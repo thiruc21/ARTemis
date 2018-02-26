@@ -50,5 +50,5 @@
     - Designing a canvas with various features and functions such as the draw tools and autofill.
     - Synchronizing each user to a team canvas, and each team canvas to a game instance/host in concert using websockets.
     - Creating a separate chat system with voice service and intergrating it to the different layers/levels of the application.
-    - Integrating several unfamiliar APIs into the project like clarifai.
+    - Integrating several unfamiliar APIs into the project like clarifai and angularjs.
     - Allowing a user to host multiple games and have all of those authorative permissions.
