@@ -24,7 +24,7 @@
         - Set, extend, and manipulate the timer.
         - Send announcements to the teams while they play.
         - Veto the API's decision on who the winner is.
-        - Manipulate the score of each team in a open and transperent manner.
+        - Manipulate the score of each team in a open and transparent manner.
     - Animated UI that feels smooth and clean.
 - Final Version
     - Additiona canvas features:
@@ -49,8 +49,8 @@
 - Difficulties:
     - Integrating several APIs into the project.
     - Designing a canvas with various features and functions such as the draw tools and autofill.
-    - Synchronizing each user to a tean canvas, and each team canvas to a game instance/host in concert using websockets.
-    - Creating a seperate chat system with voice service and intergrating it to the different layers/levels of the application.
+    - Synchronizing each user to a team canvas, and each team canvas to a game instance/host in concert using websockets.
+    - Creating a separate chat system with voice service and intergrating it to the different layers/levels of the application.
     - Allowing a user to host multiple games and have all of those authorative permissions.
 
 
