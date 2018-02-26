@@ -27,7 +27,7 @@
         - Manipulate the score of each team in a open and transparent manner.
     - Animated UI that feels smooth and clean.
 - Final Version
-    - Additiona canvas features:
+    - Additional canvas features:
         - Autofill feature.
         - More draw tools.
         - Color mixer.
