@@ -40,18 +40,15 @@
     - The host will be able to fully moniter and manipulate any sabotoges.
 ## Technical
 - For this project we will be using:
-    - nodejs for server-side coding.
-    - mongoDB for datastorage.
-    - Angularjs and Snap.svg for clientside web page and canvas design.
+    - Nodejs and express for server-side coding.
+    - MongoDB for datastorage.
+    - Angularjs and Snap.svg for frontend and canvas design.
     - Web sockets to synchronize the canvases.
     - WebRTC, specifically PeerJs, for in game chat and voice service.
-    - clarifai for image comparision.
+    - Clarifai for image comparision.
 - Difficulties:
     - Integrating several APIs into the project.
     - Designing a canvas with various features and functions such as the draw tools and autofill.
     - Synchronizing each user to a team canvas, and each team canvas to a game instance/host in concert using websockets.
     - Creating a separate chat system with voice service and intergrating it to the different layers/levels of the application.
     - Allowing a user to host multiple games and have all of those authorative permissions.
-
-
-
