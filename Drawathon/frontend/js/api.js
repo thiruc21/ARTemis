@@ -30,19 +30,6 @@ var api = (function(){
         }
     }
 
-    // Draw
-    module.pushStroke = function(x, y, px, py, color, callback){
-        send("POST", "/api/draw/", {px: px, x: x, py: py, y: y, color:color}, callback);
-    };
-
-    // Get
-    module.getStrokes = function(limit="all", callback){
-        send("GET", "/api/draw/?limit=" + limit, null, callback);
-    };
-
-    module.getLatest = function(callback){
-        send("GET", "/api/curr/", null, callback);
-    }
 
     return module;
 })();

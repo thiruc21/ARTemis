@@ -1,24 +1,23 @@
 {
-  "name": "watson-calorie-counter",
-  "version": "0.0.1",
-  "dependencies": {
-    "body-parser": "^1.17.x",
-    "cfenv": "^1.0.x",
-    "dotenv": "^4.0.0",
-    "express": "^4.15.x",
-    "formidable": "*",
-    "metrics-tracker-client": "*",
-    "nedb": "^1.8.0",
-    "vcap_services": "^0.2.0",
-    "watson-developer-cloud": "^2.0.3"
-  },
+  "name": "drawathon",
+  "version": "1.0.0",
+  "description": "Drawing game by ARTemis",
   "main": "app.js",
   "scripts": {
-    "start": "node app.js"
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "license": "Apache-2.0",
   "repository": {
     "type": "git",
-    "url": "https://github.com/IBM/watson-calorie-counter.git"
+    "url": "git+https://github.com/UTSCC09/ARTemis.git"
+  },
+  "author": "Vishakan, Vijanthan, Shadman",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/UTSCC09/ARTemis/issues"
+  },
+  "homepage": "https://github.com/UTSCC09/ARTemis#readme",
+  "dependencies": {
+    "body-parser": "^1.18.2",
+    "express": "^4.16.3"
   }
 }
