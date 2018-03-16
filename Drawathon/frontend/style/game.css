@@ -1,0 +1,101 @@
+.layout {
+    display: grid;
+    width:100%;
+    height:auto;
+    grid-template-columns: 50% 10% 40%;
+    grid-template-rows: 1fr 1fr;
+}
+
+.gcanvas {
+    grid-area: 1 / 1 / span 2 / span 1;
+    margin: 5% 5% 5% 5%;
+    width: 90%;
+    height: 90%;
+    max-width: 800px;
+    max-height: 800px;
+    min-width: 500px;
+    min-height: 500px;
+    background-color: white;
+}
+
+.gimg {
+    border-style: double;
+    border-width: 2px;
+    grid-area: 1 / 3 / span 1 / span 1;
+    margin: 5% 5% 5% 5%;
+    width: 90%;
+    height: 90%;
+    max-width: 500px;
+    max-height: 500px;
+    min-width: 500px;
+    min-height: 200px;
+}
+.chatTitle {
+    grid-area: 2 / 3 / span 1 / span 1;
+    color:black;
+    margin: 20% 0% 0% 6%;
+    height: 10%;
+}
+.gchat {
+    grid-area: 2 / 2 / span 2 / span 1;
+    height: auto;
+    border-style: double;
+    border-width: 1px;
+    margin: 5% 5% 5% 5%;
+    width: 90%;
+    height: 180%;
+    max-width: 500px;
+    max-height: 200px;
+    min-width: 500px;
+    min-height: 200px;
+    display: flex;
+    background-color: silver;
+    flex-direction: column;
+    justify-content: flex-end;
+    align-items: center;
+}
+.chatContent {
+    color:white;
+    background: grey;
+    margin: 5% 5% 5% 5%;
+    text-align: center;
+    border-radius: 10px;
+    width: 80%;
+    height: auto;
+}
+
+.colors {
+    margin: 10% 0% 0% 5%;
+    grid-area: 1 / 2 / span 1 / span 1;
+    display: flex;
+    width: 30%;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.color{
+    border-width: 1px;
+    border-style:solid;
+    width: 50px;
+    height: 50px;
+}
+
+#small{
+    border-style: none;
+    width: 10px;
+    height: 10px;
+    border-radius: 10px;
+}
+#medium{
+    border-style: none;
+    width: 25px;
+    height: 25px;
+    border-radius: 25px;
+}
+#large{
+    border-style: none;
+    width: 50px;
+    height: 50px;
+    border-radius: 50px;
+}
