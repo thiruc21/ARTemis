@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en" data-framework="angularjs">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="style/main.css" rel="stylesheet" type="text/css"/>
+    <link href="style/form.css" rel="stylesheet" type="text/css"/>
+    <link rel="icon" href="./media/icon.png">
+    <title>Drawathon</title>
+</head>
+<body>
+    <div class="form_container" ng-controller="signController">
+
+        <form class="std_form" ng-submit="signIn()">
+            <p class="form_title">Sign In</p>
+            <div class="form_content">
+                <input id="username" placeholder="Username">
+                <input id="password" placeholder="Password">
+            </div>
+            <div class="form_btns">
+                <button id="signin">Sign In</button>
+            </div>
+        </form>
+
+        <form class="std_form" ng-submit="signUp()">
+                <p class="form_title">Sign Up</p>
+            <div class="form_content">
+                <input id="username" placeholder="Username">
+                <input id="password" placeholder="Password">
+            </div>
+            <div class="form_btns">
+                <button id="signup">Sign Up</button>
+            </div>
+        </form>
+    </div>
+
+</body>
+</html>
