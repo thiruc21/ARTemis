@@ -1,0 +1,14 @@
+<div class="layout">
+  <canvas #canvas (mousemove)="mouseMove($event)" (mousedown)="mouseDown()" (mouseup)="mouseUp()" class="canvas" width="800" height="800"></canvas>
+  <div class="colors">
+    <div class="color" id="large" [ngStyle]="{ 'background-color': color }" (click)="clickSize(50)"></div>
+    <div class="color" id="medium" [ngStyle]="{ 'background-color': color }" (click)="clickSize(25)"></div>
+    <div class="color" id="small" [ngStyle]="{ 'background-color': color }" (click)="clickSize(10)"></div>
+    <div class="color" id="red" style="background-color:red;" (click)="clickColor('red')"></div>
+    <div class="color" id="blue" style="background-color:blue;" (click)="clickColor('blue')"></div>
+    <div class="color" id="green" style="background-color:green;" (click)="clickColor('green')"></div>
+    <div class="color" id="white" style="background-color:white;" (click)="clickColor('white')"></div>
+    <div class="color" id="black" style="background-color:black;" (click)="clickColor('black')"></div>
+  </div>
+</div>
+

@@ -1,0 +1,12 @@
+<h1 class="title">Public Games Available</h1>
+<div class="gamesContainer">
+  <div *ngFor="let game of games" (click)="clickGame(game)">
+    <a routerLink="/game">
+    <div class="gameElement">
+      <img class="gameThumbnail" src="assets/sample.png" alt="Could not find image.">
+      <p class="gameTitle">{{game}}</p>
+    </div>
+   </a>
+  </div>
+</div>
+
