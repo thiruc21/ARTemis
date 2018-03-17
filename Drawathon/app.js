@@ -5,7 +5,6 @@ const bodyParser = require('body-parser');
 const cookie = require('cookie');
 const session = require('express-session');
 const MongoClient = require('mongodb').MongoClient;
-
 const crypto = require('crypto');
 const fs = require('fs');
 
@@ -13,6 +12,10 @@ app.use(bodyParser.json());
 
 const http = require('http');
 const PORT = 3000;
+
+const MAXPLAYERS = 4;
+var multer  = require('multer');
+var upload = multer({ dest: path.join(__dirname, 'uploads') });
 
 // The following forceSSL middleware code snippet is taken from 
 /** https://medium.com/@ryanchenkie_40935/angular-cli-deployment-host-your-angular-2-app-on-heroku-3f266f13f352 */
@@ -84,15 +87,11 @@ app.use(function (req, res, next){
 });
 
 var isAuthenticated = function(req, res, next) {
-    console.log("\n", req.session.username, "\n")
     if (!req.session.username) return res.status(401).end("access denied");
     next();
 };
 
-
-
 // curl -H "Content-Type: application/json" -X POST -d '{"username":"alice","password":"alice"}' -c cookie.txt localhost:3000/signup/
-// Sign up with the provided credentials
 app.post('/signup/', function (req, res, next) {
     var username = req.body.username;
     var password = req.body.password;
@@ -105,7 +104,7 @@ app.post('/signup/', function (req, res, next) {
             if (user) return res.status(409).end("Username " + username + " already exists");
 
             var salt = generateSalt();
-            var hash = generateHash(password, salt)
+            var hash = generateHash(password, salt);
             dbo.collection("users").update({_id: username}, {_id: username, salt:salt, hash:hash}, 
                 {upsert: true}, function(n, nMod) {
                     if (err) return res.status(500).end(err);
@@ -117,6 +116,7 @@ app.post('/signup/', function (req, res, next) {
 
 // curl -H "Content-Type: application/json" -X POST -d '{"username":"alice","password":"alice"}' -c cookie.txt localhost:3000/signin/
 app.post('/signin/', function (req, res, next) {
+    // TODO: sanitize
     var username = req.body.username;
     var password = req.body.password;
     MongoClient.connect(uri, function(err, db) {    
@@ -151,21 +151,130 @@ app.get('/signout/', function (req, res, next) {
     res.redirect('/');
 });
 
-// curl -b cookie.txt   -H "Content-Type: application/json" -X POST -d '{"title":"join THIS Lobby lol"}' localhost:3000/api/games/
+// curl -b cookie.txt -H "Content-Type: application/json" -X POST -d '{"title":"join THIS Lobby lol"}' localhost:3000/api/games/
 app.post('/api/games/', isAuthenticated, function (req, res, next) {
-    title = req.body.title;
-    host = req.session.username
+    // TODO: sanitize
+    var title = req.body.title;
+    var host = req.session.username;
 
     MongoClient.connect(uri, function(err, db) {  
         if (err) return res.status(500).end(err);
         var dbo = db.db(dbName);
 
-        dbo.collection("games").insertOne({title:title, host: host}, function (err, game) {
+        dbo.collection("games").insertOne({title:title, host: host, inLobby: true, numPlayers:0, maxPlayers:MAXPLAYERS}, 
+                function (err, game) {
             if (err) return res.status(500).end(err);
             return res.json(game.ops[0]);
         });
     });
 });
+
+// curl -b cookie.txt localhost:3000/api/games/
+app.get('/api/games/', isAuthenticated, function (req, res, next) { 
+
+    MongoClient.connect(uri, function(err, db) {  
+        if (err) return res.status(500).end(err);
+        var dbo = db.db(dbName);
+
+        //dbo.collection("games").drop();
+        //dbo.collection("game_joined").drop();
+
+        dbo.collection("games").find({inLobby:true}).toArray(function(err, games) {
+            if (err) return res.status(500).end(" Server side error");
+            return res.json(games);
+        }); 
+    });
+});
+
+// curl -b cookie.txt -H "Content-Type: application/json" -X POST -d '{"username":"alice", peerId: 123}' localhost:3000/api/games/5aad60fd34ae2b5edf53f24c/joined/
+app.post('/api/games/:id/joined/', isAuthenticated, function (req, res, next) {
+    // TODO: sanitize
+    var user = req.session.username;
+    var gameId = req.params.id;
+    var userJoined = req.body.username;
+
+    MongoClient.connect(uri, function(err, db) {  
+        if (err) return res.status(500).end(err);
+        var dbo = db.db(dbName);
+
+        dbo.collection("games").find({"_id": gameId}).toArray(function(err, games) {
+            if (err) return res.status(500).end(err);
+            if (!games[0]) return res.status(409).end("game with id " + gameId + " not found");            
+            
+            var game = games[0];
+            if (game.numPlayers >= game.maxPlayers) return res.status(409).end("game  " + gameId + " is full");
+            if (game.host == userJoined) return res.status(409).end("User  " + userJoined + " is already the host");
+
+            // CHECK IF GAME HAS TIMED OUT? 
+            dbo.collection("game_joined").findOne({user:userJoined}, function(err, existingUser) { 
+                if (err) return res.status(500).end(err);
+                if (existingUser) return res.status(409).end("user" + userJoined + " is already in a game");
+
+                dbo.collection("game_joined").insertOne({user:userJoined, game:gameId, points:0, wins:0}, 
+                    function (err, userEntry) {
+                        if (err) return res.status(500).end(err);
+                        return res.json(userEntry[0]);
+                });
+            });            
+        });
+    });
+});
+
+
+
+
+app.post('/api/images/', isAuthenticated, upload.single('file'), function (req, res, next) {
+    MongoClient.connect(uri, function(err, db) {  
+        if (err) return res.status(500).end(err);
+        var dbo = db.db(dbName);
+
+        dbo.collection("game_joined").insert(new ImageData(req), function (err, image) {       
+            if (err) return res.status(500).end(" Server side error");
+            return res.json(new Image(image));
+        });
+
+    });
+});
+
+// Start game when number of players is greater than 1, and can only be started by host
+// LOOK INTO long polling, and start a timer, where wud timer go?
+app.get('/api/games/:id', isAuthenticated, function (req, res, next) {
+    MongoClient.connect(uri, function(err, db) {  
+        if (err) return res.status(500).end(err);
+        var dbo = db.db(dbName);
+    });
+});
+
+// JOINED clients in 
+app.get('/api/games/:id/joined/', isAuthenticated, function (req, res, next) {
+    
+    MongoClient.connect(uri, function(err, db) {  
+        if (err) return res.status(500).end(err);
+        var dbo = db.db(dbName);
+
+    });
+});
+
+// KICK player themself
+app.patch('/api/games/:id/joined/', isAuthenticated, function (req, res, next) {
+
+    MongoClient.connect(uri, function(err, db) {  
+        if (err) return res.status(500).end(err);
+        var dbo = db.db(dbName);
+
+    });
+});
+/*
+// curl -b cookie.txt localhost:3000/api/games/
+app.get('api/games/', isAuthenticated, function (req, res, next) {    
+    user = req.session.username;
+    MongoClient.connect(uri, function(err, db) {  
+        if (err) return res.status(500).end(err);
+        var dbo = db.db(dbName); 
+
+    });
+});
+*/
 
 http.createServer(app).listen(process.env.PORT || PORT, function (err) {
     if (err) console.log(err);
