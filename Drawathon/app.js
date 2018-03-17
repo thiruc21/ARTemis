@@ -15,6 +15,31 @@ app.use(express.static('frontend'));
 const http = require('http');
 const PORT = 3000;
 
+// The following forceSSL middleware code snippet is taken from 
+// https://medium.com/@ryanchenkie_40935/angular-cli-deployment-host-your-angular-2-app-on-heroku-3f266f13f352 
+
+// If an incoming request uses
+// a protocol other than HTTPS,
+// redirect that request to the
+// same url but with HTTPS
+
+const forceSSL = function() {
+    return function (req, res, next) {
+      if (req.headers['x-forwarded-proto'] !== 'https') {
+        return res.redirect(
+         ['https://', req.get('Host'), req.url].join('')
+        );
+      }
+      next();
+    }
+  }
+  
+  // Instruct the app
+  // to use the forceSSL
+  // middleware
+  
+  app.use(forceSSL());
+
 // Connection url
 const uri = "mongodb://admin:hashedpass@art-shard-00-00-xs19d.mongodb.net:27017,art-shard-00-01-xs19d.mongodb.net:27017,art-shard-00-02-xs19d.mongodb.net:27017/test?ssl=true&replicaSet=Art-shard-0&authSource=admin"
 // Database Name
