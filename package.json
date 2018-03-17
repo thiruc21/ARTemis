@@ -1,0 +1,7 @@
+{
+  "name": "art-emis",
+  "version": "1.0.0",
+  "scripts": {
+    "postinstall": "npm install --prefix Drawathon"
+  }
+}
