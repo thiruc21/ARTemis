@@ -13,7 +13,7 @@ app.use(bodyParser.json());
 app.use(express.static('frontend'));
 
 const http = require('http');
-const PORT = 3001;
+const PORT = 3000;
 
 // Connection url
 const uri = "mongodb://admin:hashedpass@art-shard-00-00-xs19d.mongodb.net:27017,art-shard-00-01-xs19d.mongodb.net:27017,art-shard-00-02-xs19d.mongodb.net:27017/test?ssl=true&replicaSet=Art-shard-0&authSource=admin"
