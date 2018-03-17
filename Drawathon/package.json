@@ -5,12 +5,12 @@
   "main": "app.js",
   "scripts": {
     "ng": "ng",
-    "build": "ng build --prod",
+    "build": "ng build",
     "test": "ng test",
     "lint": "ng lint",
     "e2e": "ng e2e",
-	"postinstall": "ng build --aot --target=production",
-    "start": "node app.js"
+    "start": "node app.js",
+    "postinstall": "ng build --prod"
   },
   "private": true,
   "dependencies": {
@@ -23,14 +23,18 @@
     "@angular/platform-browser": "^5.2.0",
     "@angular/platform-browser-dynamic": "^5.2.0",
     "@angular/router": "^5.2.0",
-    "core-js": "^2.4.1",
-    "rxjs": "^5.5.6",
-    "zone.js": "^0.8.19"
-  },
-  "devDependencies": {
     "@angular/cli": "~1.7.3",
     "@angular/compiler-cli": "^5.2.0",
     "@angular/language-service": "^5.2.0",
+    "core-js": "^2.4.1",
+    "rxjs": "^5.5.6",
+    "zone.js": "^0.8.19",
+    "body-parser": "^1.18.2",
+    "express": "^4.16.3",
+    "express-session": "^1.15.6",
+    "mongodb": "^3.0.4"
+  },
+  "devDependencies": {
     "@types/jasmine": "~2.8.3",
     "@types/jasminewd2": "~2.0.2",
     "@types/node": "~6.0.60",
@@ -46,7 +50,7 @@
     "ts-node": "~4.1.0",
     "tslint": "~5.9.1",
     "typescript": "~2.5.3"
-  }, 
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/UTSCC09/ARTemis.git"
@@ -56,11 +60,5 @@
   "bugs": {
     "url": "https://github.com/UTSCC09/ARTemis/issues"
   },
-  "homepage": "https://github.com/UTSCC09/ARTemis#readme",
-  "dependencies": {
-    "body-parser": "^1.18.2",
-    "express": "^4.16.3",
-    "express-session": "^1.15.6",
-    "mongodb": "^3.0.4"
-  }
+  "homepage": "https://github.com/UTSCC09/ARTemis#readme"
 }
