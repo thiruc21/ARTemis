@@ -49,7 +49,7 @@ app.use(session({
 
 
 
-http.createServer(app).listen(PORT, function (err) {
+http.createServer(app).listen(process.env.PORT || PORT, function (err) {
     if (err) console.log(err);
     else console.log("HTTP server on http://localhost:%s", PORT);
 });           
