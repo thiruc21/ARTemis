@@ -1,0 +1,64 @@
+.chat {
+    width: 500px;
+    height: 600px;
+    display: grid;
+    background-color: silver;
+    grid-template-rows: 50px 1fr 50px;
+    grid-template-columns: 1fr; 
+}
+.chatTitle {
+    grid-area: 1 / 1 / span 1 / span 1;
+    color:black;
+    height: 50px;
+    font-family: 'Lucida Calligraphy';
+
+    display:flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 25px;
+    background-color: beige;
+}
+.chatContent {
+    grid-area: 2 / 1 / span 1 / span 1;
+    color:white;
+    background: grey;
+    display: flex;
+    font-size: 15px;
+    text-align: center;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+}
+.chatText {
+    grid-area: 3 / 1 / span 1 / span 1;
+    color: black;
+    resize: none;
+    font-size: 15px;
+    background: white;
+}
+.chatMessage {
+    display: flex;
+    margin: 5px 5px 5px 5px;
+    justify-content: flex-start;
+    align-items: center;
+    border-radius: 5px;
+    height: auto;
+    width: 400px;
+    background-color: skyblue;
+}
+.chatButton {
+    grid-area: 3 / 1 / span 1 / span 1;
+    width: 40px;
+    height: 40px;
+    border-radius: 40px;
+    background-color: skyblue;
+    display:flex;
+    align-items: center;
+    justify-content: center;
+    justify-self: flex-end;
+    align-self: flex-end;
+    margin: 10px 0px 0px 0px;
+}
+.chatButton:hover {
+    cursor: pointer;
+}

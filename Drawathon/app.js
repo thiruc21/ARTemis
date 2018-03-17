@@ -44,7 +44,7 @@ const forceSSL = function() {
 if (app.get('env') !== 'development'){
     app.use(forceSSL());
 }
-app.use(express.static('frontend'));
+app.use(express.static('dist'));
 // Connection url
 const uri = "mongodb://admin:hashedpass@art-shard-00-00-xs19d.mongodb.net:" +
      "27017,art-shard-00-01-xs19d.mongodb.net:27017,art-shard-00-02-xs19d.mongodb.net" + 
