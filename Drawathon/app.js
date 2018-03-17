@@ -36,9 +36,11 @@ const forceSSL = function() {
 // Instruct the app
 // to use the forceSSL
 // middleware
-  
-app.use(forceSSL());
 
+// Allow localhost to work in HTTP, otherwise HTTPS is required
+if (app.get('env') !== 'development'){
+    app.use(forceSSL());
+}
 app.use(express.static('frontend'));
 // Connection url
 const uri = "mongodb://admin:hashedpass@art-shard-00-00-xs19d.mongodb.net:" +
@@ -55,7 +57,7 @@ app.use(session({
 }));
 
 if (app.get('env') === 'production') {
-    session.cookie.secure = true;
+    //session.cookie.secure = true;
 }
 
 function generateSalt (){
