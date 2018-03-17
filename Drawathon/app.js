@@ -50,15 +50,11 @@ const uri = "mongodb://admin:hashedpass@art-shard-00-00-xs19d.mongodb.net:" +
 const dbName = 'test';
 
 app.use(session({
-    cookie: {httpOnly: true, secure: true, sameSite: true},
+    //cookie: {//httpOnly: true,         secure: true, sameSite: true},
     secret: 'please change this secret',
     resave: false,
     saveUninitialized: true,
 }));
-
-if (app.get('env') === 'production') {
-    //session.cookie.secure = true;
-}
 
 function generateSalt (){
     return crypto.randomBytes(16).toString('base64');
@@ -75,7 +71,7 @@ app.use(function(req, res, next){
     res.setHeader('Set-Cookie', cookie.serialize('username', username, {
           sameSite: true,
           secure: true,
-          httpOnly: false,
+          //httpOnly: false,
           path : '/', 
           maxAge: 60 * 60 * 24 * 7 // 1 week in number of seconds
     }));
@@ -88,6 +84,7 @@ app.use(function (req, res, next){
 });
 
 var isAuthenticated = function(req, res, next) {
+    console.log("\n", req.session.username, "\n")
     if (!req.session.username) return res.status(401).end("access denied");
     next();
 };
@@ -99,9 +96,7 @@ var isAuthenticated = function(req, res, next) {
 app.post('/signup/', function (req, res, next) {
     var username = req.body.username;
     var password = req.body.password;
-    if((!username)||(!password)) {
-        return res.status(400).end("Bad request, please provide the username and password\n");
-    }
+    
     MongoClient.connect(uri, function(err, db) {    
         if (err) return res.status(500).end(err);
         var dbo = db.db(dbName);
@@ -120,14 +115,10 @@ app.post('/signup/', function (req, res, next) {
     });
 });
 
-// curl -H "Content-Type: application/json" -X POST -d '{"username":"alice","password":"alice"}' -b cookie.txt localhost:3000/signin/
-// Sign in with the provided credentials
+// curl -H "Content-Type: application/json" -X POST -d '{"username":"alice","password":"alice"}' -c cookie.txt localhost:3000/signin/
 app.post('/signin/', function (req, res, next) {
     var username = req.body.username;
     var password = req.body.password;
-    if((!username)||(!password)) {
-         return res.status(400).end("Bad request, please provide the username and password\n");
-    }
     MongoClient.connect(uri, function(err, db) {    
         if (err) return res.status(500).end(err);
         var dbo = db.db(dbName);
@@ -139,6 +130,8 @@ app.post('/signin/', function (req, res, next) {
             req.session.username = username;
             // initialize cookie
             res.setHeader('Set-Cookie', cookie.serialize('username', username, {
+                sameSite: true,
+                secure: true,
                 path : '/', 
                 maxAge: 60 * 60 * 24 * 7
             }));
@@ -158,14 +151,20 @@ app.get('/signout/', function (req, res, next) {
     res.redirect('/');
 });
 
-// Sign out of the current user
-app.get('/signout/', function (req, res, next) {
-    req.session.destroy();
-    res.setHeader('Set-Cookie', cookie.serialize('username', '', {
-          path : '/', 
-          maxAge: 60 * 60 * 24 * 7 
-    }));
-    res.redirect('/');
+// curl -b cookie.txt   -H "Content-Type: application/json" -X POST -d '{"title":"join THIS Lobby lol"}' localhost:3000/api/games/
+app.post('/api/games/', isAuthenticated, function (req, res, next) {
+    title = req.body.title;
+    host = req.session.username
+
+    MongoClient.connect(uri, function(err, db) {  
+        if (err) return res.status(500).end(err);
+        var dbo = db.db(dbName);
+
+        dbo.collection("games").insertOne({title:title, host: host}, function (err, game) {
+            if (err) return res.status(500).end(err);
+            return res.json(game.ops[0]);
+        });
+    });
 });
 
 http.createServer(app).listen(process.env.PORT || PORT, function (err) {
