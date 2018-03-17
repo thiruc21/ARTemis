@@ -1,11 +1,19 @@
 <h1>Lobby</h1>
 <div class="layout">
   <div class="teamLeft">
-    
+    <div *ngFor="let player1 of team1" class="teamPlayer">
+      <p>{{player1}}</p>
+    </div>
   </div>
-  <div class="teamRigh">
-
+  <div class="hostCenter">
+    <h2>Hosted by MC: {{host}}</h2>
+    <a routerLink="/game" class="startButton">Start</a>
+  </div>
+  <div class="teamRight">
+    <div *ngFor="let player2 of team2" class="teamPlayer">
+      <p>{{player2}}</p>
+    </div>
   </div>
 </div>
 
-<a routerLink="/game"><button>Start</button></a>
+
