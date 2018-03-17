@@ -95,27 +95,77 @@ var isAuthenticated = function(req, res, next) {
 
 
 // curl -H "Content-Type: application/json" -X POST -d '{"username":"alice","password":"alice"}' -c cookie.txt localhost:3000/signup/
+// Sign up with the provided credentials
 app.post('/signup/', function (req, res, next) {
     var username = req.body.username;
     var password = req.body.password;
-    var salt = generateSalt();
+    if((!username)||(!password)) {
+        return res.status(400).end("Bad request, please provide the username and password\n");
+    }
     MongoClient.connect(uri, function(err, db) {    
         if (err) return res.status(500).end(err);
         var dbo = db.db(dbName);
-
         dbo.collection("users").findOne({_id: username}, function(err, user) {
             if (err) return res.status(500).end(err);
-            if (user) return res.status(409).end("username " + username + " already exists");
+            if (user) return res.status(409).end("Username " + username + " already exists");
 
             var salt = generateSalt();
             var hash = generateHash(password, salt)
             dbo.collection("users").update({_id: username}, {_id: username, salt:salt, hash:hash}, 
                 {upsert: true}, function(n, nMod) {
                     if (err) return res.status(500).end(err);
-                    return res.json("user " + username + " signed up");
+                    return res.json("User " + username + " signed up");
             });
         });
     });
+});
+
+// curl -H "Content-Type: application/json" -X POST -d '{"username":"alice","password":"alice"}' -b cookie.txt localhost:3000/signin/
+// Sign in with the provided credentials
+app.post('/signin/', function (req, res, next) {
+    var username = req.body.username;
+    var password = req.body.password;
+    if((!username)||(!password)) {
+         return res.status(400).end("Bad request, please provide the username and password\n");
+    }
+    MongoClient.connect(uri, function(err, db) {    
+        if (err) return res.status(500).end(err);
+        var dbo = db.db(dbName);
+        // retrieve user from the database
+        dbo.collection("users").findOne({_id: username}, function(err, user) {
+            if (err) return res.status(500).end(err);
+            if (!user) return res.status(401).end("Access denied, incorrect credentials\n");
+            if (user.hash !== generateHash(password, user.salt)) return res.status(401).end("Access denied, incorrect credentials\n"); 
+            req.session.username = username;
+            // initialize cookie
+            res.setHeader('Set-Cookie', cookie.serialize('username', username, {
+                path : '/', 
+                maxAge: 60 * 60 * 24 * 7
+            }));
+            return res.json("User " + username + " signed in");
+        });
+    });
+    
+});
+
+// Sign out of the current user
+app.get('/signout/', function (req, res, next) {
+    req.session.destroy();
+    res.setHeader('Set-Cookie', cookie.serialize('username', '', {
+          path : '/', 
+          maxAge: 60 * 60 * 24 * 7 
+    }));
+    res.redirect('/');
+});
+
+// Sign out of the current user
+app.get('/signout/', function (req, res, next) {
+    req.session.destroy();
+    res.setHeader('Set-Cookie', cookie.serialize('username', '', {
+          path : '/', 
+          maxAge: 60 * 60 * 24 * 7 
+    }));
+    res.redirect('/');
 });
 
 http.createServer(app).listen(process.env.PORT || PORT, function (err) {
