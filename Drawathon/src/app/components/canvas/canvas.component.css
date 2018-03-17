@@ -1,7 +1,7 @@
 .layout {
     display: grid;
-    grid-template-rows: 10px 800px 10px;
-    grid-template-columns: 10px 800px 10px 50px;
+    grid-template-rows: 10px 600px 10px;
+    grid-template-columns: 10px 600px 10px 50px;
 }
 
 .canvas {

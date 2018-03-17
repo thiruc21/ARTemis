@@ -4,5 +4,5 @@
         <div class="chatMessage" *ngFor="let message of messages">{{message}}</div>
     </div>
     <textarea #textarea class="chatText" rows="1" ngModel="message"></textarea>
-    <img class="chatButton" src="assets/send.png" (click)="submitMessage()">
+    <div class="chatButton" (click)="submitMessage()"><img src="assets/send.png" alt=""></div>
 </div>

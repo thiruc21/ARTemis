@@ -39,7 +39,7 @@
 .chatMessage {
     display: flex;
     margin: 5px 5px 5px 5px;
-    justify-content: center;
+    justify-content: flex-start;
     align-items: center;
     border-radius: 5px;
     height: auto;
@@ -52,8 +52,12 @@
     height: 40px;
     border-radius: 40px;
     background-color: skyblue;
+    display:flex;
+    align-items: center;
+    justify-content: center;
     justify-self: flex-end;
     align-self: flex-end;
+    margin: 10px 0px 0px 0px;
 }
 .chatButton:hover {
     cursor: pointer;
