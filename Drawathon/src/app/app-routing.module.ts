@@ -4,18 +4,19 @@ import  { GameComponent } from './components/game/game.component';
 import { MainComponent } from './components/main/main.component';
 import { LobbyComponent } from './components/lobby/lobby.component';
 import { ChatComponent } from './components/chat/chat.component';
-import { SignComponent } from './components/sign/sign.component'
+import { SignupComponent } from './components/signup/signup.component'
+import { SigninComponent } from './components/signin/signin.component';
 
 const routes: Routes = [
   { path: 'game', component:GameComponent } ,
   { path: '', component:MainComponent, pathMatch: 'full' } ,
   { path: 'lobby', component:LobbyComponent } ,
   { path: 'test', component:ChatComponent } ,
-  { path: 'sign', component:SignComponent}
+  { path: 'signin', component:SigninComponent} ,
+  { path: 'signup', component:SignupComponent}
 ];
 @NgModule({
   imports: [ RouterModule.forRoot(routes) ],
   exports: [ RouterModule ]
 })
-
 export class AppRoutingModule { }
