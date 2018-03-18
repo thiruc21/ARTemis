@@ -125,7 +125,7 @@ app.post('/signin/', function (req, res, next) {
         // retrieve user from the database
         dbo.collection("users").findOne({_id: username}, function(err, user) {
             if (err) return res.status(500).end(err);
-            if (!user) return res.status(401).end("Access denied, incorrect credentials\n");
+            if (!user) return res.status(401).end("Access denied\n");
             if (user.hash !== generateHash(password, user.salt)) return res.status(401).end("Access denied, incorrect credentials\n"); 
             req.session.username = username;
             // initialize cookie
@@ -219,18 +219,39 @@ app.post('/api/games/:id/joined/', isAuthenticated, function (req, res, next) {
         });
     });
 });
+// curl -b cookie.txt localhost:3000/api/games/as/joined
+app.get('/api/games/:id/joined/', isAuthenticated, function (req, res, next) { 
+    var host = req.session.username;
 
-
-
-
-app.post('/api/images/', isAuthenticated, upload.single('file'), function (req, res, next) {
     MongoClient.connect(uri, function(err, db) {  
         if (err) return res.status(500).end(err);
         var dbo = db.db(dbName);
 
-        dbo.collection("game_joined").insert(new ImageData(req), function (err, image) {       
+        dbo.collection("game_joined").find({user:host, inLobby:true}).toArray(function(err, games) {
+            if (err) return res.status(500).end(err);
+            return res.json(games);
+        });
+    });
+});
+
+var ImageData = function(image){   
+    this._id = image._idl
+    this.title = image.title;    
+    this.picture = image.pic;    
+};
+
+app.post('/api/images/', isAuthenticated, upload.single('file'), function (req, res, next) {
+    var host = req.session.username;
+    var title = req.body.title;
+    var pic = req.file;
+
+    MongoClient.connect(uri, function(err, db) {  
+        if (err) return res.status(500).end(err);
+        var dbo = db.db(dbName);
+
+        dbo.collection("game_joined").insert({host:host, title:title, picture:picture}, function (err, image) {       
             if (err) return res.status(500).end(" Server side error");
-            return res.json(new Image(image));
+            return res.json( new ImageData(image));
         });
 
     });
@@ -254,6 +275,7 @@ app.get('/api/games/:id/joined/', isAuthenticated, function (req, res, next) {
 
     });
 });
+
 
 // KICK player themself
 app.patch('/api/games/:id/joined/', isAuthenticated, function (req, res, next) {
