@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { Location } from '@angular/common';
-import { API } from '../assets/js/API';
+import { ApiModule } from './api/api.module';
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
@@ -9,14 +9,14 @@ import { API } from '../assets/js/API';
 export class AppComponent implements OnInit{
   title = 'app';
   user:string;
-  private api: API
+  private apiModule:ApiModule;
   constructor(
     private location: Location
   ) {};
   ngOnInit() {
     //Called after the constructor, initializing input properties, and the first call to ngOnChanges.
     //Add 'implements OnInit' to the class.
-    this.api = new API();
-    this.user = this.api.getCurrentUser();
+    this.apiModule = new ApiModule
+    this.user = this.apiModule.getCurrentUser();
   }
 }
