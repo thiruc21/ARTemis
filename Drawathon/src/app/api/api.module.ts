@@ -1,5 +1,7 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { HttpClientModule } from '@angular/common/http';
+
 
 @NgModule({
   imports: [
@@ -26,7 +28,6 @@ export class ApiModule {
   private send(method, url, data, callback){
       var xhr = new XMLHttpRequest();
       xhr.onload = function() {
-      xhr.withCredentials = true;
           if (xhr.status !== 200) callback("[" + xhr.status + "]" + xhr.responseText, null);
           else {
             console.log(xhr.responseText);
@@ -36,6 +37,7 @@ export class ApiModule {
       xhr.open(method, url, true);
       if (!data) xhr.send();
       else{
+          xhr.withCredentials = true;
           xhr.setRequestHeader('Content-Type', 'application/json');
           xhr.send(JSON.stringify(data));
       }

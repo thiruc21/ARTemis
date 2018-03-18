@@ -17,16 +17,18 @@ export class SigninComponent implements OnInit {
   ngOnInit() {
     this.apiModule = new ApiModule();
   }
-  SignIn() {
+  SignIn(e) {
     this.username = this.user.nativeElement.value;
     this.password = this.pass.nativeElement.value;
     var apiModule = this.apiModule;
+    console.log(e);
+    e.preventDefault();
     console.log("Signing in with: " + this.username + " , " + this.password);
+
     this.apiModule.signin(this.username, this.password, function(err, res){
       if (err) console.log(err);
       else {
         console.log(res);
-        console.log(apiModule.getCurrentUser());
       }
     });
   }
