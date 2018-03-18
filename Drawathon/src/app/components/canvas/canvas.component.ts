@@ -10,7 +10,7 @@ export class CanvasComponent implements OnInit {
   pts:any;
   bound:any;
   pressed:boolean;
-
+  public bg:string = "white";
   @ViewChild('canvas') public canvas: ElementRef;
   constructor() { }
   private ctx: CanvasRenderingContext2D;
@@ -41,7 +41,7 @@ export class CanvasComponent implements OnInit {
     this.pts.x = event.clientX - this.bound.left;
     this.pts.y = event.clientY - this.bound.top;
 
-    if (this.pressed && event.clientX < this.bound.right && event.clientX > this.bound.left && event.clientY < this.bound.bottom && event.clientY > this.bound.top) {
+    if (this.bg == "white" && this.pressed && event.clientX < this.bound.right && event.clientX > this.bound.left && event.clientY < this.bound.bottom && event.clientY > this.bound.top) {
         //draw(api.pushStroke(pts.x, pts.y, pts.px, pts.py, color));
         this.draw();
     }

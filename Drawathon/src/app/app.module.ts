@@ -9,6 +9,7 @@ import { FormsModule } from '@angular/forms';
 import { CanvasComponent } from './components/canvas/canvas.component';
 import { ChatComponent } from './components/chat/chat.component';
 import { LobbyComponent } from './components/lobby/lobby.component';
+import { SignComponent } from './components/sign/sign.component';
 
 
 @NgModule({
@@ -18,7 +19,8 @@ import { LobbyComponent } from './components/lobby/lobby.component';
     GameComponent,
     CanvasComponent,
     ChatComponent,
-    LobbyComponent
+    LobbyComponent,
+    SignComponent
   ],
   imports: [
     BrowserModule,
