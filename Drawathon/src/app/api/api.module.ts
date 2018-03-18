@@ -1,16 +1,30 @@
-import { NgModule } from '@angular/core';
+import { NgModule, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { HttpClientModule } from '@angular/common/http';
+import { HttpClientModule, HttpHeaders, HttpClient } from '@angular/common/http';
+import { AppComponent } from '../app.component';
 
 
+const httpOptions = {
+  headers: new HttpHeaders({
+    'Content-Type':  'application/json',
+    'Authorization': 'my-auth-token'
+  })
+};
 @NgModule({
   imports: [
     CommonModule
   ],
   declarations: []
 })
-export class ApiModule { 
-  
+export class ApiModule implements OnInit {   
+  private http:HttpClient;
+  ngOnInit() {
+  }
+
+  private send2(method, url, data, callback){
+    
+  }
+  constructor() {}
   private sendFiles(method, url, data, callback){
     var formdata = new FormData();
     Object.keys(data).forEach(function(key){
