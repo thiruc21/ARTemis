@@ -26,7 +26,7 @@ export class ApiModule {
   private send(method, url, data, callback){
       var xhr = new XMLHttpRequest();
       xhr.onload = function() {
-          
+      xhr.withCredentials = true;
           if (xhr.status !== 200) callback("[" + xhr.status + "]" + xhr.responseText, null);
           else {
             console.log(xhr.responseText);

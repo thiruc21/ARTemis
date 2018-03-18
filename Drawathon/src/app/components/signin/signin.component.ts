@@ -20,12 +20,13 @@ export class SigninComponent implements OnInit {
   SignIn() {
     this.username = this.user.nativeElement.value;
     this.password = this.pass.nativeElement.value;
+    var apiModule = this.apiModule;
     console.log("Signing in with: " + this.username + " , " + this.password);
     this.apiModule.signin(this.username, this.password, function(err, res){
       if (err) console.log(err);
       else {
         console.log(res);
-        console.log(this.apiModule.getCurrentUser());
+        console.log(apiModule.getCurrentUser());
       }
     });
   }
