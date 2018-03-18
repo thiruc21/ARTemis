@@ -18,10 +18,10 @@ export class ChatComponent implements OnInit {
   @ViewChild('peer') public peerId:ElementRef;
 
   ngOnInit() {
-    this.btnDisplay = "flex";
-
     this.textelem = this.textarea.nativeElement;
     this.textelem.disabled = this.disabled;
+    if (this.textelem.disabled) this.btnDisplay = "none";
+    else this.btnDisplay = "flex";
     this.messages = [];
     this.myPeerId = "";
     this.peer = new Peer({host : "lightpeerjs.herokuapp.com",
