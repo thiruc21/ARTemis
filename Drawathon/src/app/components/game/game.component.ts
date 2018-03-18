@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef, AfterViewInit  } from '@angular/core';
 import { CanvasComponent } from '../canvas/canvas.component';
 import { ChatComponent } from '../chat/chat.component';
 
@@ -19,6 +19,12 @@ export class GameComponent implements OnInit {
     this.canvas.bg = "grey";
     this.chat.disabled = true;
     this.timer();
+  }
+  ngAfterViewInit() {
+    this.chat.myPeerId;
+    this.canvas.myPeerId = this.chat.myPeerId;
+    var peerId:HTMLInputElement = this.chat.peerId.nativeElement;
+    this.canvas.peerId = peerId.value;
   }
   timer(){
     setTimeout(() => {

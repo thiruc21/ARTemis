@@ -5,7 +5,7 @@ const bodyParser = require('body-parser');
 const cookie = require('cookie');
 const session = require('express-session');
 const MongoClient = require('mongodb').MongoClient;
-const ObjectId = require('mongodb').ObjectID;
+var ObjectID = require("mongodb").ObjectId;
 const crypto = require('crypto');
 const fs = require('fs');
 
@@ -75,8 +75,6 @@ app.use(function(req, res, next){
     req.user = ('user' in req.session)? req.session.user : null;
     var username = (req.session.username)? req.session.username : '';
     res.setHeader('Set-Cookie', cookie.serialize('username', username, {
-          sameSite: true,
-          secure: true,
           //httpOnly: false,
           path : '/', 
           maxAge: 60 * 60 * 24 * 7 // 1 week in number of seconds
@@ -95,7 +93,6 @@ var isAuthenticated = function(req, res, next) {
 };
 
 // curl -H "Content-Type: application/json" -X POST -d '{"username":"alice","password":"alice"}' -c cookie.txt localhost:3000/signup/
-// curl -H "Content-Type: application/json" -X POST -d '{"username":"bob","password":"alice"}' -c cookie.txt localhost:3000/signup/
 app.post('/signup/', function (req, res, next) {
     var username = req.body.username;
     var password = req.body.password;
@@ -103,7 +100,6 @@ app.post('/signup/', function (req, res, next) {
     MongoClient.connect(uri, function(err, db) {    
         if (err) return res.status(500).end(err);
         var dbo = db.db(dbName);
-
         dbo.collection("users").findOne({_id: username}, function(err, user) {
             if (err) return res.status(500).end(err);
             if (user) return res.status(409).end("Username " + username + " already exists");
@@ -120,7 +116,6 @@ app.post('/signup/', function (req, res, next) {
 });
 
 // curl -H "Content-Type: application/json" -X POST -d '{"username":"alice","password":"alice"}' -c cookie.txt localhost:3000/signin/
-// curl -H "Content-Type: application/json" -X POST -d '{"username":"bob","password":"alice"}' -c cookie.txt localhost:3000/signin/
 app.post('/signin/', function (req, res, next) {
     // TODO: sanitize
     var username = req.body.username;
@@ -131,16 +126,15 @@ app.post('/signin/', function (req, res, next) {
         // retrieve user from the database
         dbo.collection("users").findOne({_id: username}, function(err, user) {
             if (err) return res.status(500).end(err);
-            if (!user) return res.status(401).end("User does not exist\n");
+            if (!user) return res.status(401).end("Access denied, incorrect credentials\n");
             if (user.hash !== generateHash(password, user.salt)) return res.status(401).end("Access denied, incorrect credentials\n"); 
             req.session.username = username;
             // initialize cookie
             res.setHeader('Set-Cookie', cookie.serialize('username', username, {
-                sameSite: true,
-                secure: true,
                 path : '/', 
                 maxAge: 60 * 60 * 24 * 7
             }));
+            db.close();
             return res.json("User " + username + " signed in");
         });
     });
@@ -176,12 +170,14 @@ app.post('/api/games/', isAuthenticated, function (req, res, next) {
 });
 
 // curl -b cookie.txt localhost:3000/api/games/
-/* List all games in lobby */
 app.get('/api/games/', isAuthenticated, function (req, res, next) { 
 
     MongoClient.connect(uri, function(err, db) {  
         if (err) return res.status(500).end(err);
         var dbo = db.db(dbName);
+
+        //dbo.collection("games").drop();
+        //dbo.collection("game_joined").drop();
 
         dbo.collection("games").find({inLobby:true}).toArray(function(err, games) {
             if (err) return res.status(500).end(" Server side error");
@@ -190,15 +186,10 @@ app.get('/api/games/', isAuthenticated, function (req, res, next) {
     });
 });
 
-// curl -b cookie.txt -H "Content-Type: application/json" -X POST -d '{"peerId": 123}' localhost:3000/api/games/5aae9368eccb1357c708bbd0/joined/
-// curl -b cookie.txt -H "Content-Type: application/json" -X POST -d '{"peerId": 1234}' localhost:3000/api/games/5aae9368eccb1357c708bbd0/joined/
-/* 
-Join a game lobby, if game exists and is not full 
-GAMES: {_id,title, host, inLobby, numPlayers, maxPlayers}
-GAMESJOINED: {user, gameId, points, wins, teamNum}
-*/
+// curl -b cookie.txt -H "Content-Type: application/json" -X POST -d '{"username":"alice", "peerId": 123}' localhost:3000/api/games/5aad97f9f4e28b075083ef9c/joined/
 app.post('/api/games/:id/joined/', isAuthenticated, function (req, res, next) {
     // TODO: sanitize
+    var user = req.session.username;
     var gameId = req.params.id;
     var userJoined = req.session.username;
 
@@ -296,24 +287,15 @@ app.get('/api/games/:id/joined/', isAuthenticated, function (req, res, next) {
     });
 });
 
-var ImageData = function(image){   
-    this._id = image._idl
-    this.title = image.title;    
-    this.picture = image.pic;    
-};
 
 app.post('/api/images/', isAuthenticated, upload.single('file'), function (req, res, next) {
-    var host = req.session.username;
-    var title = req.body.title;
-    var pic = req.file;
-
     MongoClient.connect(uri, function(err, db) {  
         if (err) return res.status(500).end(err);
         var dbo = db.db(dbName);
 
-        dbo.collection("game_joined").insert({host:host, title:title, picture:picture}, function (err, image) {       
+        dbo.collection("game_joined").insert(new ImageData(req), function (err, image) {       
             if (err) return res.status(500).end(" Server side error");
-            return res.json( new ImageData(image));
+            return res.json(new Image(image));
         });
 
     });
@@ -333,10 +315,11 @@ app.get('/api/games/:id', isAuthenticated, function (req, res, next) {
 // JOINED clients in 
 /*
 app.get('/api/games/:id/joined/', isAuthenticated, function (req, res, next) {
-
+    
     MongoClient.connect(uri, function(err, db) {  
         if (err) return res.status(500).end(err);
         var dbo = db.db(dbName);
+
     });
 });
 */
