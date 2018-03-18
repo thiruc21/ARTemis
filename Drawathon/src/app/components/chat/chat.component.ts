@@ -24,7 +24,11 @@ export class ChatComponent implements OnInit {
     this.textelem.disabled = this.disabled;
     this.messages = [];
     this.myPeerId = "";
-    this.peer = new Peer({key: 'lwjd5qra8257b9'}); //Register our own...!!!
+    this.peer = new Peer({host : "lightpeerjs.herokuapp.com",
+                          secure : true,
+                          path : "/peerjs",
+                          port : 443,
+                          debug: true});     
     this.peer.on('open', function(id){
       console.log(id);
     });
