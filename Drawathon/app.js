@@ -5,6 +5,7 @@ const bodyParser = require('body-parser');
 const cookie = require('cookie');
 const session = require('express-session');
 const MongoClient = require('mongodb').MongoClient;
+var ObjectID = require("mongodb").ObjectId;
 const crypto = require('crypto');
 const fs = require('fs');
 
@@ -135,6 +136,7 @@ app.post('/signin/', function (req, res, next) {
                 path : '/', 
                 maxAge: 60 * 60 * 24 * 7
             }));
+            db.close();
             return res.json("User " + username + " signed in");
         });
     });
@@ -186,7 +188,7 @@ app.get('/api/games/', isAuthenticated, function (req, res, next) {
     });
 });
 
-// curl -b cookie.txt -H "Content-Type: application/json" -X POST -d '{"username":"alice", peerId: 123}' localhost:3000/api/games/5aad60fd34ae2b5edf53f24c/joined/
+// curl -b cookie.txt -H "Content-Type: application/json" -X POST -d '{"username":"alice", "peerId": 123}' localhost:3000/api/games/5aad97f9f4e28b075083ef9c/joined/
 app.post('/api/games/:id/joined/', isAuthenticated, function (req, res, next) {
     // TODO: sanitize
     var user = req.session.username;
@@ -197,25 +199,25 @@ app.post('/api/games/:id/joined/', isAuthenticated, function (req, res, next) {
         if (err) return res.status(500).end(err);
         var dbo = db.db(dbName);
 
-        dbo.collection("games").find({"_id": gameId}).toArray(function(err, games) {
+        dbo.collection("games").findOne({'_id': ObjectID(gameId)}, {}, function(err, game) {
             if (err) return res.status(500).end(err);
-            if (!games[0]) return res.status(409).end("game with id " + gameId + " not found");            
-            
-            var game = games[0];
+            if (!game) return res.status(409).end("game with id " + gameId + " not found");
+
             if (game.numPlayers >= game.maxPlayers) return res.status(409).end("game  " + gameId + " is full");
             if (game.host == userJoined) return res.status(409).end("User  " + userJoined + " is already the host");
 
+            
             // CHECK IF GAME HAS TIMED OUT? 
             dbo.collection("game_joined").findOne({user:userJoined}, function(err, existingUser) { 
                 if (err) return res.status(500).end(err);
                 if (existingUser) return res.status(409).end("user" + userJoined + " is already in a game");
 
-                dbo.collection("game_joined").insertOne({user:userJoined, game:gameId, points:0, wins:0}, 
-                    function (err, userEntry) {
+                dbo.collection("game_joined").insertOne({user:userJoined, game:gameId, points:0, wins:0}, function (err, userEntry) {
                         if (err) return res.status(500).end(err);
                         return res.json(userEntry[0]);
                 });
-            });            
+            });
+            
         });
     });
 });
