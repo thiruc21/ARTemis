@@ -36,6 +36,7 @@ export class API implements OnInit{
         return null;
     }
     public signup = function(username, password, callback) {
+        console.log("API sending " + username +" , " + password);
         this.send("POST", "/signup/", {username: username, password: password}, callback);
     }
     public signin = function(username, password, callback) {
