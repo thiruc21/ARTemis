@@ -1,6 +1,10 @@
 <div class="layout">
-  <app-canvas class="gcanvas"></app-canvas>
+  <app-canvas #canvas class="gcanvas"></app-canvas>
   <img class="gimg" src="assets/sample.png" alt="Image not found">
-  <app-chat class="gchat"></app-chat>
+  <div class="gtimer">
+    <p>{{timeText}}</p>
+    <h1>{{timeVal}}</h1>
+  </div>
+  <app-chat #chat class="gchat"></app-chat>
 </div>
 

@@ -5,7 +5,7 @@ const bodyParser = require('body-parser');
 const cookie = require('cookie');
 const session = require('express-session');
 const MongoClient = require('mongodb').MongoClient;
-var ObjectID = require("mongodb").ObjectId;
+const ObjectID = require('mongodb').ObjectID;
 const crypto = require('crypto');
 const fs = require('fs');
 
@@ -83,7 +83,6 @@ app.use(function(req, res, next){
 });
 
 app.use(function (req, res, next){
-    console.log("HTTP request", req.method, req.url, req.body);
     next();
 });
 
@@ -93,6 +92,7 @@ var isAuthenticated = function(req, res, next) {
 };
 
 // curl -H "Content-Type: application/json" -X POST -d '{"username":"alice","password":"alice"}' -c cookie.txt localhost:3000/signup/
+// curl -H "Content-Type: application/json" -X POST -d '{"username":"bob","password":"alice"}' -c cookie.txt localhost:3000/signup/
 app.post('/signup/', function (req, res, next) {
     var username = req.body.username;
     var password = req.body.password;
@@ -116,6 +116,7 @@ app.post('/signup/', function (req, res, next) {
 });
 
 // curl -H "Content-Type: application/json" -X POST -d '{"username":"alice","password":"alice"}' -c cookie.txt localhost:3000/signin/
+// curl -H "Content-Type: application/json" -X POST -d '{"username":"bob","password":"alice"}' -c cookie.txt localhost:3000/signin/
 app.post('/signin/', function (req, res, next) {
     // TODO: sanitize
     var username = req.body.username;
@@ -126,7 +127,7 @@ app.post('/signin/', function (req, res, next) {
         // retrieve user from the database
         dbo.collection("users").findOne({_id: username}, function(err, user) {
             if (err) return res.status(500).end(err);
-            if (!user) return res.status(401).end("Access denied, incorrect credentials\n");
+            if (!user) return res.status(401).end("User does not exist\n");
             if (user.hash !== generateHash(password, user.salt)) return res.status(401).end("Access denied, incorrect credentials\n"); 
             req.session.username = username;
             // initialize cookie
@@ -136,7 +137,6 @@ app.post('/signin/', function (req, res, next) {
                 path : '/', 
                 maxAge: 60 * 60 * 24 * 7
             }));
-            db.close();
             return res.json("User " + username + " signed in");
         });
     });
@@ -171,15 +171,14 @@ app.post('/api/games/', isAuthenticated, function (req, res, next) {
     });
 });
 
+
 // curl -b cookie.txt localhost:3000/api/games/
+/* List all games in lobby */
 app.get('/api/games/', isAuthenticated, function (req, res, next) { 
 
     MongoClient.connect(uri, function(err, db) {  
         if (err) return res.status(500).end(err);
         var dbo = db.db(dbName);
-
-        //dbo.collection("games").drop();
-        //dbo.collection("game_joined").drop();
 
         dbo.collection("games").find({inLobby:true}).toArray(function(err, games) {
             if (err) return res.status(500).end(" Server side error");
@@ -188,51 +187,118 @@ app.get('/api/games/', isAuthenticated, function (req, res, next) {
     });
 });
 
-// curl -b cookie.txt -H "Content-Type: application/json" -X POST -d '{"username":"alice", "peerId": 123}' localhost:3000/api/games/5aad97f9f4e28b075083ef9c/joined/
+// curl -b cookie.txt -H "Content-Type: application/json" -X POST -d '{"peerId": 123}' localhost:3000/api/games/5aae9368eccb1357c708bbd0/joined/
+// curl -b cookie.txt -H "Content-Type: application/json" -X POST -d '{"peerId": 1234}' localhost:3000/api/games/5aae9368eccb1357c708bbd0/joined/
+/* 
+Join a game lobby, if game exists and is not full 
+GAMES: {title, host, inLobby, numPlayers, maxPlayers}
+GAMESJOINED: {user, gameId, points, wins, teamNum}
+*/
 app.post('/api/games/:id/joined/', isAuthenticated, function (req, res, next) {
     // TODO: sanitize
-    var user = req.session.username;
+    //var user = req.session.username;
     var gameId = req.params.id;
-    var userJoined = req.body.username;
+    var userJoined = req.session.username;
 
     MongoClient.connect(uri, function(err, db) {  
         if (err) return res.status(500).end(err);
         var dbo = db.db(dbName);
 
-        dbo.collection("games").findOne({'_id': ObjectID(gameId)}, {}, function(err, game) {
+        dbo.collection("games").findOne({_id: ObjectID(gameId) }, function(err, game) {
             if (err) return res.status(500).end(err);
             if (!game) return res.status(409).end("game with id " + gameId + " not found");
-
             if (game.numPlayers >= game.maxPlayers) return res.status(409).end("game  " + gameId + " is full");
-            if (game.host == userJoined) return res.status(409).end("User  " + userJoined + " is already the host");
+            if (game.host == userJoined) return res.status(409).end("Joining user " + userJoined + " is already the host");
 
-            
+            dbo.collection('games').aggregate([
+                {$lookup:{
+                        from: "game_joined",
+                        localField: '_id',
+                        foreignField: 'gameId',
+                        as: "game_join_info"
+                }}]).toArray(function(err, gamesJoined) {                
+               
+               if (err) return res.status(500).end(" Server side error");   
+               gameJoined = gamesJoined[0];
+               gameEntries = gameJoined.game_join_info;
+
+                var teamNum = 0;          
+                /* 1 game has 1 game instance */      
+                if (gameEntries.length === 1) {
+                    teamNum = team(gameEntries);
+                }                                  
+                players = parseInt(game.numPlayers) + 1;
+                // CHECK if user is in the game
+
+                dbo.collection("games").update({_id: ObjectID(gameId)},{$set: {"numPlayers": players} }, function(err, wrRes){
+                        if (err) return res.status(500).end(err);                        
+                        
+                    dbo.collection("game_joined").insertOne(
+                        {user:userJoined, gameId:gameId, points:0, wins:0, teamNum:teamNum}, function (err, userEntry) {
+                            if (err) return res.status(500).end(err);
+                            return res.json(userEntry[0]);
+                    });
+                });
+            });            
+            /*
             // CHECK IF GAME HAS TIMED OUT? 
-            dbo.collection("game_joined").findOne({user:userJoined}, function(err, existingUser) { 
+            dbo.collection("game_joined").find({user:userJoined}).toArray(function(err, existingUser) { 
                 if (err) return res.status(500).end(err);
                 if (existingUser) return res.status(409).end("user" + userJoined + " is already in a game");
-
-                dbo.collection("game_joined").insertOne({user:userJoined, game:gameId, points:0, wins:0}, function (err, userEntry) {
-                        if (err) return res.status(500).end(err);
-                        return res.json(userEntry[0]);
-                });
+                
             });
-            
+            */
         });
     });
 });
 
+function team(userEnt) {
+    var team1 = 0;
+    var team2 = 0;    
+    for (i = 0; i < userEnt.length; i++) { 
+        if ((userEnt[i]).teamNum === team1) {
+            team1++;
+        } else {
+            team2++;
+        }
+    }
+    if (team2 <= team1) return 1;
+    return 0;
+}
 
+// curl -b cookie.txt localhost:3000/api/games/as/joined
+app.get('/api/games/:id/joined/', isAuthenticated, function (req, res, next) { 
+    var host = req.session.username;
 
-
-app.post('/api/images/', isAuthenticated, upload.single('file'), function (req, res, next) {
     MongoClient.connect(uri, function(err, db) {  
         if (err) return res.status(500).end(err);
         var dbo = db.db(dbName);
 
-        dbo.collection("game_joined").insert(new ImageData(req), function (err, image) {       
+        dbo.collection("game_joined").find({user:host, inLobby:true}).toArray(function(err, games) {
+            if (err) return res.status(500).end(err);
+            return res.json(games);
+        });
+    });
+});
+
+var ImageData = function(image){   
+    this._id = image._idl
+    this.title = image.title;    
+    this.picture = image.pic;    
+};
+
+app.post('/api/images/', isAuthenticated, upload.single('file'), function (req, res, next) {
+    var host = req.session.username;
+    var title = req.body.title;
+    var pic = req.file;
+
+    MongoClient.connect(uri, function(err, db) {  
+        if (err) return res.status(500).end(err);
+        var dbo = db.db(dbName);
+
+        dbo.collection("game_joined").insert({host:host, title:title, picture:picture}, function (err, image) {       
             if (err) return res.status(500).end(" Server side error");
-            return res.json(new Image(image));
+            return res.json( new ImageData(image));
         });
 
     });
@@ -256,6 +322,7 @@ app.get('/api/games/:id/joined/', isAuthenticated, function (req, res, next) {
 
     });
 });
+
 
 // KICK player themself
 app.patch('/api/games/:id/joined/', isAuthenticated, function (req, res, next) {
@@ -283,7 +350,13 @@ http.createServer(app).listen(process.env.PORT || PORT, function (err) {
     else console.log("HTTP server on http://localhost:%s", PORT);
 });       
 
-//game_instance = {ownerid, password, teamIds, }
-//teamIds = {teamId, Userids=[]}
-//userIds = {userid, hash, imagIds=[]}
-//imageIds = 
+/*
+MongoClient.connect(uri, function(err, db) {  
+    if (err) return res.status(500).end(err);
+    var dbo = db.db(dbName);
+
+    dbo.collection("users").drop();
+    dbo.collection("games").drop();
+    dbo.collection("game_joined").drop();
+});    
+*/
