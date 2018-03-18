@@ -14,8 +14,11 @@ export class ChatComponent implements OnInit {
   @ViewChild('peer') public peerId:ElementRef;
   ngOnInit() {
     this.messages = [];
-    this.myPeerId = "";
-    this.peer = new Peer(); //Register our own...!!!
+    this.myPeerId = ""; 
+    //host : 'https://lightpeerjs.herokuapp.com'
+    this.peer = new Peer({key : "hw30ok9q9gsexw29",
+                          host : "https://lightpeerjsherokuapp.com",
+                          path : "/peerjs"}); 
     this.peer.on('open', function(id){
       console.log(id);
     });
