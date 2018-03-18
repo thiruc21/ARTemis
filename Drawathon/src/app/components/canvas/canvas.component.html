@@ -1,5 +1,5 @@
 <div class="layout">
-  <canvas #canvas (mousemove)="mouseMove($event)" (mousedown)="mouseDown()" (mouseup)="mouseUp()" [ngStyle]="{ 'background-color': bg }" class="canvas" width="600" height="600"></canvas>
+  <canvas #canvas (mousemove)="mouseMove($event)" (mousedown)="mouseDown($event)" (mouseup)="mouseUp()" (mouseleave)="mouseUp()" [ngStyle]="{ 'background-color': bg }" class="canvas" width="600" height="600"></canvas>
   <div class="colors">
     <div class="color" id="large" [ngStyle]="{ 'background-color': color }" (click)="clickSize(50)"></div>
     <div class="color" id="medium" [ngStyle]="{ 'background-color': color }" (click)="clickSize(25)"></div>

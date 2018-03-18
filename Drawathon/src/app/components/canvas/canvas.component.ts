@@ -10,12 +10,13 @@ export class CanvasComponent implements OnInit {
   pts:any;
   bound:any;
   pressed:boolean;
+  size:number;
   public bg:string = "white";
   @ViewChild('canvas') public canvas: ElementRef;
   constructor() { }
   private ctx: CanvasRenderingContext2D;
-
-
+  public myPeerId:string;
+  public peerId:string;
   ngOnInit() {
     this.color  = "black";
     this.pts = {x: 0, y:0, px:0, py:0}
@@ -29,8 +30,13 @@ export class CanvasComponent implements OnInit {
     this.ctx.lineWidth = 10;
     this.bound = canvasEvent.getBoundingClientRect();
   }
-  mouseDown = function() {
+  mouseDown(event){
     this.pressed = true;
+    this.pts.x = event.clientX - this.bound.left;
+    this.pts.y = event.clientY - this.bound.top;
+    if (this.bg == "white" && this.pressed && event.clientX < this.bound.right && event.clientX > this.bound.left && event.clientY < this.bound.bottom && event.clientY > this.bound.top) {
+      this.drawPoint();
+  }
   };
   mouseUp = function() {
     this.pressed = false;
@@ -46,7 +52,16 @@ export class CanvasComponent implements OnInit {
         this.draw();
     }
   }
-  
+  drawPoint() {
+    this.ctx.beginPath();
+    this.ctx.fillStyle = this.color;
+    // Find radius of a circle with diameter = this.ctx.lineWidth then fill
+    this.ctx.arc(this.pts.x, this.pts.y, this.ctx.lineWidth/2, 0, 2*Math.PI, true);
+    this.ctx.closePath()
+    this.ctx.fill();
+
+  }
+
   draw() {
     this.ctx.beginPath();
     this.ctx.moveTo(this.pts.px, this.pts.py);
@@ -63,6 +78,7 @@ export class CanvasComponent implements OnInit {
 
   clickSize(size){
     this.ctx.lineWidth = size;
+    this.size = size;
   }
 
 }

@@ -7,7 +7,7 @@ import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
 })
 export class ChatComponent implements OnInit {
   messages:string[];
-  myPeerId:string;
+  public myPeerId:string;
   peer;
   public disabled:boolean = false;
   btnDisplay:string;
@@ -39,7 +39,10 @@ export class ChatComponent implements OnInit {
     // Receive the data
     this.peer.on('connection', function(connection) {
       connection.on('data', function(data){
-        messages.push(data);
+        // If data received is for chat, push the message
+        if (data[0] == "chat"){
+          messages.push(data[1]);
+        }
       });
     });
     this.timeOut();
@@ -54,7 +57,7 @@ export class ChatComponent implements OnInit {
     // Connect to other peer and send message
     var otherPeer = this.peer.connect(this.peerId.nativeElement.value);
     otherPeer.on('open', function(){
-      otherPeer.send(me + ": " + text);
+      otherPeer.send(["chat", me + ": " + text]);
     });
   }
 
