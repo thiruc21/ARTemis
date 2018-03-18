@@ -4,3 +4,4 @@ interface NodeModule {
   id: string;
 }
 declare var Peer: any;
+declare var API: any;

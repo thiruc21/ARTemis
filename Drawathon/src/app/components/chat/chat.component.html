@@ -4,7 +4,7 @@
         <div class="chatMessage" *ngFor="let message of messages">{{message}}</div>
     </div>
     <textarea #textarea class="chatText" rows="1" ngModel="message"></textarea>
-    <div class="chatButton" (click)="submitMessage()"><img src="assets/send.png" alt=""></div>
+    <div class="chatButton" [ngStyle]="{ 'display': btnDisplay }" (click)="submitMessage()"><img src="assets/send.png" alt=""></div>
 </div>
 <div>
     <h1>My id: {{myPeerId}}</h1>

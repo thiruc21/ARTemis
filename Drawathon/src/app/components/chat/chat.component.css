@@ -36,6 +36,9 @@
     font-size: 15px;
     background: white;
 }
+.chatText:disabled {
+    background: grey;
+}
 .chatMessage {
     display: flex;
     margin: 5px 5px 5px 5px;
