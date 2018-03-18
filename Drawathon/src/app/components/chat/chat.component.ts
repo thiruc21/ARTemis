@@ -15,7 +15,7 @@ export class ChatComponent implements OnInit {
   ngOnInit() {
     this.messages = [];
     this.myPeerId = "";
-    this.peer = new Peer({key: 'lwjd5qra8257b9'}); //Register our own...!!!
+    this.peer = new Peer(); //Register our own...!!!
     this.peer.on('open', function(id){
       console.log(id);
     });
