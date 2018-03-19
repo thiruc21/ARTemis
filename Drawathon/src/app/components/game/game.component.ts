@@ -27,7 +27,7 @@ export class GameComponent implements OnInit {
   constructor() { }
   ngOnInit() {
     this.lobbyD = "grid";
-    this.gameD = "none";
+    this.gameD = "grid";
     this.api = new ApiModule();
     var lob = this.api.getLobby();
     var gameId = lob._id;
