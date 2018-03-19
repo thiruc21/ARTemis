@@ -227,6 +227,26 @@ app.post('/api/games/:id/joined/', isAuthenticated, function (req, res, next) {
     });
 });
 
+
+// curl -b cookie.txt -H "Content-Type: application/json" -X DELETE localhost:3000/api/games/5aad97f9f4e28b075083ef9c/
+app.delete('/api/games/:id/', isAuthenticated, function (req, res, next) {
+    var host = req.session.username;
+    var gameId = req.params.id;
+
+    findGames(res, ObjectID(gameId), function(err, game, dbo, db) {
+        if (err) return res.status(500).end(" Server side error");
+        if (!game) return res.status(409).end("game with id " + gameId + " not found"); 
+        if (game.host !== host) 
+            return res.status(409).end("User " + host + " is not the host");
+
+        dbo.collection("games").deleteOne({gameId: ObjectID(gameId), host: host}, function(err, wrRes) {
+            if (err) return res.status(500).end(err);
+            if (wrRes.deletedCount === 0) return res.status(409).end("User " + host + " was not deleted");
+            return res.json("Game " + game.title + " has been removed");
+        });
+    });    
+});
+
 // curl -b cookie.txt -H -X POST localhost:3000/api/games/5aae9368eccb1357c708bbd0/joined/
 // KICK player themself
 app.delete('/api/games/:id/joined/', isAuthenticated, function (req, res, next) {
