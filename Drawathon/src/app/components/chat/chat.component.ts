@@ -21,7 +21,7 @@ export class ChatComponent implements OnInit {
   ngOnInit() {
     this.api = new ApiModule();
     this.textelem = this.textarea.nativeElement;
-    this.textelem.disabled = this.disabled;
+    //this.textelem.disabled = this.disabled;
     if (this.textelem.disabled) this.btnDisplay = "none";
     else this.btnDisplay = "flex";
     this.messages = [];
@@ -37,17 +37,23 @@ export class ChatComponent implements OnInit {
     setTimeout(() => {
       this.myPeerId = this.peer.id;
     },3000);
-    var messages:string[] = this.messages;
+    //var messages:string[] = this.messages;
+    var me:any = this;
+    var func:(me:this, data:string) => void = this.addMessage;
     // Receive the data
     this.peer.on('connection', function(connection) {
       connection.on('data', function(data){
-          messages.push(data);
+          //messages.push(data);
+          func(me, data);
       });
     });
-    this.timeOut();
+    //this.timeOut();
     this.keepAlive();
   }
   // Push the message, connect to the peer, and send message to the peer
+  addMessage(me, data) {
+    me.messages.push(data);
+  }
   submitMessage() {
     var text = this.textarea.nativeElement.value;
     var me = this.api.getCurrentUser();
@@ -82,8 +88,8 @@ export class ChatComponent implements OnInit {
     this.textelem.disabled = this.disabled;
     if (this.textelem.disabled) this.btnDisplay = "none";
     else this.btnDisplay = "flex";
-    var message = this.messages.pop();
-    this.messages.push(message);
+    //var message = this.messages.pop();
+    //this.messages.push(message);
   }
   
 }

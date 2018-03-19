@@ -15,9 +15,11 @@ export class MainComponent implements OnInit {
   public user:string;
   constructor(public router: Router) { }
   private api:ApiModule
+  check:boolean;
   @ViewChild('title') public label:ElementRef;
 
   ngOnInit() {
+    this.check = true;
     //Load games
     this.games = [];
     this.gamesData = [];
@@ -53,19 +55,21 @@ export class MainComponent implements OnInit {
       if (err) console.log(err);
       else {
         api.pushLobby(res);
+        this.check = false;
         rtr.navigate(['/game']);
       }
     })
   }
   clickGame(i){
     this.api.pushLobby(this.gamesData[i]);
+    this.check = false;
     this.router.navigate(['/game']);
   }
   timeOut(){
     // Update messages every second
     setTimeout(() => {
       this.update();
-      this.timeOut();
+      if (this.check) this.timeOut();
     }, 1000);
   }
 
