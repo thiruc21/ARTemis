@@ -11,28 +11,40 @@ import { ApiModule } from '../../api/api.module';
 
 })
 export class GameComponent implements OnInit {
+  // Canvas and chat references.
   @ViewChild('canvas') public canvas:CanvasComponent;
   @ViewChild('chat') public chat:ChatComponent;
+
+  // Values for game start timer.
   timeText:string;
   timeVal:number;
+  // Controls display of lobby and game.
   lobbyD:string;
   gameD:string;
+  // Variables to hold all related info of the game.
+  gameId:string;
   team1:string[];
   team2:string[];
-  api:ApiModule;
   host:string;
+  // Chat and canvas peering variables.
   myChatId:string;
   myCanvasId:string;
   chatPeer:any;
   canvasPeer:any;
+  // Api module.
+  api:ApiModule;
 
   constructor() { }
+
   ngOnInit() {
-    this.lobbyD = "none";
-    this.gameD = "grid";
+    // Set defaults.
+    this.lobbyD = "grid";
+    this.gameD = "none";
     this.api = new ApiModule();
-    //var lob = this.api.getLobby();
+    var lob = this.api.getLobby();
+    this.gameId = lob._id;
     //var gameId = lob._id;
+
     //this.canvasPeer= new Peer({host : "lightpeerjs.herokuapp.com",
     //secure : true,
     //path : "/peerjs",
@@ -62,9 +74,8 @@ export class GameComponent implements OnInit {
     }
     this.timer();
   }
-  ngAfterViewInit() {
-  }
-  timer(){
+
+  timer() {
     setTimeout(() => {
       if (this.gameD == "grid"){
         if (this.timeVal == 0){

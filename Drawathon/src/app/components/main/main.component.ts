@@ -12,75 +12,85 @@ import { Router } from '@angular/router';
 export class MainComponent implements OnInit {
   games:string[];
   gamesData:any[];
-  public user:string;
+  user:string;
+  check:boolean;
   constructor(public router: Router) { }
   private api:ApiModule
-  check:boolean;
+
   @ViewChild('title') public label:ElementRef;
 
   ngOnInit() {
-    this.check = true;
-    //Load games
+    //Set Default values.
     this.games = [];
     this.gamesData = [];
     this.api = new ApiModule();
+    // Get current user.
     this.user = this.api.getCurrentUser();
-    if (this.user == "" || this.user == null) {
-      this.games = [];
-      this.gamesData = [];
+
+    if (this.user == "" || this.user == null) { // No users.
+      this.check = false; // No need to check.
     }
     else {
+      // Temp references to allow usage inside the callback.
       var games:string[] = this.games;
       var gamesData:any[] = this.gamesData;
+      var check:boolean = this.check;
       this.api.getGames(function(err, res){
         if (err) console.log(err);
-        else {
-          if (res.length > 0) {
-              res.forEach(function(element) {
-                games.push(element.title + " by " + element.host);
-                gamesData.push(element);
-              });
+        else if (res) {
+          check = true; // Short poll for updates.
+          if (res.length > 0) { // If there is a game availabe.
+            res.forEach(function(element) {
+              games.push(element.title + " by " + element.host);
+              gamesData.push(element);
+            });
           }
         }
+        else check = true;
       });
-      this.timeOut();
+      this.timeOut(); // Short poll timer loop.
     }
   }
-
-  createGame(){
+  // Make a new game.
+  createGame() { // Temp references.
     var label = this.label.nativeElement.value;
     var api = this.api;
     var rtr = this.router;
-    this.api.addGame(label, "132", "123", function(err, res){
+    var check:boolean = this.check;
+    // Add game.
+    this.api.addGame(label, "132", "123", function(err, res) {
       if (err) console.log(err);
       else {
-        api.pushLobby(res);
-        this.check = false;
+        api.pushLobby(res); // Store lobby that user enters into local Storage.
+        check = false; // No need to check for updates when the user is not on the page.
         rtr.navigate(['/game']);
       }
     })
   }
-  clickGame(i){
+  clickGame(i) { //User is joing a lobby at index i.
     this.api.pushLobby(this.gamesData[i]);
-    this.check = false;
-    this.router.navigate(['/game']);
-  }
-  timeOut(){
-    // Update messages every second
-    setTimeout(() => {
-      this.update();
-      if (this.check) this.timeOut();
-    }, 1000);
+    this.check = false; // No need to check for updates.
+    this.router.navigate(['/game']); // Navigate.
   }
 
-  update(){
+  timeOut() {
+    // Check for new lobbys every three seconds.
+    setTimeout(() => {
+      this.update();
+      if (this.check) this.timeOut(); // Only continue if check is true.
+    }, 3000);
+  }
+
+  update() {
+    // temp values.
     var games:string[] = this.games;
     var gamesData:any[] = this.gamesData;
     this.api.getGames(function(err, res) {
       games = [];
-      if (res.length > 0) {
+      gamesData = [];
+      if (res && res.length > 0) {
         res.forEach(function(element) {
-        games.push(element.title + " by " + element.host)
+        games.push(element.title + " by " + element.host);
         gamesData.push(element);
         });
       }

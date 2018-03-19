@@ -8,6 +8,7 @@ import { Router } from '@angular/router';
   templateUrl: './pannel.component.html',
   styleUrls: ['./pannel.component.css']
 })
+
 export class PannelComponent implements OnInit {
   user:string;
   private apiModule:ApiModule;
@@ -20,7 +21,6 @@ export class PannelComponent implements OnInit {
     var aout:HTMLLinkElement = this.linkout.nativeElement;
     this.apiModule = new ApiModule();
     this.user = this.apiModule.getCurrentUser();
-    console.log(this.user);
     if (this.user == "" || this.user == null) {
       ain.style.display = "flex";
       ain.innerHTML = `Sign In`;
@@ -33,7 +33,7 @@ export class PannelComponent implements OnInit {
       aout.style.display = "flex";
       aout.innerHTML=`Sign Out`;
     }
-  }  
+  }
   signOut() {
     var module = this.apiModule;
     var user = this.user;
@@ -46,5 +46,4 @@ export class PannelComponent implements OnInit {
       }
     });
   }
-
 }
