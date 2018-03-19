@@ -239,7 +239,7 @@ app.delete('/api/games/:id/', isAuthenticated, function (req, res, next) {
         if (game.host !== host) 
             return res.status(409).end("User " + host + " is not the host");
 
-        dbo.collection("games").deleteOne({gameId: ObjectID(gameId), host: host}, function(err, wrRes) {
+        dbo.collection("games").deleteOne({_id: ObjectID(gameId), host: host}, function(err, wrRes) {
             if (err) return res.status(500).end(err);
             if (wrRes.deletedCount === 0) return res.status(409).end("User " + host + " was not deleted");
             return res.json("Game " + game.title + " has been removed");
