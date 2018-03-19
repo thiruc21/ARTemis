@@ -52,6 +52,9 @@ const uri = "mongodb://admin:hashedpass@art-shard-00-00-xs19d.mongodb.net:" +
      ":27017/test?ssl=true&replicaSet=Art-shard-0&authSource=admin";
 const dbName = 'test';
 
+var db = null;
+var dbo;
+
 app.use(session({
     //cookie: {//httpOnly: true,         secure: true, sameSite: true},
     secret: 'please change this secret',
@@ -87,7 +90,7 @@ app.use(function (req, res, next){
 });
 
 var isAuthenticated = function(req, res, next) {
-    if (!req.session.username) return res.status(401).end("access denied");
+    //if (!req.session.username) return res.status(401).end("access denied");
     next();
 };
 
@@ -98,6 +101,7 @@ app.post('/signup/', function (req, res, next) {
     
     connect(res, function(err, dbo, db) {
         if (err) return res.status(500).end(err);
+        if (!dbo) return res.status(500).end("dbo err");
         dbo.collection("users").findOne({_id: username}, function(err, user) {
             if (err) return res.status(500).end(err);
             if (user) return res.status(409).end("Username " + username + " already exists");
@@ -131,7 +135,6 @@ app.post('/signin/', function (req, res, next) {
                 path : '/', 
                 maxAge: 60 * 60 * 24 * 7
             }));
-            db.close();
             return res.json("User " + username + " signed in");
         });
     });
@@ -171,9 +174,9 @@ app.post('/api/games/', isAuthenticated, function (req, res, next) {
 // curl -b cookie.txt localhost:3000/api/games/
 app.get('/api/games/', isAuthenticated, function (req, res, next) { 
     connect(res, function(err, dbo, db) {
-        if (err) return res.status(500).end(err);
+        if (err) return res.status(500).end(err);        
 
-        dbo.collection("games").find().toArray(function(err, games) {
+        dbo.collection("games").find({}).toArray(function(err, games) {
             if (err) return res.status(500).end(" Server side error");
             return res.json(games);
         });
@@ -296,15 +299,23 @@ app.post('/api/images/', isAuthenticated, upload.single('file'), function (req, 
     connect(res, function(err, dbo, db) {
         if (err) return res.status(500).end(err);
 
-        dbo.collection("game_joined").insert(new ImageData(req), function (err, image) {       
+        dbo.collection().insert(new ImageData(req), function (err, image) {       
             if (err) return res.status(500).end(" Server side error");
             return res.json(new Image(image));
         });
     });
 });
 
-// Start game when number of players is greater than 1, and can only be started by host
-// LOOK INTO long polling, and start a timer, where wud timer go?
+app.get('/api/images/:id/image/', isAuthenticated, function (req, res, next) {
+    var imageId = req.params.id; 
+    images.findOne({_id: imageId}, function(err, image){
+        if (err) return res.status(500).end(" Server side error");
+        if (image === null) return res.status(404).end(" image id #" + imageId + " does not exists");
+        var profile = image.picture;
+        res.setHeader('Content-Type', profile.mimetype);
+        res.sendFile(profile.path);        
+    });
+});
 
 function team(userEnt) {
     var team0 = 0;
@@ -323,29 +334,38 @@ function team(userEnt) {
 function findGames(res, gameId, callback) {
     connect(res, function(err, dbo, db) {
         if (err) callback(err, null, dbo, db);
-        dbo.collection("games").findOne({_id: gameId}, function(err, game) {
-            callback(err, game, dbo, db);
-        });            
+        else {
+            dbo.collection("games").findOne({_id: gameId}, function(err, game) {
+                callback(err, game, dbo, db);
+            });  
+        }          
     });
 }
 
 function connect(res, callback) {
-    MongoClient.connect(uri, function(err, db) {  
-        if (err) callback(err, dbo, null);
-        var dbo = db.db(dbName);        
-        callback(err, dbo, db);
-    });
+    callback(null, dbo, db);
 }
 
 http.createServer(app).listen(process.env.PORT || PORT, function (err) {
     if (err) console.log(err);
-    else console.log("HTTP server on http://localhost:%s", PORT);
+    else {
+        MongoClient.connect(uri, function(err, mongodb) {  
+            if (err) throw err;
+            else {
+                db = mongodb;
+                dbo = db.db(dbName);
+            }        
+        });
+        console.log("HTTP server on http://localhost:%s", PORT);
+    }
+        
+        
 });       
 
 /*
 MongoClient.connect(uri, function(err, db) {  
     if (err) return res.status(500).end(err);
-    var dbo = db.db(dbName);
+    
     console.log("REMOVING!");
     //dbo.collection("users").drop();
     dbo.collection("games").drop();
