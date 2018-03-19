@@ -346,22 +346,24 @@ function connect(res, callback) {
     callback(null, dbo, db);
 }
 
+async function con() {
+    MongoClient.connect(uri, function(err, mongodb) {  
+        if (err) throw err;
+        else {
+            db = mongodb;
+            dbo = db.db(dbName);
+        }        
+    });
+}
+con();
 http.createServer(app).listen(process.env.PORT || PORT, function (err) {
     if (err) console.log(err);
     else {
-        MongoClient.connect(uri, function(err, mongodb) {  
-            if (err) throw err;
-            else {
-                db = mongodb;
-                dbo = db.db(dbName);
-            }        
-        });
         console.log("HTTP server on http://localhost:%s", PORT);
     }
         
         
 });       
-
 /*
 MongoClient.connect(uri, function(err, db) {  
     if (err) return res.status(500).end(err);
