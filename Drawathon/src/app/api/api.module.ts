@@ -74,9 +74,17 @@ export class ApiModule implements OnInit {
     this.send("GET", "/api/games/",null, callback);
   }
   public addGame = function(title, pId1, pId2, callback) {
-    this.send("POST", "/api/games", {title: title, team1Id: pId1, team2Id: pId2}, callback);
+    this.send("POST", "/api/games/", {title: title, team1Id: pId1, team2Id: pId2}, callback);
   }
-
+  public joinGame = function(gameId, canvasId, chatId, callback) {
+      this.send("POST", "/api/games/" + gameId + "/joined/", {canvasId:canvasId, chatId:chatId}, callback);
+  }
+  public leaveGame = function(gameId, callback) {
+      this.send("DELETE", "/api/games/" + gameId + "/joined/", callback);
+  }
+  public getPlayers = function(gameId, callback) {
+      this.send("GET", "/api/games/" + gameId + "/joined/", callback);
+  }
 
   //Local Storage
   public pushLobby = function(lobby) {
