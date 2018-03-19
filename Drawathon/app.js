@@ -90,7 +90,7 @@ app.use(function (req, res, next){
 });
 
 var isAuthenticated = function(req, res, next) {
-    //if (!req.session.username) return res.status(401).end("access denied");
+    if (!req.session.username) return res.status(401).end("access denied");
     next();
 };
 
@@ -204,14 +204,15 @@ app.post('/api/games/:id/joined/', isAuthenticated, function (req, res, next) {
                 localField: '_id',
                 foreignField: 'gameId',
                 as: "game_join_info"
-             }}]).toArray(function(err, gamesJoined) {    
+            }}]).toArray(function(err, gamesJoined) {    
             if (err) return res.status(500).end(" Server side error");            
             
             var gameJoined = gamesJoined[0];
             var usersJoined = gameJoined.game_join_info;
             var teamNum = 0;
             
-            if (usersJoined.length > 0) teamNum = team(usersJoined);       
+            if (usersJoined.length > 0) teamNum = team(usersJoined);    
+            console.log(teamNum);   
             var players = parseInt(game.numPlayers) + 1;
 
             // CHECK if user is in the game
@@ -322,9 +323,9 @@ function team(userEnt) {
     var team2 = 0;    
     for (i = 0; i < userEnt.length; i++) { 
         if ((userEnt[i]).teamNum === team1) {
-            team0++;
-        } else {
             team1++;
+        } else {
+            team0++;
         }
     }
     if (team1 < team0) return 1;
@@ -355,10 +356,11 @@ async function con() {
         }        
     });
 }
-con();
+
 http.createServer(app).listen(process.env.PORT || PORT, function (err) {
     if (err) console.log(err);
     else {
+        con();
         console.log("HTTP server on http://localhost:%s", PORT);
     }
         
