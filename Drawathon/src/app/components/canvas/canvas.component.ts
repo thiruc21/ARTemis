@@ -141,7 +141,7 @@ export class CanvasComponent implements OnInit {
        this.keepAlive();
     }, 25000);
   }
-  pDraw(x,y,px,py,color, size) {
+  pDraw(x,y,px,py, size, color) {
     this.ctx.beginPath();
     this.ctx.moveTo(px, py);
     this.ctx.lineTo(x, y);
