@@ -1,5 +1,7 @@
 import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
 import { ApiModule } from '../../api/api.module';
+import { Router } from '@angular/router';
+
 
 @Component({
   selector: 'app-pannel',
@@ -11,7 +13,7 @@ export class PannelComponent implements OnInit {
   private apiModule:ApiModule;
   @ViewChild('signin') private linkin:ElementRef;
   @ViewChild('signout') private linkout:ElementRef;
-  constructor() { }
+  constructor(public router: Router) { }
 
   ngOnInit() {
     var ain:HTMLLinkElement = this.linkin.nativeElement;
@@ -31,18 +33,16 @@ export class PannelComponent implements OnInit {
       aout.style.display = "flex";
       aout.innerHTML=`Sign Out`;
     }
-    
-
-    
   }  
   signOut() {
-    this.apiModule.signout(function(err){
-      var module = this.apiModule;
-      var user = this.user;
+    var module = this.apiModule;
+    var user = this.user;
+    var rtr = this.router;
+    this.apiModule.signout(function(err, res){
       if (err) console.log(err);
       else {
         user = module.getCurrentUser();
-        console.log(user);
+        rtr.navigate(['/']);
       }
     });
   }
