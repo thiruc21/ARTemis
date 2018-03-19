@@ -1,4 +1,6 @@
-<h1 class="title">Public Games Available</h1>
+<app-pannel></app-pannel>
+<div class="layout">
+  <h1 class="title">Public Games Available</h1>
 <div class="gamesContainer">
   <div *ngFor="let game of games" (click)="clickGame(game)">
     <a routerLink="/lobby">
@@ -9,4 +11,11 @@
    </a>
   </div>
 </div>
+<div class="createGame">
+  <p>Create Game:</p>
+  <input #title placeholder="Title">
+  <button (click)="createGame()">Create New Game</button>
+</div>
+</div>
+
 

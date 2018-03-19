@@ -1,5 +1,6 @@
 import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
 import { ApiModule } from '../../api/api.module';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-signin',
@@ -12,7 +13,7 @@ export class SigninComponent implements OnInit {
   apiModule:ApiModule;
   username:string;
   password:string;
-  constructor() { }
+  constructor(public router: Router) { }
 
   ngOnInit() {
     this.apiModule = new ApiModule();
@@ -24,11 +25,12 @@ export class SigninComponent implements OnInit {
     console.log(e);
     e.preventDefault();
     console.log("Signing in with: " + this.username + " , " + this.password);
-
+    var rtr = this.router;
     this.apiModule.signin(this.username, this.password, function(err, res){
-      if (err) console.log(err);
+      if (err) console.log("access-denied");
       else {
         console.log(res);
+        rtr.navigate(['/']);
       }
     });
   }

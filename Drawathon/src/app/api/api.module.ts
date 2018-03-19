@@ -68,6 +68,16 @@ export class ApiModule implements OnInit {
   public signin = function(username, password, callback) {
     this.send("POST", "/signin/", {username: username, password: password}, callback);
   }
+  public signout = function(callback) {
+    this.send("GET", "/signout/", null, callback);
+  }
+  public getGames = function(callback) {
+    this.send("GET", "/api/games/",null, callback);
+  }
+  public addGame = function(title, callback) {
+    this.send("POST", "/api/games", {title: title}, callback);
+  }
+
   public startGame = function() {
       var canvas = JSON.parse(localStorage.getItem("canvas"));
       if (canvas.end) {
