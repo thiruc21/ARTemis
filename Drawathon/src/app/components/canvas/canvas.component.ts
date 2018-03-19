@@ -6,26 +6,38 @@ import { Component, OnInit, ViewChild, ElementRef, AfterViewInit } from '@angula
   styleUrls: ['./canvas.component.css']
 })
 export class CanvasComponent implements OnInit {
+  // Canvas draw elements.
   color:string;
   pts:any;
   bound:any;
   pressed:boolean;
   size:number;
+
   peerEdit:any[];
+
+  // Variables to be accessed by parent. game.component.
   public bg:string = "white";
   public myPeerId:string;
-  peer;
+  public peer;
+
   @ViewChild('canvas') public canvas: ElementRef;
   @ViewChild('peer') public peerId:ElementRef;
+
   constructor() { }
-  private ctx: CanvasRenderingContext2D;
-  private ptx: CanvasRenderingContext2D;
+
+  private canvasElem: HTMLCanvasElement;
+  private ctx: CanvasRenderingContext2D; // Rendering context.
+
   ngOnInit() {
-    this.peerEdit = []
+    this.peerEdit = [] // set edit to none.
     this.color  = "black";
     this.pts = {x: 0, y:0, px:0, py:0}
     this.pressed = false;
     this.myPeerId = "";
+    this.canvasElem = this.canvas.nativeElement;
+    this.ctx = this.canvasElem.getContext('2d');
+
+    // Connect to peer.
     this.peer = new Peer({host : "lightpeerjs.herokuapp.com",
                           secure : true,
                           path : "/peerjs",
@@ -58,7 +70,6 @@ export class CanvasComponent implements OnInit {
     this.ctx = canvasEvent.getContext('2d');
     this.ctx.lineJoin = "round";
     this.ctx.lineWidth = 10;
-    this.ptx = canvasEvent.getContext('2d');
     this.bound = canvasEvent.getBoundingClientRect();
   }
   mouseDown(event){

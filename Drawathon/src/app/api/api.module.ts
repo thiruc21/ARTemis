@@ -44,7 +44,6 @@ export class ApiModule implements OnInit {
       xhr.onload = function() {
           if (xhr.status !== 200) callback("[" + xhr.status + "]" + xhr.responseText, null);
           else {
-            console.log(xhr.responseText);
             callback(null, JSON.parse(xhr.responseText));
           }
       };
