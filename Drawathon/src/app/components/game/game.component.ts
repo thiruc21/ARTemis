@@ -21,10 +21,7 @@ export class GameComponent implements OnInit {
     this.timer();
   }
   ngAfterViewInit() {
-    this.chat.myPeerId;
-    this.canvas.myPeerId = this.chat.myPeerId;
-    var peerId:HTMLInputElement = this.chat.peerId.nativeElement;
-    this.canvas.peerId = peerId.value;
+
   }
   timer(){
     setTimeout(() => {
