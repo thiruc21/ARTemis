@@ -7,6 +7,8 @@ import { ApiModule } from '../../api/api.module';
   selector: 'app-game',
   templateUrl: './game.component.html',
   styleUrls: ['./game.component.css'],
+  //<app-lobby [ngStyle]="{ 'display':lobbyD }" class="lobby"></app-lobby>
+
 })
 export class GameComponent implements OnInit {
   @ViewChild('canvas') public canvas:CanvasComponent;
@@ -26,31 +28,31 @@ export class GameComponent implements OnInit {
 
   constructor() { }
   ngOnInit() {
-    this.lobbyD = "grid";
-    this.gameD = "none";
+    this.lobbyD = "none";
+    this.gameD = "grid";
     this.api = new ApiModule();
-    var lob = this.api.getLobby();
-    var gameId = lob._id;
-    this.canvasPeer= new Peer({host : "lightpeerjs.herokuapp.com",
-    secure : true,
-    path : "/peerjs",
-    port : 443,
-    debug: true});
+    //var lob = this.api.getLobby();
+    //var gameId = lob._id;
+    //this.canvasPeer= new Peer({host : "lightpeerjs.herokuapp.com",
+    //secure : true,
+    //path : "/peerjs",
+    //port : 443,
+    //debug: true});
 
-    this.chatPeer = new Peer({host : "lightpeerjs.herokuapp.com",
-    secure : true,
-    path : "/peerjs",
-    port : 443,
-    debug: true});
-    setTimeout(() => {
-      this.myCanvasId= this.canvasPeer.id;
-    },3000);
-    setTimeout(() => {
-      this.myChatId= this.chatPeer.id;
-    },3000);
-    this.api.joinGame(gameId, "123", "123", function(){
+    //this.chatPeer = new Peer({host : "lightpeerjs.herokuapp.com",
+    //secure : true,
+    //path : "/peerjs",
+    //port : 443,
+    //debug: true});
+    //setTimeout(() => {
+    //  this.myCanvasId= this.canvasPeer.id;
+    //},3000);
+    //setTimeout(() => {
+    //  this.myChatId= this.chatPeer.id;
+    //},3000);
+    //this.api.joinGame(gameId, "123", "123", function(){
 
-    });
+    //});
 
     if (this.gameD == "grid"){
       this.timeText = "Game Starts in:"
