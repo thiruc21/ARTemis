@@ -1,4 +1,5 @@
 import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
+import { ApiModule } from '../../api/api.module';
 
 @Component({
   selector: 'app-chat',
@@ -12,12 +13,13 @@ export class ChatComponent implements OnInit {
   public disabled:boolean = false;
   btnDisplay:string;
   textelem:HTMLTextAreaElement;
-
+  private api:ApiModule;
   constructor() { }
   @ViewChild('textarea') public textarea:ElementRef;
   @ViewChild('peer') public peerId:ElementRef;
 
   ngOnInit() {
+    this.api = new ApiModule();
     this.textelem = this.textarea.nativeElement;
     this.textelem.disabled = this.disabled;
     if (this.textelem.disabled) this.btnDisplay = "none";
@@ -48,13 +50,13 @@ export class ChatComponent implements OnInit {
   // Push the message, connect to the peer, and send message to the peer
   submitMessage() {
     var text = this.textarea.nativeElement.value;
-    var me = this.myPeerId;
+    var me = this.api.getCurrentUser();
     this.messages.push(me + ": " + text);
     this.textarea.nativeElement.value = "";
     // Connect to other peer and send message
     var otherPeer = this.peer.connect(this.peerId.nativeElement.value);
     otherPeer.on('open', function(){
-      otherPeer.send( me + ": " + text);
+      otherPeer.send(me + ": " + text);
     });
   }
 
