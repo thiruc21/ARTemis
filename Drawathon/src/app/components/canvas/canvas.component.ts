@@ -19,6 +19,7 @@ export class CanvasComponent implements OnInit {
   @ViewChild('peer') public peerId:ElementRef;
   constructor() { }
   private ctx: CanvasRenderingContext2D;
+  private ptx: CanvasRenderingContext2D;
   ngOnInit() {
     this.peerEdit = []
     this.color  = "black";
@@ -57,6 +58,7 @@ export class CanvasComponent implements OnInit {
     this.ctx = canvasEvent.getContext('2d');
     this.ctx.lineJoin = "round";
     this.ctx.lineWidth = 10;
+    this.ptx = canvasEvent.getContext('2d');
     this.bound = canvasEvent.getBoundingClientRect();
   }
   mouseDown(event){
@@ -140,13 +142,13 @@ export class CanvasComponent implements OnInit {
     }, 25000);
   }
   pDraw(x,y,px,py,color, size) {
-    this.ctx.beginPath();
-    this.ctx.moveTo(px, py);
-    this.ctx.lineTo(x, y);
-    this.ctx.strokeStyle = color;
-    this.ctx.lineWidth = size;
-    this.ctx.closePath();
-    this.ctx.stroke();
+    this.ptx.beginPath();
+    this.ptx.moveTo(px, py);
+    this.ptx.lineTo(x, y);
+    this.ptx.strokeStyle = color;
+    this.ptx.lineWidth = size;
+    this.ptx.closePath();
+    this.ptx.stroke();
   }
    // Update 
    update(){
