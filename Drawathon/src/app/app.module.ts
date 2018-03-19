@@ -12,6 +12,7 @@ import { ChatComponent } from './components/chat/chat.component';
 import { LobbyComponent } from './components/lobby/lobby.component';
 import { SigninComponent } from './components/signin/signin.component';
 import { SignupComponent } from './components/signup/signup.component';
+import { PannelComponent } from './components/pannel/pannel.component';
 
 
 @NgModule({
@@ -23,7 +24,8 @@ import { SignupComponent } from './components/signup/signup.component';
     ChatComponent,
     LobbyComponent,
     SigninComponent,
-    SignupComponent
+    SignupComponent,
+    PannelComponent
   ],
   imports: [
     BrowserModule,

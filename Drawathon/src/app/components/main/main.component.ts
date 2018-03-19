@@ -1,5 +1,6 @@
-import { Component, OnInit, Output } from '@angular/core';
+import { Component, OnInit, Output, ViewChild, ElementRef } from '@angular/core';
 import { AppComponent } from '../../app.component';
+import { ApiModule } from '../../api/api.module';
 
 @Component({
   selector: 'app-main',
@@ -9,15 +10,27 @@ import { AppComponent } from '../../app.component';
 export class MainComponent implements OnInit {
   games:string[];
   constructor() { }
-  
+  private api:ApiModule
+  @ViewChild('title') public label:ElementRef;
   ngOnInit() {
     //Load games
+    this.api = new ApiModule();
+    this.api.getGames(function(err, res){
+      if (err) console.log(err);
+      else {
+        console.log(res);
+      }
+    });
     this.games = ["fakeGame1", "fakeGame2", "fakeGame3", "fakeGame4","fakeGame5"];
     console.log(this.games);
   }
-  
-  clickGame(game){
-    
+  createGame(){
+    var label = this.label.nativeElement.value;
+    this.api.addGame(label, function(err, res){
+      if (err) console.log(err);
+      else {
+        console.log(res);
+      }
+    })
   }
-
 }
