@@ -151,20 +151,23 @@ app.get('/signout/', function (req, res, next) {
     res.json("User signed out");
 });
 
-// curl -b cookie.txt -H "Content-Type: application/json" -X POST -d '{"title":"join THIS Lobby lol"}' localhost:3000/api/games/
+// curl -b cookie.txt -H "Content-Type: application/json" -X POST -d '{"title":"join THIS Lobby lol", "team1Id":123, "team2Id":123}' localhost:3000/api/games/
 app.post('/api/games/', isAuthenticated, function (req, res, next) {
     // TODO: sanitize
     var title = req.body.title;
+    var team1Id = req.body.team1Id;
+    var team2Id = req.body.team2Id;
     var host = req.session.username;
 
     MongoClient.connect(uri, function(err, db) {  
         if (err) return res.status(500).end(err);
         var dbo = db.db(dbName);
 
-        dbo.collection("games").insertOne({title:title, host: host, inLobby: true, numPlayers:0, maxPlayers:MAXPLAYERS}, 
-                function (err, game) {
-            if (err) return res.status(500).end(err);
-            return res.json(game.ops[0]);
+        dbo.collection("games").insertOne({title:title, host: host, team1Id:team1Id, 
+            team2Id:team2Id, inLobby: true, numPlayers:0, maxPlayers:MAXPLAYERS}, 
+            function (err, game) {
+                if (err) return res.status(500).end(err);
+                return res.json(game.ops[0]);
         });
     });
 });
@@ -183,9 +186,12 @@ app.get('/api/games/', isAuthenticated, function (req, res, next) {
     });
 });
 
-// curl -b cookie.txt -H "Content-Type: application/json" -X POST -d '{"username":"alice", "peerId": 123}' localhost:3000/api/games/5aad97f9f4e28b075083ef9c/joined/
+// curl -b cookie.txt -H "Content-Type: application/json" -X POST -d '{"canvasId": 123, "chatId": 123}' localhost:3000/api/games/5aad97f9f4e28b075083ef9c/joined/
 app.post('/api/games/:id/joined/', isAuthenticated, function (req, res, next) {
     // TODO: sanitize
+    var canvasId = req.body.canvasId;
+    var chatId = req.body.chatId;
+
     var user = req.session.username;
     var gameId = req.params.id;
     var userJoined = req.session.username;
@@ -219,9 +225,9 @@ app.post('/api/games/:id/joined/', isAuthenticated, function (req, res, next) {
                     if (err) return res.status(500).end(err);
 
                 dbo.collection("game_joined").insertOne(
-                    {user:userJoined, gameId:gameId, points:0, wins:0, teamNum:teamNum}, function (err, userEntry) {
+                    {user:userJoined, gameId:gameId, points:0, wins:0, teamNum:teamNum, canvasId:canvasId, chatId:chatId}, 
+                    function (err, userEntry) {
                         if (err) return res.status(500).end(err);
-                        console.log("added", userEntry);
                         return res.json(userEntry.ops[0]);
                 });
             });
@@ -232,6 +238,7 @@ app.post('/api/games/:id/joined/', isAuthenticated, function (req, res, next) {
 // curl -b cookie.txt -H -X POST localhost:3000/api/games/5aae9368eccb1357c708bbd0/joined/
 // KICK player themself
 app.delete('/api/games/:id/joined/', isAuthenticated, function (req, res, next) {
+    //TODO Sanitize
     var gameId = req.params.id;
     var userLeave = req.session.username;
     /*
@@ -245,9 +252,9 @@ app.delete('/api/games/:id/joined/', isAuthenticated, function (req, res, next) 
     */
     connect(res, function(err, dbo, db) {
         if (err) callback(err, dbo, db);
-        dbo.collection("game_joined").deleteOne({gameId: ObjectID(gameId), user: userLeave}, function(err, wrRes) {
+        dbo.collection("game_joined").deleteOne({gameId: gameId, user: userLeave}, function(err, wrRes) {
             if (err) return res.status(500).end(err);
-            if (wrRes.n == 0) res.status(409).end("User " + userLeave + " is not in the game!");
+            if (wrRes.deletedCount == 0) res.status(409).end("User " + userLeave + " is not in the game!");
 
             dbo.collection("games").findAndModify({_id: ObjectID(gameId)}, {"$inc":{ "numPlayers": -1 }}, 
             {returnNewDocument:true}, function(err, upRes) {
@@ -334,7 +341,6 @@ function team(userEnt) {
 
 function findGames(res, gameId, callback) {
     //TODO sanitize gameId
-
     connect(res, function(err, dbo, db) {
         if (err) callback(err, null, dbo, db);
         dbo.collection("games").findOne({_id: gameId}, function(err, game) {
@@ -364,5 +370,5 @@ MongoClient.connect(uri, function(err, db) {
     //dbo.collection("users").drop();
     dbo.collection("games").drop();
     dbo.collection("game_joined").drop();
-});    
+}); 
 */
