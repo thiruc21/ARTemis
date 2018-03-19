@@ -62,21 +62,37 @@ export class MainComponent implements OnInit {
       if (err) console.log(err);
       else {
         api.pushLobby(res); // Store lobby that user enters into local Storage.
-        check = false; // No need to check for updates when the user is not on the page.
-        rtr.navigate(['/game']);
+        this.api.joinGame(res._id, "123", "123", function(err, res){
+          if (err) console.log(err);
+          else {
+            console.log('successfully joined.');
+            check = false; // No need to check for updates.
+            rtr.navigate(['/lobby']); // Navigate.
+          }
+        });
       }
     })
   }
   clickGame(i) { //User is joing a lobby at index i.
+    var check:boolean = this.check;
+    var rtr:Router = this.router;
     this.api.pushLobby(this.gamesData[i]);
-    this.check = false; // No need to check for updates.
-    this.router.navigate(['/game']); // Navigate.
+    this.api.joinGame(this.gamesData[i]._id, "123", "123", function(err, res){
+      if (err) console.log(err);
+      else {
+        console.log('successfully joined.');
+        check = false; // No need to check for updates.
+        rtr.navigate(['/lobby']); // Navigate.
+      }
+    });
   }
 
   timeOut() {
     // Check for new lobbys every three seconds.
     setTimeout(() => {
       this.update();
+      this.check = this.check;
+      console.log("im still running");
       if (this.check) this.timeOut(); // Only continue if check is true.
     }, 3000);
   }
