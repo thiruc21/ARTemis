@@ -1,17 +1,17 @@
 .layout {
     display: grid;
     grid-template-columns: 800px 200px;
-    grid-template-rows: 1fr;
+    grid-template-rows: 1fr 1fr;
 }
 
 .createGame {
-    grid-area: 1 / 2 / span 1 / span 1;
+    grid-area: 2 / 2 / span 1 / span 1;
     display: flex;
     flex-direction: column;
 }
 
 .gamesContainer {
-    grid-area: 1 / 1 / span 1 / span 1;
+    grid-area: 2 / 1 / span 1 / span 1;
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
@@ -42,6 +42,7 @@
 }
 
 .gameTitle {
+    grid-area: 1 / 1 / span 1 / span 1;
     font-size: 16px;
     text-decoration: none;
     color: white;

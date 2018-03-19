@@ -1,5 +1,5 @@
-<app-pannel></app-pannel>
-<div class="layout">
+<app-lobby [ngStyle]="{'display':{{lobbyD}}}" class="lobby"></app-lobby>
+<div [ngStyle]="{'display':{{gameD}}}" class="layout">
   <app-canvas #canvas class="gcanvas"></app-canvas>
   <img class="gimg" src="assets/sample.png" alt="Image not found">
   <div class="gtimer">

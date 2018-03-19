@@ -62,8 +62,7 @@ export class ApiModule implements OnInit {
       return null;
   }
   public signup = function(username, password, callback) {
-      console.log("API sending " + username +" , " + password);
-      this.send("POST", "/signup/", {username: username, password: password}, callback);
+    this.send("POST", "/signup/", {username: username, password: password}, callback);
   }
   public signin = function(username, password, callback) {
     this.send("POST", "/signin/", {username: username, password: password}, callback);
@@ -74,10 +73,26 @@ export class ApiModule implements OnInit {
   public getGames = function(callback) {
     this.send("GET", "/api/games/",null, callback);
   }
-  public addGame = function(title, callback) {
-    this.send("POST", "/api/games", {title: title}, callback);
+  public addGame = function(title, pId1, pId2, callback) {
+    this.send("POST", "/api/games/", {title: title, team1Id: pId1, team2Id: pId2}, callback);
+  }
+  public joinGame = function(gameId, canvasId, chatId, callback) {
+      this.send("POST", "/api/games/" + gameId + "/joined/", {canvasId:canvasId, chatId:chatId}, callback);
+  }
+  public leaveGame = function(gameId, callback) {
+      this.send("DELETE", "/api/games/" + gameId + "/joined/", callback);
+  }
+  public getPlayers = function(gameId, callback) {
+      this.send("GET", "/api/games/" + gameId + "/joined/", callback);
   }
 
+  //Local Storage
+  public pushLobby = function(lobby) {
+    localStorage.setItem("lob", JSON.stringify({lobby: lobby}));
+  }
+  public getLobby = function() {
+      return JSON.parse(localStorage.getItem('lob'));
+  }
   public startGame = function() {
       var canvas = JSON.parse(localStorage.getItem("canvas"));
       if (canvas.end) {
@@ -95,7 +110,6 @@ export class ApiModule implements OnInit {
       var stroke = {x:x, y:y, px:px, py:py, color:color};
       canvas.strokes.push(stroke);
       localStorage.setItem("canvas", JSON.stringify(canvas));
-      console.log("hiiii");
       return stroke;
   };
   public getStrokes = function() {
