@@ -18,6 +18,7 @@ export class LobbyComponent implements OnInit {
   api:ApiModule;
   players:any;
   lob:any;
+  check:boolean;
   constructor(public router: Router) { }
 
   ngOnInit() {
@@ -35,26 +36,61 @@ export class LobbyComponent implements OnInit {
       players = res;
     });
     setTimeout(() => {
-      this.players = players
-      var i = 0;
-      for (i = 0; i < this.players.length; i++) {
-        if (this.team1.length <= this.team2.length) this.team1.push(this.players[i].user);
-        else this.team2.push(this.players[i].user);
+      this.check = true;
+      if (players) {
+        this.team1 = [];
+        this.team2 = [];
+        this.players = players;
+        var i = 0;
+        for (i = 0; i < this.players.length; i++) {
+          if (this.team1.length <= this.team2.length) this.team1.push(this.players[i].user);
+          else this.team2.push(this.players[i].user);
+        }
       }
+      console.log("calling timeout");
+      this.timeOut();
     },1000);
   }
 
+
+
+  timeOut() {
+    console.log("GETTING");
+    var players = this.players;
+    this.api.getPlayers(this.lob._id, function(err, res){
+      players = res;
+    });
+    // Check for new lobbys every three seconds.
+    setTimeout(() => {
+      if (players) {
+        this.team1 = [];
+        this.team2 = [];
+        this.players = players;
+        var i = 0;
+        for (i = 0; i < this.players.length; i++) {
+          if (this.team1.length <= this.team2.length) this.team1.push(this.players[i].user);
+          else this.team2.push(this.players[i].user);
+        }
+      }
+      if (this.check) this.timeOut(); // Only continue if check is true.
+    }, 3000);
+  }
   leave(){
-    var check:boolean = false;
+    var check:boolean = this.check;
     this.api.leaveGame(this.lob._id, function(err, res){
       if (err) console.log(err);
       else {
         console.log('successfully left.');
-        check = true; // No need to check for updates.
+        check = false; // No need to check for updates.
       }
     });
     setTimeout(() => {
-      if (check) this.router.navigate(['/']); // Navigate.
+      this.check = check;
+      if (check == false) this.router.navigate(['/']); // Navigate.
     },1000);
+  }
+  startGame() {
+    this.check = false;
+    if (this.check == false) this.router.navigate(['/game']); // Navigate.
   }
 }
