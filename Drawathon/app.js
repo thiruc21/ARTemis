@@ -219,10 +219,10 @@ app.post('/api/games/:id/joined/', isAuthenticated, function (req, res, next) {
             
             var gameJoined = gamesJoined[0];
             var usersJoined = gameJoined.game_join_info;
-            console.log(" \n game joined:", gameJoined, usersJoined);
             var teamNum = 0;
             
-            if (usersJoined.length > 0) teamNum = team(usersJoined);       
+            if (usersJoined.length > 0) teamNum = team(usersJoined);    
+            console.log(teamNum);   
             var players = parseInt(game.numPlayers) + 1;
 
             // CHECK if user is in the game
@@ -333,13 +333,13 @@ app.get('/api/images/:id/image/', isAuthenticated, function (req, res, next) {
 
 function team(userEnt) {
     var team0 = 0;
-    var team2 = 0;
+    var team1 = 0;
     var i = 0;   
     for (i; i < userEnt.length; i++) { 
         if ((userEnt[i]).teamNum === team1) {
-            team0++;
-        } else {
             team1++;
+        } else {
+            team0++;
         }
     }
     if (team1 < team0) return 1;
@@ -359,6 +359,16 @@ function findGames(res, gameId, callback) {
 
 function connect(res, callback) {
     callback(null, dbo, db);
+}
+
+async function con() {
+    MongoClient.connect(uri, function(err, mongodb) {  
+        if (err) throw err;
+        else {
+            db = mongodb;
+            dbo = db.db(dbName);
+        }        
+    });
 }
 
 http.createServer(app).listen(process.env.PORT || PORT, function (err) {
