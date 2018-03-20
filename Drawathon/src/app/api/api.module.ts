@@ -16,7 +16,7 @@ const httpOptions = {
   ],
   declarations: []
 })
-export class ApiModule implements OnInit {   
+export class ApiModule implements OnInit { 
   private http:HttpClient;
   ngOnInit() {
   }
@@ -38,7 +38,8 @@ export class ApiModule implements OnInit {
     };
     xhr.open(method, url, true);
     xhr.send(formdata);
-};
+  }
+  
   private send(method, url, data, callback){
       var xhr = new XMLHttpRequest();
       xhr.onload = function() {
@@ -55,43 +56,54 @@ export class ApiModule implements OnInit {
           xhr.send(JSON.stringify(data));
       }
   }
+
   public getCurrentUser = function(){
       var l = document.cookie.split("username=");
       if (l.length > 1) return l[1];
       return null;
   }
+
   public signup = function(username, password, callback) {
     this.send("POST", "/signup/", {username: username, password: password}, callback);
   }
+
   public signin = function(username, password, callback) {
     this.send("POST", "/signin/", {username: username, password: password}, callback);
   }
+
   public signout = function(callback) {
     this.send("GET", "/signout/", null, callback);
   }
+
   public getGames = function(callback) {
     this.send("GET", "/api/games/",null, callback);
   }
+
   public addGame = function(title, pId1, pId2, callback) {
     this.send("POST", "/api/games/", {title: title, team1Id: pId1, team2Id: pId2}, callback);
   }
+
   public joinGame = function(gameId, canvasId, chatId, callback) {
-      this.send("POST", "/api/games/" + gameId + "/joined/", {canvasId:canvasId, chatId:chatId}, callback);
+    this.send("POST", "/api/games/" + gameId + "/joined/", {canvasId:canvasId, chatId:chatId}, callback);
   }
+
   public leaveGame = function(gameId, callback) {
-      this.send("DELETE", "/api/games/" + gameId + "/joined/", callback);
+    this.send("DELETE", "/api/games/" + gameId + "/joined/", null, callback);
   }
+
   public getPlayers = function(gameId, callback) {
-      this.send("GET", "/api/games/" + gameId + "/joined/", callback);
+    this.send("GET", "/api/games/" + gameId + "/joined/", null, callback);
   }
 
   //Local Storage
   public pushLobby = function(lobby) {
-    localStorage.setItem("lob", JSON.stringify({lobby: lobby}));
+    localStorage.setItem("lob", JSON.stringify(lobby));
   }
+
   public getLobby = function() {
       return JSON.parse(localStorage.getItem('lob'));
   }
+  
   public startGame = function() {
       var canvas = JSON.parse(localStorage.getItem("canvas"));
       if (canvas.end) {
@@ -101,6 +113,7 @@ export class ApiModule implements OnInit {
       localStorage.setItem("canvas", JSON.stringify(canvas));
       return canvas;
   };
+
   public pushStroke = function(x, y, px, py, color) {
       if (!localStorage.getItem("canvas")){
           localStorage.setItem("canvas", JSON.stringify({end: false, strokes: []}));

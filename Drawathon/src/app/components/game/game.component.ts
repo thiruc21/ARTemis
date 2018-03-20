@@ -38,11 +38,9 @@ export class GameComponent implements OnInit {
 
   ngOnInit() {
     // Set defaults.
-    this.lobbyD = "grid";
-    this.gameD = "none";
+    //this.lobbyD = "grid";
+    this.gameD = "grid";
     this.api = new ApiModule();
-    var lob = this.api.getLobby();
-    this.gameId = lob._id;
     //var gameId = lob._id;
 
     //this.canvasPeer= new Peer({host : "lightpeerjs.herokuapp.com",

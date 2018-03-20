@@ -57,3 +57,8 @@
 .startButton:hover {
     cursor: pointer;
 }
+.leaveButton {
+    width:100px;
+    height:50px;
+    justify-self: flex-end;
+}
