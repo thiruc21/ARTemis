@@ -50,9 +50,7 @@ export class LobbyComponent implements OnInit {
       this.timeOut();
     },1000);
   }
-
-
-
+  
   timeOut() {
     var players = this.players;
     this.api.getPlayers(this.lob._id, function(err, res){

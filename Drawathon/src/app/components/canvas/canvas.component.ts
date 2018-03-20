@@ -108,6 +108,7 @@ export class CanvasComponent implements OnInit {
     this.ctx.beginPath();
     this.ctx.moveTo(this.pts.px, this.pts.py);
     this.ctx.lineTo(this.pts.x, this.pts.y);
+    this.ctx.lineWidth = this.size;
     this.ctx.strokeStyle = this.color;
     this.ctx.closePath();
     this.ctx.stroke();

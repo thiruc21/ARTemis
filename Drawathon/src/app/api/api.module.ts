@@ -103,16 +103,6 @@ export class ApiModule implements OnInit {
   public getLobby = function() {
       return JSON.parse(localStorage.getItem('lob'));
   }
-  
-  public startGame = function() {
-      var canvas = JSON.parse(localStorage.getItem("canvas"));
-      if (canvas.end) {
-          canvas.strokes = [];
-          canvas.end = false;
-      }
-      localStorage.setItem("canvas", JSON.stringify(canvas));
-      return canvas;
-  };
 
   public pushStroke = function(x, y, px, py, color) {
       if (!localStorage.getItem("canvas")){
@@ -127,12 +117,5 @@ export class ApiModule implements OnInit {
   public getStrokes = function() {
       var canvas = JSON.parse(localStorage.getItem("canvas"));
       return canvas.strokes;
-  };
-  public endGame =function() {
-      var canvas = JSON.parse(localStorage.getItem("canvas"));
-      canvas.strokes = [];
-      canvas.end = true;
-      localStorage.setItem("canvas", JSON.stringify(canvas));
-      return canvas;
   };
  }

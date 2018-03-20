@@ -82,6 +82,7 @@ export class MainComponent implements OnInit {
     });
     setTimeout(() => {
       this.check = check;
+      this.update();
       if (this.check==false) this.router.navigate(['/lobby']); // Navigate.
     },1500);
   }
