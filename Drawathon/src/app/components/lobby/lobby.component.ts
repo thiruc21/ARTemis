@@ -47,7 +47,6 @@ export class LobbyComponent implements OnInit {
           else this.team2.push(this.players[i].user);
         }
       }
-      console.log("calling timeout");
       this.timeOut();
     },1000);
   }
@@ -55,7 +54,6 @@ export class LobbyComponent implements OnInit {
 
 
   timeOut() {
-    console.log("GETTING");
     var players = this.players;
     this.api.getPlayers(this.lob._id, function(err, res){
       players = res;
