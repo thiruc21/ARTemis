@@ -213,16 +213,13 @@ app.post('/api/games/:id/joined/', isAuthenticated, function (req, res, next) {
                 }
               }*/
             ]).toArray(function(err, gamesJoined) {
-            console.log(err, gamesJoined);   
             if (err) return res.status(500).end(err);
-            
-            
+
             var gameJoined = gamesJoined[0];
-            var usersJoined = gameJoined.game_join_info;
+            var usersJoined = gameJoined.game_join_info;            
             var teamNum = 0;
             
             if (usersJoined.length > 0) teamNum = team(usersJoined);    
-            console.log(teamNum);   
             var players = parseInt(game.numPlayers) + 1;
 
             // CHECK if user is in the game
@@ -361,16 +358,6 @@ function connect(res, callback) {
     callback(null, dbo, db);
 }
 
-async function con() {
-    MongoClient.connect(uri, function(err, mongodb) {  
-        if (err) throw err;
-        else {
-            db = mongodb;
-            dbo = db.db(dbName);
-        }        
-    });
-}
-
 http.createServer(app).listen(process.env.PORT || PORT, function (err) {
     if (err) console.log(err);
     else {
@@ -379,8 +366,8 @@ http.createServer(app).listen(process.env.PORT || PORT, function (err) {
             else {
                 db = mongodb;
                 dbo = db.db(dbName);
-                dbo.collection("games").drop();
-                dbo.collection("game_joined").drop();
+                //dbo.collection("games").drop();
+                //dbo.collection("game_joined").drop();
             }        
         });
         console.log("HTTP server on http://localhost:%s", PORT);
