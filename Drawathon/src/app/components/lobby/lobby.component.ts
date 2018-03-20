@@ -1,5 +1,6 @@
 import { Component, OnInit, AfterViewInit } from '@angular/core';
 import { ApiModule } from '../../api/api.module';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-lobby',
@@ -17,7 +18,7 @@ export class LobbyComponent implements OnInit {
   api:ApiModule;
   players:any;
   lob:any;
-  constructor() { }
+  constructor(public router: Router) { }
 
   ngOnInit() {
     // Set defaults.
@@ -43,4 +44,17 @@ export class LobbyComponent implements OnInit {
     },1000);
   }
 
+  leave(){
+    var check:boolean = false;
+    this.api.leaveGame(this.lob._id, function(err, res){
+      if (err) console.log(err);
+      else {
+        console.log('successfully left.');
+        check = true; // No need to check for updates.
+      }
+    });
+    setTimeout(() => {
+      if (check) this.router.navigate(['/']); // Navigate.
+    },1000);
+  }
 }

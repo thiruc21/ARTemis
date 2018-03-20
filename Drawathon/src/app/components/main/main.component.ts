@@ -45,7 +45,7 @@ export class MainComponent implements OnInit {
           check = true; // Short poll for updates.
           if (res.length > 0) { // If there is a game availabe.
             res.forEach(function(element) {
-              if (element.numPlayers < 4 && element.host != user){
+              if (element.numPlayers < 4 /*&& element.host != user*/){
                 games.push(element.title + " by " + element.host);
                 gamesData.push(element);
               }
@@ -56,7 +56,7 @@ export class MainComponent implements OnInit {
       });
       setTimeout(() => {
         this.check = check;
-      },3000);
+      },2000);
       this.timeOut(); // Short poll timer loop.
     }
   }
@@ -70,19 +70,20 @@ export class MainComponent implements OnInit {
       if (err) console.log(err);
       else {
         api.pushLobby(res); // Store lobby that user enters into local Storage.
-        api.joinGame(res._id, "123", "123", function(err, res){
+        /*api.joinGame(res._id, "123", "123", function(err, res){
           if (err) console.log(err);
           else {
             console.log('successfully joined.');
             check = false; // No need to check for updates.
           }
-        });
+        });*/
+        console.log("successfully created");
       }
     });
     setTimeout(() => {
       this.check = check;
       if (this.check==false) this.router.navigate(['/lobby']); // Navigate.
-    },2000);
+    },1500);
   }
   clickGame(i) { //User is joing a lobby at index i.
     var check:boolean = this.check;
@@ -97,7 +98,7 @@ export class MainComponent implements OnInit {
     setTimeout(() => {
       this.check = check;
       if (this.check==false) this.router.navigate(['/lobby']); // Navigate.
-    },2000);
+    },1500);
   }
 
   timeOut() {
@@ -119,7 +120,7 @@ export class MainComponent implements OnInit {
       gamesData = [];
       if (res && res.length > 0) {
         res.forEach(function(element) {
-        if (element.numPlayers < 4 && element.host != user){
+        if (element.numPlayers < 4 /*&& element.host != user*/){
           games.push(element.title + " by " + element.host);
           gamesData.push(element);
         }

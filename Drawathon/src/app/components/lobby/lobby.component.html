@@ -9,6 +9,7 @@
   <div class="hostCenter">
     <h2>Hosted by: {{host}}</h2>
     <a routerLink="/game" class="startButton">Start</a>
+    <button class="leaveButton" (click)="leave()">Leave Lobby</button>
   </div>
   <div class="teamRight">
     <div *ngFor="let player2 of team2" class="teamPlayer">

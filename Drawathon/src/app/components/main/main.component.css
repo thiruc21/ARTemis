@@ -1,11 +1,13 @@
 .layout {
     display: grid;
     grid-template-columns: 800px 200px;
-    grid-template-rows: 1fr 1fr;
+    grid-template-rows: 100px 1fr;
 }
 
 .createGame {
     background: grey;
+    width:100px;
+    height: 100px;
     margin: 20px 20px 20px 20px;
     grid-area: 2 / 2 / span 1 / span 1;
     display: flex;

@@ -92,7 +92,6 @@ export class ApiModule implements OnInit {
   }
 
   public getPlayers = function(gameId, callback) {
-    console.log(gameId);
     this.send("GET", "/api/games/" + gameId + "/joined/", null, callback);
   }
 
