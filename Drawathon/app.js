@@ -12,18 +12,20 @@ const ObjectId = require("mongodb").ObjectId;
 
 const passport = require('passport');
 const google = require('googleapis');
+
 var GoogleStrategy = require('passport-google-oauth20').Strategy;
-var twitchStrategy = require("passport-twitch").Strategy;
+
+//var twitchStrategy = require("passport-twitch").Strategy;
 
 const app = express();
-app.use(bodyParser.json());
 
 const http = require('http');
 const PORT = 3000;
 const MAXPLAYERS = 4;
-
 var multer  = require('multer');
 var upload = multer({ dest: path.join(__dirname, 'uploads') });
+
+app.use(bodyParser.json());
 app.use(express.static('dist'));
 
 const uri = "mongodb://admin:hashedpass@art-shard-00-00-xs19d.mongodb.net:" +
@@ -63,34 +65,47 @@ passport.use('googleToken', new GoogleStrategy({
         clientSecret: 'A-R_JDtyqlUg_kn-mbWxnXn-',
         callbackURL: 'http://localhost:3000/users/oauth/google/callback' //
     }, function(accessToken, refreshToken, profile, callback) {
-        dbo.collection("users").findAndModify(
-            {googleId: profile.id}, [],
-        {
-            $setOnInsert: {dispName: profile.displayName, givName: profile.name.givenName}
-        }, 
-        {new: true, upsert: true}, function(err, userProf) {
+
+        dbo.collection("users").findOne({googleId: profile.id}, function(err, foundUser) {
             if (err) return callback(err, null);
-            return callback(null, userProf.value);
-        });         
+            if (foundUser) return callback(null, foundUser);
+            dbo.collection("users").insertOne({googleId: profile.id, dispName: profile.displayName, givName: profile.name.givenName},
+            function (err, res) {
+                if (err) return callback(err, null);
+                return callback(null, res.ops[0]);
+            });
+        });
     }
 ));
 
-app.use(passport.initialize());
-app.use(passport.session());
+
 
 /* Serialization for passport to save users into session, called by passport in request flow,
-stored in req.session.passport.user. Currently we store the Whole profile in session, might be bad... */
+stored in req.session.passport.user and deserialized to req.user if success */
 passport.serializeUser(function(user, done) {
-    done(null, user);
+    done(null, user._id);
 });
 
-passport.deserializeUser(function(user, done) {
-    done(null, user);
-    /*dbo.collection("users").findOne({id: user.id}, function(err, user) {
-        if (err || !user) return done(err, null);
-        return done(null, user);
-    });*/
+passport.deserializeUser(function(id, done) {
+    dbo.collection("users").findOne({_id: ObjectId(id)}, function(err, user) {
+        return done(err, user);
+    });    
 });
+
+app.use(session({
+    //cookie: {//httpOnly: true, secure: true, sameSite: true},
+    secret: 'please change this secret',
+    resave: false,
+    saveUninitialized: true,
+}));
+
+app.use(function (req, res, next){
+    console.log("HTTP request", req.method, req.url, req.body);
+    next();
+});
+
+app.use(passport.initialize());
+app.use(passport.session());
 
 // The following forceSSL middleware code snippet is taken from 
 /** https://medium.com/@ryanchenkie_40935/angular-cli-deployment-host-your-angular-2-app-on-heroku-3f266f13f352 */
@@ -121,13 +136,6 @@ if (app.get('env') !== 'development'){
 var db = null;
 var dbo;
 
-app.use(session({
-    //cookie: {//httpOnly: true, secure: true, sameSite: true},
-    secret: 'please change this secret',
-    resave: false,
-    saveUninitialized: true,
-}));
-
 function generateSalt (){
     return crypto.randomBytes(16).toString('base64');
 }
@@ -138,10 +146,14 @@ function generateHash (password, salt){
     return hash.digest('base64');
 }
 
+
 app.use(function(req, res, next){
     var cookies = cookie.parse(req.headers.cookie || '');
-    req.user = ('user' in req.session)? req.session.user : null;
-    var username = (req.session.username)? req.session.username : '';
+    //req.user = ('user' in req.session)? req.session.user : null;
+    
+    var authUser = (req.user)? req.user.givName : '';
+    var username = (req.session.username)? req.session.username : authUser;
+
     res.setHeader('Set-Cookie', cookie.serialize('username', username, {
           //httpOnly: false,
           path : '/', 
@@ -150,16 +162,26 @@ app.use(function(req, res, next){
     next();
 });
 
-app.use(function (req, res, next){
-    console.log("HTTP request", req.method, req.url, req.body);
-    next();
-});
-
 var isAuthenticated = function(req, res, next) {
-    console.log(req.isAuthenticated());
-    if (!req.isAuthenticated() || !req.session.username) return res.status(401).end("access denied");
+    if (!req.isAuthenticated() && !req.session.username) return res.status(401).end("access denied");
     next();
 };
+
+/* Gets the current user for the session id*/
+app.get('/authenticated/',  function(req, res, next) {
+    if (!req.user) return res.status(409).end("No users authenticated"); 
+    return res.json("User " + req.user.givName + " ");
+
+
+    //console.log("\n 2 session \n[",  req.session, req.session.passport,"] \n");
+    /*
+    passport.deserializeUser(req.session.passport.user, function(err, user) {
+        if (err) return res.status(500).end(err);
+        if (!user) return res.status(409).end("No users authenticated"); 
+        return res.json("User " + user.givName + " ");
+    });
+    */    
+});
 
 /* uses passport auth to direct appropriately, afterwards callback get is called
 and further redirected to homepage, after req.session.passport.user is set */
@@ -170,9 +192,15 @@ app.get('/users/oauth/google/', passport.authenticate('googleToken', {scope:
 app.get('/users/oauth/google/callback', 
   passport.authenticate('googleToken', { failureRedirect: '/signin/'}),
   function(req, res) {
-    console.log("Sucessfully authenticated, now redirecting to home page");
+    
+    res.setHeader('Set-Cookie', cookie.serialize('username', req.user.givName, {
+        //httpOnly: false,
+        path : '/', 
+        maxAge: 60 * 60 * 24 * 7 // 1 week in number of seconds
+    }));
+
     // Successful authentication, redirect home.
-    res.redirect('/');
+    return res.redirect('/');    
   });
 
 // curl -H "Content-Type: application/json" -X POST -d '{"username":"alice","password":"alice"}' -c cookie.txt localhost:3000/signup/
@@ -225,7 +253,10 @@ app.post('/signin/', function (req, res, next) {
 
 // Sign out of the current user
 app.get('/signout/', function (req, res, next) {
+    console.log("sign out");
+    req.logOut();
     req.session.destroy();
+    
     res.setHeader('Set-Cookie', cookie.serialize('username', '', {
           path : '/', 
           maxAge: 60 * 60 * 24 * 7 
@@ -439,12 +470,13 @@ function connect(res, callback) {
     callback(null, dbo, db);
 }
 
-async function mongoSetup(){
+async function mongoSetup() {
     await MongoClient.connect(uri, function(err, mongodb) {  
         if (err) console.log(err);
         else {
             db = mongodb;
             dbo = db.db(dbName);
+            //dbo.collection("users").drop();
             //dbo.collection("games").drop();
             //dbo.collection("game_joined").drop();
         }        
@@ -452,9 +484,10 @@ async function mongoSetup(){
 }
 mongoSetup();
 
+
 http.createServer(app).listen(process.env.PORT || PORT, function (err) {
     if (err) console.log(err);
     else {
         console.log("HTTP server on http://localhost:%s", PORT);
     }        
-});  
+})
