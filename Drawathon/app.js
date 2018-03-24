@@ -1,23 +1,96 @@
 "use strict"
 const path = require('path');
 const express = require('express');
-const app = express();
 const bodyParser = require('body-parser');
 const cookie = require('cookie');
 const session = require('express-session');
-const MongoClient = require('mongodb').MongoClient;
-var ObjectId = require("mongodb").ObjectId;
 const crypto = require('crypto');
 const fs = require('fs');
 
+const MongoClient = require('mongodb').MongoClient;
+const ObjectId = require("mongodb").ObjectId;
+
+const passport = require('passport');
+const google = require('googleapis');
+var GoogleStrategy = require('passport-google-oauth20').Strategy;
+var twitchStrategy = require("passport-twitch").Strategy;
+
+const app = express();
 app.use(bodyParser.json());
 
 const http = require('http');
 const PORT = 3000;
-
 const MAXPLAYERS = 4;
+
 var multer  = require('multer');
 var upload = multer({ dest: path.join(__dirname, 'uploads') });
+app.use(express.static('dist'));
+
+const uri = "mongodb://admin:hashedpass@art-shard-00-00-xs19d.mongodb.net:" +
+     "27017,art-shard-00-01-xs19d.mongodb.net:27017,art-shard-00-02-xs19d.mongodb.net" + 
+     ":27017/test?ssl=true&replicaSet=Art-shard-0&authSource=admin";
+const dbName = 'test';
+
+
+
+/* Twitch Strategy */
+/*
+ passport.use(new twitchStrategy({
+    clientID: 'p8153nxml0rxi29b9xrakz57cp8yrh',
+    clientSecret: 'wdsa7z2dyovn2n2wb7e8n6o4ydgx1j',
+    callbackURL: "http://localhost:3000/users/oauth/google/callback",
+    scope: "user_read"
+  },
+  function(accessToken, refreshToken, profile, done) {
+    console.log("access", accessToken);
+    console.log("profile", profile);
+    console.log("name", profile.displayName);
+    return done(err, user);
+  }
+)); 
+*/
+
+/* Google OUATH Strategy, once 'authenticated', user will be directed to google's authentication page, then a user's
+    profile is returned which we process and send back to a callback function
+    All frontend needs to do is call '/users/oauth/google/', and check
+    appropriate profile set in session.
+
+    Step 1: directed to http://localhost:3000/users/oauth/google
+    Step 2: website returned user, and serialized profile in session
+    */
+passport.use('googleToken', new GoogleStrategy({ 
+        clientID: '599342492421-8mhu8ms52vk6l4knoiveumt23uef9e7i.apps.googleusercontent.com',
+        clientSecret: 'A-R_JDtyqlUg_kn-mbWxnXn-',
+        callbackURL: 'http://localhost:3000/users/oauth/google/callback' //
+    }, function(accessToken, refreshToken, profile, callback) {
+        dbo.collection("users").findAndModify(
+            {googleId: profile.id}, [],
+        {
+            $setOnInsert: {dispName: profile.displayName, givName: profile.name.givenName}
+        }, 
+        {new: true, upsert: true}, function(err, userProf) {
+            if (err) return callback(err, null);
+            return callback(null, userProf.value);
+        });         
+    }
+));
+
+app.use(passport.initialize());
+app.use(passport.session());
+
+/* Serialization for passport to save users into session, called by passport in request flow,
+stored in req.session.passport.user. Currently we store the Whole profile in session, might be bad... */
+passport.serializeUser(function(user, done) {
+    done(null, user);
+});
+
+passport.deserializeUser(function(user, done) {
+    done(null, user);
+    /*dbo.collection("users").findOne({id: user.id}, function(err, user) {
+        if (err || !user) return done(err, null);
+        return done(null, user);
+    });*/
+});
 
 // The following forceSSL middleware code snippet is taken from 
 /** https://medium.com/@ryanchenkie_40935/angular-cli-deployment-host-your-angular-2-app-on-heroku-3f266f13f352 */
@@ -45,18 +118,11 @@ const forceSSL = function() {
 if (app.get('env') !== 'development'){
     app.use(forceSSL());
 }
-app.use(express.static('dist'));
-
-const uri = "mongodb://admin:hashedpass@art-shard-00-00-xs19d.mongodb.net:" +
-     "27017,art-shard-00-01-xs19d.mongodb.net:27017,art-shard-00-02-xs19d.mongodb.net" + 
-     ":27017/test?ssl=true&replicaSet=Art-shard-0&authSource=admin";
-const dbName = 'test';
-
 var db = null;
 var dbo;
 
 app.use(session({
-    //cookie: {//httpOnly: true,         secure: true, sameSite: true},
+    //cookie: {//httpOnly: true, secure: true, sameSite: true},
     secret: 'please change this secret',
     resave: false,
     saveUninitialized: true,
@@ -90,9 +156,24 @@ app.use(function (req, res, next){
 });
 
 var isAuthenticated = function(req, res, next) {
-    if (!req.session.username) return res.status(401).end("access denied");
+    console.log(req.isAuthenticated());
+    if (!req.isAuthenticated() || !req.session.username) return res.status(401).end("access denied");
     next();
 };
+
+/* uses passport auth to direct appropriately, afterwards callback get is called
+and further redirected to homepage, after req.session.passport.user is set */
+app.get('/users/oauth/google/', passport.authenticate('googleToken', {scope:
+    [ 'profile']})
+);
+
+app.get('/users/oauth/google/callback', 
+  passport.authenticate('googleToken', { failureRedirect: '/signin/'}),
+  function(req, res) {
+    console.log("Sucessfully authenticated, now redirecting to home page");
+    // Successful authentication, redirect home.
+    res.redirect('/');
+  });
 
 // curl -H "Content-Type: application/json" -X POST -d '{"username":"alice","password":"alice"}' -c cookie.txt localhost:3000/signup/
 app.post('/signup/', function (req, res, next) {
@@ -358,18 +439,22 @@ function connect(res, callback) {
     callback(null, dbo, db);
 }
 
+async function mongoSetup(){
+    await MongoClient.connect(uri, function(err, mongodb) {  
+        if (err) console.log(err);
+        else {
+            db = mongodb;
+            dbo = db.db(dbName);
+            //dbo.collection("games").drop();
+            //dbo.collection("game_joined").drop();
+        }        
+    });
+}
+mongoSetup();
+
 http.createServer(app).listen(process.env.PORT || PORT, function (err) {
     if (err) console.log(err);
     else {
-        MongoClient.connect(uri, function(err, mongodb) {  
-            if (err) console.log(err);
-            else {
-                db = mongodb;
-                dbo = db.db(dbName);
-                //dbo.collection("games").drop();
-                //dbo.collection("game_joined").drop();
-            }        
-        });
         console.log("HTTP server on http://localhost:%s", PORT);
     }        
 });  
