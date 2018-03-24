@@ -12,6 +12,7 @@ const ObjectId = require("mongodb").ObjectId;
 
 const passport = require('passport');
 const google = require('googleapis');
+const config = require('./config');
 
 var GoogleStrategy = require('passport-google-oauth20').Strategy;
 
@@ -28,9 +29,6 @@ var upload = multer({ dest: path.join(__dirname, 'uploads') });
 app.use(bodyParser.json());
 app.use(express.static('dist'));
 
-const uri = "mongodb://admin:hashedpass@art-shard-00-00-xs19d.mongodb.net:" +
-     "27017,art-shard-00-01-xs19d.mongodb.net:27017,art-shard-00-02-xs19d.mongodb.net" + 
-     ":27017/test?ssl=true&replicaSet=Art-shard-0&authSource=admin";
 const dbName = 'test';
 
 
@@ -61,9 +59,9 @@ const dbName = 'test';
     Step 2: website returned user, and serialized profile in session
     */
 passport.use('googleToken', new GoogleStrategy({ 
-        clientID: '599342492421-8mhu8ms52vk6l4knoiveumt23uef9e7i.apps.googleusercontent.com',
-        clientSecret: 'A-R_JDtyqlUg_kn-mbWxnXn-',
-        callbackURL: 'http://localhost:3000/users/oauth/google/callback' //
+        clientID: config.google.clientid,
+        clientSecret: config.google.cllientSecret,
+        callbackURL: config.google.Callback
     }, function(accessToken, refreshToken, profile, callback) {
 
         dbo.collection("users").findOne({googleId: profile.id}, function(err, foundUser) {
@@ -471,7 +469,7 @@ function connect(res, callback) {
 }
 
 async function mongoSetup() {
-    await MongoClient.connect(uri, function(err, mongodb) {  
+    await MongoClient.connect(config.mongo.id, function(err, mongodb) {  
         if (err) console.log(err);
         else {
             db = mongodb;
