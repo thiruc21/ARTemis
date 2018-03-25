@@ -11,9 +11,9 @@
       </a>
     </div>
   </div>
-  <div [ngStyle]="{ 'display': createD }" class="createGame">
-    <p>Create Game:</p>
-    <input #title placeholder="Title">
-    <button (click)="createGame()">Create New Game</button>
-  </div>
+  <form [ngStyle]="{ 'display': createD }" class="createGame">
+    <p>Create Game</p>
+    <input class="inTitle" #title placeholder="Title" required>
+    <button class="createButton" (submit)="createGame($event)">Create</button>
+  </form>
 </div>

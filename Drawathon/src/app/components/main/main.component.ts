@@ -26,10 +26,10 @@ export class MainComponent implements OnInit {
     this.gamesData = [];
     this.api = new ApiModule();
     // Get current user.
-    var user = this.user = this.api.getCurrentUser();
+    this.user = this.api.getCurrentUser();
 
     if (this.user == "" || this.user == null) { // No users.
-      console.log("SHOULD RETURN BACK TO LOGIN PAGE, VIISAAA SAAAAn");
+      this.router.navigate(['/signin'])
       this.createD = "none";
       this.check = false; // No need to check.
     }
@@ -61,7 +61,8 @@ export class MainComponent implements OnInit {
     }
   }
   // Make a new game.
-  createGame() { // Temp references.
+  createGame(e) { // Temp references.
+    e.preventDefault();
     var label = this.label.nativeElement.value;
     var api = this.api;
     var check:boolean = this.check;
@@ -78,6 +79,7 @@ export class MainComponent implements OnInit {
           }
         });*/
         console.log("successfully created");
+        check = false; 
       }
     });
     setTimeout(() => {
@@ -128,6 +130,9 @@ export class MainComponent implements OnInit {
         });
       }
     });
-    if (games.length > 0) this.games.push(this.games.pop());
+    if (games.length > 0) {
+      console.log("updating")
+      this.games.push(this.games.pop())
+    };
   }
 }

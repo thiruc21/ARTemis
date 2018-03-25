@@ -19,6 +19,7 @@ export class LobbyComponent implements OnInit {
   players:any;
   lob:any;
   check:boolean;
+  hostD:string;
   constructor(public router: Router) { }
 
   ngOnInit() {
@@ -27,10 +28,13 @@ export class LobbyComponent implements OnInit {
     this.user = this.api.getCurrentUser();
     this.lob = this.api.getLobby();
     this.players =[];
+    this.hostD = "none";
     this.host = this.lob.host;
     this.team1 = [];
     this.team2 = [];
-    this.team1.push(this.user);
+    if (this.host == this.api.getCurrentUser()) this.hostD = "flex";
+    else this.team1.push(this.user);
+
     var players = this.players;
     this.api.getPlayers(this.lob._id, function(err, res){
       players = res;
@@ -69,7 +73,7 @@ export class LobbyComponent implements OnInit {
         }
       }
       if (this.check) this.timeOut(); // Only continue if check is true.
-    }, 3000);
+    }, 2000);
   }
   leave(){
     var check:boolean = this.check;
