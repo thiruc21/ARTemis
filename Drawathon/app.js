@@ -6,13 +6,22 @@ const cookie = require('cookie');
 const session = require('express-session');
 const crypto = require('crypto');
 const fs = require('fs');
-
 const MongoClient = require('mongodb').MongoClient;
 const ObjectId = require("mongodb").ObjectId;
+
+
 
 const passport = require('passport');
 const google = require('googleapis');
 const config = require('./config');
+
+const validator = require('validator');
+
+const expValidator = require('express-validator');
+
+
+const checker = require('express-validator/check');
+const sanitize = require('express-validator/filter');
 
 var GoogleStrategy = require('passport-google-oauth20').Strategy;
 //var twitchStrategy = require("passport-twitch").Strategy;
@@ -28,6 +37,9 @@ const MAXPLAYERS = 4;
 var multer  = require('multer');
 var upload = multer({ dest: path.join(__dirname, 'uploads') });
 
+
+app.use(expValidator())
+//app.use(checker());
 app.use(bodyParser.json());
 app.use(express.static('dist'));
 
@@ -73,8 +85,6 @@ passport.use('googleToken', new GoogleStrategy({
         });
     }
 ));
-
-
 
 /* Serialization for passport to save users into session, called by passport in request flow,
 stored in req.session.passport.user and deserialized to req.user if success 
@@ -154,16 +164,23 @@ app.use(function(req, res, next){
 });
 
 var isAuthenticated = function(req, res, next) {
-    console.log(req.session.username);
     if (!req.isAuthenticated() && !req.session.username) return res.status(401).end("access denied");
     next();
 };
 
-/* Gets the current user for the session id */
-app.get('/authenticated/',  function(req, res, next) {
-    if (!req.user) return res.status(409).end("No users authenticated"); 
-    return res.json("User " + req.user.givName + " ");
-});
+var checkUsername = function(req, res, next) {
+    req.check('username', 'Please enter a valid username').exists().isAlphanumeric();
+    var errors = req.validationErrors();
+    if (errors) return res.status(400).send(errors[0].msg);
+    next();
+};
+
+var checkPassword = function(req, res, next) {
+    req.check('password', 'Please enter a valid password').exists().isAlphanumeric();
+    var errors = req.validationErrors();
+    if (errors) return res.status(400).send(errors[0].msg);
+    next();
+};
 
 /* uses passport auth to direct appropriately, afterwards callback get is called
 and further redirected to homepage, after req.session.passport.user is set */
@@ -185,33 +202,28 @@ app.get('/users/oauth/google/callback',
   });
 
 // curl -H "Content-Type: application/json" -X POST -d '{"username":"alice","password":"alice"}' -c cookie.txt localhost:3000/signup/
-app.post('/signup/', function (req, res, next) {
+app.post('/signup/', [checkUsername, checkPassword],  function (req, res, next) {
     var username = req.body.username;
     var password = req.body.password;    
 
-    connect(res, function(err, dbo, db) {
+    dbo.collection("users").findOne({username: username, authProvider: 'artemis'}, function(err, user) {
         if (err) return res.status(500).end(err);
-        if (!dbo) return res.status(500).end("dbo err");
-        dbo.collection("users").findOne({username: username, authProvider: 'artemis'}, function(err, user) {
-            if (err) return res.status(500).end(err);
-            if (user) return res.status(409).end("Username " + username + " already exists");
+        if (user) return res.status(409).end("Username " + username + " already exists");
 
-            var salt = generateSalt();
-            var hash = generateHash(password, salt);
-            dbo.collection("users").update({username: username, authProvider: 'artemis'}, 
-                {username: username, authProvider: 'artemis', salt:salt, hash:hash}, 
-                {upsert: true}, function(n, nMod) {
-                    if (err) return res.status(500).end(err);
-                    return res.json("User " + username + " signed up");
-            });
+        var salt = generateSalt();
+        var hash = generateHash(password, salt);
+        dbo.collection("users").update({username: username, authProvider: 'artemis'}, 
+            {username: username, authProvider: 'artemis', salt:salt, hash:hash}, 
+            {upsert: true}, function(n, nMod) {
+                if (err) return res.status(500).end(err);
+                return res.json("User " + username + " signed up");
         });
     });
 });
 
 // curl -H "Content-Type: application/json" -X POST -d '{"username":"alice","password":"alice"}' -c cookie.txt localhost:3000/signin/
 // curl -H "Content-Type: application/json" -X POST -d '{"username":"bob","password":"alice"}' -c cookie.txt localhost:3000/signin/
-app.post('/signin/', function (req, res, next) {
-    // TODO: sanitize
+app.post('/signin/', [checkUsername, checkPassword], function (req, res, next) {
     var username = req.body.username;
     var password = req.body.password;
     connect(res, function(err, dbo, db) {
