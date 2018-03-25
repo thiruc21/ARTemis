@@ -30,6 +30,7 @@
     "core-js": "^2.4.1",
     "express": "^4.16.3",
     "express-session": "^1.15.6",
+    "get-env": "^0.5.10",
     "googleapis": "^27.0.0",
     "mongodb": "^3.0.4",
     "multer": "^1.3.0",
