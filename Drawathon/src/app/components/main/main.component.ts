@@ -26,9 +26,10 @@ export class MainComponent implements OnInit {
     this.gamesData = [];
     this.api = new ApiModule();
     // Get current user.
-    this.user = this.api.getCurrentUser();
+    var user = this.user = this.api.getCurrentUser();
 
     if (this.user == "" || this.user == null) { // No users.
+      console.log("SHOULD RETURN BACK TO LOGIN PAGE, VIISAAA SAAAAn");
       this.createD = "none";
       this.check = false; // No need to check.
     }
@@ -37,9 +38,8 @@ export class MainComponent implements OnInit {
       // Temp references to allow usage inside the callback.
       var games:string[] = this.games;
       var gamesData:any[] = this.gamesData;
-      var check:boolean = this.check;
-      var user = this.user;
-      this.api.getGames(function(err, res){
+      var check:boolean = this.check;      
+      this.api.getGames(function(err, res) {
         if (err) console.log(err);
         else if (res) {
           check = true; // Short poll for updates.

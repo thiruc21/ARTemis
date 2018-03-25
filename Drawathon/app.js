@@ -15,11 +15,10 @@ const google = require('googleapis');
 const config = require('./config');
 
 var GoogleStrategy = require('passport-google-oauth20').Strategy;
-
 //var twitchStrategy = require("passport-twitch").Strategy;
+
 var db = null;
 var dbo = null;
-
 
 const app = express();
 
@@ -32,13 +31,8 @@ var upload = multer({ dest: path.join(__dirname, 'uploads') });
 app.use(bodyParser.json());
 app.use(express.static('dist'));
 
-const dbName = 'test';
-
-
-
 /* Twitch Strategy */
-/*
- passport.use(new twitchStrategy({
+/*passport.use(new twitchStrategy({
     clientID: 'p8153nxml0rxi29b9xrakz57cp8yrh',
     clientSecret: 'wdsa7z2dyovn2n2wb7e8n6o4ydgx1j',
     callbackURL: "http://localhost:3000/users/oauth/google/callback",
@@ -50,10 +44,10 @@ const dbName = 'test';
     console.log("name", profile.displayName);
     return done(err, user);
   }
-)); 
-*/
+)); */
 
-/* Google OUATH Strategy, once 'authenticated', user will be directed to google's authentication page, then a user's
+/*
+ Google OUATH Strategy, once 'authenticated', user will be directed to google's authentication page, then a user's
     profile is returned which we process and send back to a callback function
     All frontend needs to do is call '/users/oauth/google/', and check
     appropriate profile set in session.
@@ -83,7 +77,8 @@ passport.use('googleToken', new GoogleStrategy({
 
 
 /* Serialization for passport to save users into session, called by passport in request flow,
-stored in req.session.passport.user and deserialized to req.user if success */
+stored in req.session.passport.user and deserialized to req.user if success 
+*/
 passport.serializeUser(function(user, done) {
     done(null, user._id);
 });
@@ -147,8 +142,6 @@ function generateHash (password, salt){
 
 app.use(function(req, res, next){
     var cookies = cookie.parse(req.headers.cookie || '');
-    //req.user = ('user' in req.session)? req.session.user : null;
-    
     var authUser = (req.user)? req.user.givName : '';
     var username = (req.session.username)? req.session.username : authUser;
 
@@ -161,11 +154,12 @@ app.use(function(req, res, next){
 });
 
 var isAuthenticated = function(req, res, next) {
+    console.log(req.session.username);
     if (!req.isAuthenticated() && !req.session.username) return res.status(401).end("access denied");
     next();
 };
 
-/* Gets the current user for the session id*/
+/* Gets the current user for the session id */
 app.get('/authenticated/',  function(req, res, next) {
     if (!req.user) return res.status(409).end("No users authenticated"); 
     return res.json("User " + req.user.givName + " ");
@@ -180,7 +174,7 @@ app.get('/users/oauth/google/', passport.authenticate('googleToken', {scope:
 app.get('/users/oauth/google/callback', 
   passport.authenticate('googleToken', { failureRedirect: '/signin/'}),
   function(req, res) {
-    
+    req.session.username = req.user.givName;
     res.setHeader('Set-Cookie', cookie.serialize('username', req.user.givName, {
         //httpOnly: false,
         path : '/', 
@@ -194,6 +188,7 @@ app.get('/users/oauth/google/callback',
 app.post('/signup/', function (req, res, next) {
     var username = req.body.username;
     var password = req.body.password;    
+
     connect(res, function(err, dbo, db) {
         if (err) return res.status(500).end(err);
         if (!dbo) return res.status(500).end("dbo err");
@@ -203,7 +198,8 @@ app.post('/signup/', function (req, res, next) {
 
             var salt = generateSalt();
             var hash = generateHash(password, salt);
-            dbo.collection("users").update({username: username, authProvider: 'artemis'}, {salt:salt, hash:hash}, 
+            dbo.collection("users").update({username: username, authProvider: 'artemis'}, 
+                {username: username, authProvider: 'artemis', salt:salt, hash:hash}, 
                 {upsert: true}, function(n, nMod) {
                     if (err) return res.status(500).end(err);
                     return res.json("User " + username + " signed up");
@@ -234,7 +230,6 @@ app.post('/signin/', function (req, res, next) {
             return res.json("User " + username + " signed in");
         });
     });
-    
 });
 
 // Sign out of the current user
@@ -425,7 +420,8 @@ app.get('/api/images/:id/image/', isAuthenticated, function (req, res, next) {
 */
 
 function getAuthUser(req) {
-    return req.session.username? req.session.username : req.user.givName;
+    return req.session.username;
+    //return req.session.username? req.session.username : req.user.givName;
 }
 
 function team(userEnt) {
@@ -464,10 +460,10 @@ async function mongoSetup() {
         if (!mongodb) console.log(err);
         else {
             db = mongodb;
-            dbo = db.db(dbName);
+            dbo = db.db(config.mongo.dbname);
             //dbo.collection("users").drop();
-            dbo.collection("games").drop();
-           // dbo.collection("game_joined").drop();
+            //dbo.collection("games").drop();
+           // dbo.collection("game_joined").drop(s;
         }        
     });
 }
