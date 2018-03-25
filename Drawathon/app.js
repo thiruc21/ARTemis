@@ -1,23 +1,118 @@
 "use strict"
 const path = require('path');
 const express = require('express');
-const app = express();
 const bodyParser = require('body-parser');
 const cookie = require('cookie');
 const session = require('express-session');
-const MongoClient = require('mongodb').MongoClient;
-var ObjectId = require("mongodb").ObjectId;
 const crypto = require('crypto');
 const fs = require('fs');
+const MongoClient = require('mongodb').MongoClient;
+const ObjectId = require("mongodb").ObjectId;
 
-app.use(bodyParser.json());
+
+
+const passport = require('passport');
+const google = require('googleapis');
+const config = require('./config');
+
+const validator = require('validator');
+
+const expValidator = require('express-validator');
+
+
+const checker = require('express-validator/check');
+const sanitize = require('express-validator/filter');
+
+var GoogleStrategy = require('passport-google-oauth20').Strategy;
+//var twitchStrategy = require("passport-twitch").Strategy;
+
+var db = null;
+var dbo = null;
+
+const app = express();
 
 const http = require('http');
 const PORT = 3000;
-
 const MAXPLAYERS = 4;
 var multer  = require('multer');
 var upload = multer({ dest: path.join(__dirname, 'uploads') });
+
+
+app.use(expValidator())
+//app.use(checker());
+app.use(bodyParser.json());
+app.use(express.static('dist'));
+
+/* Twitch Strategy */
+/*passport.use(new twitchStrategy({
+    clientID: 'p8153nxml0rxi29b9xrakz57cp8yrh',
+    clientSecret: 'wdsa7z2dyovn2n2wb7e8n6o4ydgx1j',
+    callbackURL: "http://localhost:3000/users/oauth/google/callback",
+    scope: "user_read"
+  },
+  function(accessToken, refreshToken, profile, done) {
+    console.log("access", accessToken);
+    console.log("profile", profile);
+    console.log("name", profile.displayName);
+    return done(err, user);
+  }
+)); */
+
+/*
+ Google OUATH Strategy, once 'authenticated', user will be directed to google's authentication page, then a user's
+    profile is returned which we process and send back to a callback function
+    All frontend needs to do is call '/users/oauth/google/', and check
+    appropriate profile set in session.
+
+    Step 1: directed to http://localhost:3000/users/oauth/google
+    Step 2: website returned user, and serialized profile in session
+*/
+passport.use('googleToken', new GoogleStrategy({ 
+        clientID: config.google.clientid,
+        clientSecret: config.google.cllientSecret,
+        callbackURL: config.google.Callback
+    }, function(accessToken, refreshToken, profile, callback) {
+
+        dbo.collection("users").findOne({googleId: profile.id, authProvider: 'google'}, function(err, foundUser) {
+            if (err) return callback(err, null);
+            if (foundUser) return callback(null, foundUser);
+            dbo.collection("users").insertOne(
+            {givName: profile.name.givenName, googleId: profile.id, authProvider: 'google', dispName: profile.displayName},
+            function (err, res) {
+                if (err) return callback(err, null);
+                return callback(null, res.ops[0]);
+            });
+        });
+    }
+));
+
+/* Serialization for passport to save users into session, called by passport in request flow,
+stored in req.session.passport.user and deserialized to req.user if success 
+*/
+passport.serializeUser(function(user, done) {
+    done(null, user._id);
+});
+
+passport.deserializeUser(function(id, done) {
+    dbo.collection("users").findOne({_id: ObjectId(id)}, function(err, user) {
+        return done(err, user);
+    });    
+});
+
+app.use(session({
+    //cookie: {//httpOnly: true, secure: true, sameSite: true},
+    secret: 'please change this secret',
+    resave: false,
+    saveUninitialized: true,
+}));
+
+app.use(function (req, res, next){
+    console.log("HTTP request", req.method, req.url, req.body);
+    next();
+});
+
+app.use(passport.initialize());
+app.use(passport.session());
 
 // The following forceSSL middleware code snippet is taken from 
 /** https://medium.com/@ryanchenkie_40935/angular-cli-deployment-host-your-angular-2-app-on-heroku-3f266f13f352 */
@@ -26,7 +121,6 @@ var upload = multer({ dest: path.join(__dirname, 'uploads') });
 // a protocol other than HTTPS,
 // redirect that request to the
 // same url but with HTTPS
-
 const forceSSL = function() {
     return function (req, res, next) {
       if (req.headers['x-forwarded-proto'] !== 'https') {
@@ -45,22 +139,6 @@ const forceSSL = function() {
 if (app.get('env') !== 'development'){
     app.use(forceSSL());
 }
-app.use(express.static('dist'));
-
-const uri = "mongodb://admin:hashedpass@art-shard-00-00-xs19d.mongodb.net:" +
-     "27017,art-shard-00-01-xs19d.mongodb.net:27017,art-shard-00-02-xs19d.mongodb.net" + 
-     ":27017/test?ssl=true&replicaSet=Art-shard-0&authSource=admin";
-const dbName = 'test';
-
-var db = null;
-var dbo;
-
-app.use(session({
-    //cookie: {//httpOnly: true,         secure: true, sameSite: true},
-    secret: 'please change this secret',
-    resave: false,
-    saveUninitialized: true,
-}));
 
 function generateSalt (){
     return crypto.randomBytes(16).toString('base64');
@@ -74,8 +152,9 @@ function generateHash (password, salt){
 
 app.use(function(req, res, next){
     var cookies = cookie.parse(req.headers.cookie || '');
-    req.user = ('user' in req.session)? req.session.user : null;
-    var username = (req.session.username)? req.session.username : '';
+    var authUser = (req.user)? req.user.givName : '';
+    var username = (req.session.username)? req.session.username : authUser;
+
     res.setHeader('Set-Cookie', cookie.serialize('username', username, {
           //httpOnly: false,
           path : '/', 
@@ -84,49 +163,73 @@ app.use(function(req, res, next){
     next();
 });
 
-app.use(function (req, res, next){
-    console.log("HTTP request", req.method, req.url, req.body);
-    next();
-});
-
 var isAuthenticated = function(req, res, next) {
-    if (!req.session.username) return res.status(401).end("access denied");
+    if (!req.isAuthenticated() && !req.session.username) return res.status(401).end("access denied");
     next();
 };
 
-// curl -H "Content-Type: application/json" -X POST -d '{"username":"alice","password":"alice"}' -c cookie.txt localhost:3000/signup/
-app.post('/signup/', function (req, res, next) {
-    var username = req.body.username;
-    var password = req.body.password;
-    
-    connect(res, function(err, dbo, db) {
-        if (err) return res.status(500).end(err);
-        if (!dbo) return res.status(500).end("dbo err");
-        dbo.collection("users").findOne({_id: username}, function(err, user) {
-            if (err) return res.status(500).end(err);
-            if (user) return res.status(409).end("Username " + username + " already exists");
+var checkUsername = function(req, res, next) {
+    req.check('username', 'Please enter a valid username').exists().isAlphanumeric();
+    var errors = req.validationErrors();
+    if (errors) return res.status(400).send(errors[0].msg);
+    next();
+};
 
-            var salt = generateSalt();
-            var hash = generateHash(password, salt);
-            dbo.collection("users").update({_id: username}, {_id: username, salt:salt, hash:hash}, 
-                {upsert: true}, function(n, nMod) {
-                    if (err) return res.status(500).end(err);
-                    return res.json("User " + username + " signed up");
-            });
+var checkPassword = function(req, res, next) {
+    req.check('password', 'Please enter a valid password').exists().isAlphanumeric();
+    var errors = req.validationErrors();
+    if (errors) return res.status(400).send(errors[0].msg);
+    next();
+};
+
+/* uses passport auth to direct appropriately, afterwards callback get is called
+and further redirected to homepage, after req.session.passport.user is set */
+app.get('/users/oauth/google/', passport.authenticate('googleToken', {scope:
+    [ 'profile']})
+);
+
+app.get('/users/oauth/google/callback', 
+  passport.authenticate('googleToken', { failureRedirect: '/signin/'}),
+  function(req, res) {
+    req.session.username = req.user.givName;
+    res.setHeader('Set-Cookie', cookie.serialize('username', req.user.givName, {
+        //httpOnly: false,
+        path : '/', 
+        maxAge: 60 * 60 * 24 * 7 // 1 week in number of seconds
+    }));
+    // Successful authentication, redirect home.
+    return res.redirect('/');    
+  });
+
+// curl -H "Content-Type: application/json" -X POST -d '{"username":"alice","password":"alice"}' -c cookie.txt localhost:3000/signup/
+app.post('/signup/', [checkUsername, checkPassword],  function (req, res, next) {
+    var username = req.body.username;
+    var password = req.body.password;    
+
+    dbo.collection("users").findOne({username: username, authProvider: 'artemis'}, function(err, user) {
+        if (err) return res.status(500).end(err);
+        if (user) return res.status(409).end("Username " + username + " already exists");
+
+        var salt = generateSalt();
+        var hash = generateHash(password, salt);
+        dbo.collection("users").update({username: username, authProvider: 'artemis'}, 
+            {username: username, authProvider: 'artemis', salt:salt, hash:hash}, 
+            {upsert: true}, function(n, nMod) {
+                if (err) return res.status(500).end(err);
+                return res.json("User " + username + " signed up");
         });
     });
 });
 
 // curl -H "Content-Type: application/json" -X POST -d '{"username":"alice","password":"alice"}' -c cookie.txt localhost:3000/signin/
 // curl -H "Content-Type: application/json" -X POST -d '{"username":"bob","password":"alice"}' -c cookie.txt localhost:3000/signin/
-app.post('/signin/', function (req, res, next) {
-    // TODO: sanitize
+app.post('/signin/', [checkUsername, checkPassword], function (req, res, next) {
     var username = req.body.username;
     var password = req.body.password;
     connect(res, function(err, dbo, db) {
         if (err) return res.status(500).end(err);
         // retrieve user from the database
-        dbo.collection("users").findOne({_id: username}, function(err, user) {
+        dbo.collection("users").findOne({username: username, authProvider: 'artemis'}, function(err, user) {
             if (err) return res.status(500).end(err);
             if (!user) return res.status(401).end("Access denied, incorrect credentials\n");
             if (user.hash !== generateHash(password, user.salt)) return res.status(401).end("Access denied, incorrect credentials\n"); 
@@ -139,12 +242,13 @@ app.post('/signin/', function (req, res, next) {
             return res.json("User " + username + " signed in");
         });
     });
-    
 });
 
 // Sign out of the current user
 app.get('/signout/', function (req, res, next) {
+    req.logOut();
     req.session.destroy();
+    
     res.setHeader('Set-Cookie', cookie.serialize('username', '', {
           path : '/', 
           maxAge: 60 * 60 * 24 * 7 
@@ -158,7 +262,7 @@ app.post('/api/games/', isAuthenticated, function (req, res, next) {
     var title = req.body.title;
     var team1Id = req.body.team1Id;
     var team2Id = req.body.team2Id;
-    var host = req.session.username;
+    var host = getAuthUser(req);
 
     connect(res, function(err, dbo, db) {
         if (err) return res.status(500).end(err);
@@ -189,7 +293,7 @@ app.post('/api/games/:id/joined/', isAuthenticated, function (req, res, next) {
     // TODO: sanitize
     var canvasId = req.body.canvasId;
     var chatId = req.body.chatId;
-    var userJoined = req.session.username;
+    var userJoined = getAuthUser(req);
     var gameId = req.params.id;
 
     findGames(res, gameId, function(err, game, dbo, db) {
@@ -241,7 +345,7 @@ app.post('/api/games/:id/joined/', isAuthenticated, function (req, res, next) {
 
 // curl -b cookie.txt -H "Content-Type: application/json" -X DELETE localhost:3000/api/games/5aad97f9f4e28b075083ef9c/
 app.delete('/api/games/:id/', isAuthenticated, function (req, res, next) {
-    var host = req.session.username;
+    var host = getAuthUser(req);
     var gameId = req.params.id;
 
     findGames(res, gameId, function(err, game, dbo, db) {
@@ -286,7 +390,7 @@ app.delete('/api/games/:id/joined/', isAuthenticated, function (req, res, next) 
 /* Returns every player entry for that game */ 
 app.get('/api/games/:id/joined/', isAuthenticated, function (req, res, next) {
     var gameId = req.params.id;
-    var host = req.session.username;         
+    var host = getAuthUser(req);      
 
     connect(res, function(err, dbo, db) {
         if (err) return res.status(500).end(err);
@@ -327,6 +431,10 @@ app.get('/api/images/:id/image/', isAuthenticated, function (req, res, next) {
 });
 */
 
+function getAuthUser(req) {
+    return req.session.username;
+    //return req.session.username? req.session.username : req.user.givName;
+}
 
 function team(userEnt) {
     var team0 = 0;
@@ -358,18 +466,25 @@ function connect(res, callback) {
     callback(null, dbo, db);
 }
 
+async function mongoSetup() {
+    await MongoClient.connect(config.mongo.id, function(err, mongodb) {  
+        if (err) console.log(err);
+        if (!mongodb) console.log(err);
+        else {
+            db = mongodb;
+            dbo = db.db(config.mongo.dbname);
+            //dbo.collection("users").drop();
+            //dbo.collection("games").drop();
+           // dbo.collection("game_joined").drop(s;
+        }        
+    });
+}
+mongoSetup();
+
+
 http.createServer(app).listen(process.env.PORT || PORT, function (err) {
     if (err) console.log(err);
     else {
-        MongoClient.connect(uri, function(err, mongodb) {  
-            if (err) console.log(err);
-            else {
-                db = mongodb;
-                dbo = db.db(dbName);
-                //dbo.collection("games").drop();
-                //dbo.collection("game_joined").drop();
-            }        
-        });
         console.log("HTTP server on http://localhost:%s", PORT);
     }        
-});  
+})

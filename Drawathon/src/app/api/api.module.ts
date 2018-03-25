@@ -21,9 +21,6 @@ export class ApiModule implements OnInit {
   ngOnInit() {
   }
 
-  private send2(method, url, data, callback){
-    
-  }
   constructor() {}
   private sendFiles(method, url, data, callback){
     var formdata = new FormData();
