@@ -86,6 +86,20 @@ passport.use('googleToken', new GoogleStrategy({
     }
 ));
 
+/*
+passport.use('facebookToken',new FacebookStrategy({
+    clientID: FACEBOOK_APP_ID,
+    clientSecret: config.facebook.clientSecret,
+    callbackURL: config.facebook.Callback
+  },
+  function(accessToken, refreshToken, profile, cb) {
+    User.findOrCreate({ facebookId: profile.id }, function (err, user) {
+      return cb(err, user);
+    });
+  }
+));
+*/
+
 /* Serialization for passport to save users into session, called by passport in request flow,
 stored in req.session.passport.user and deserialized to req.user if success 
 */
