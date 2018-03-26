@@ -300,7 +300,7 @@ app.post('/signin/', [checkUsername, checkPassword], function (req, res, next) {
             res.setHeader('Set-Cookie', cookie.serialize('username', username, {
                 sameSite: true,
                 secure: true,
-                httpOnly: true,
+                httpOnly: false,
                 path : '/', 
                 maxAge: 60 * 60 * 24 * 7
             }));
