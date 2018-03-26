@@ -22,7 +22,7 @@ if (env === 'dev') {
     config.facebook.Callback =  'http://localhost:3000/auth/facebook/callback'
 } else {
     config.google.Callback = 'https://art-emis.herokuapp.com/users/oauth/google/callback'
-    config.facebook.Callback =  'http://art-emis.herokuapp.com/users/oauth/facebook/callback'
+    config.facebook.Callback =  'https://art-emis.herokuapp.com/users/oauth/facebook/callback'
 }
 
 module.exports = config;

@@ -24,6 +24,7 @@ const checker = require('express-validator/check');
 const sanitize = require('express-validator/filter');
 
 var GoogleStrategy = require('passport-google-oauth20').Strategy;
+var FacebookStrategy = require('passport-facebook').Strategy;
 //var twitchStrategy = require("passport-twitch").Strategy;
 
 var db = null;
@@ -86,19 +87,24 @@ passport.use('googleToken', new GoogleStrategy({
     }
 ));
 
-/*
+
 passport.use('facebookToken',new FacebookStrategy({
-    clientID: FACEBOOK_APP_ID,
+    clientID: config.facebook.appid,
     clientSecret: config.facebook.clientSecret,
     callbackURL: config.facebook.Callback
   },
   function(accessToken, refreshToken, profile, cb) {
-    User.findOrCreate({ facebookId: profile.id }, function (err, user) {
-      return cb(err, user);
+    console.log("profile", profile);
+    dbo.collection("users").findOne({googleId: profile.id, authProvider: 'facebook'}, function(err, foundUser) {
+        if (err) return callback(err, null);
+        if (foundUser) return callback(null, foundUser);
+        //dbo.collection("users").insertOne(
+            //{givName: profile.name.givenName, googleId: profile.id, authProvider: 'facebook', dispName: profile.displayName},
+            
     });
+
   }
 ));
-*/
 
 /* Serialization for passport to save users into session, called by passport in request flow,
 stored in req.session.passport.user and deserialized to req.user if success 
@@ -202,15 +208,29 @@ app.get('/users/oauth/google/', passport.authenticate('googleToken', {scope:
     [ 'profile']})
 );
 
+app.get('/users/oauth/facebook/', passport.authenticate('facebookToken', {scope:
+    [ 'public_profile']})
+);
+
+app.get('/users/oauth/facebook/callback', 
+  passport.authenticate('googleToken', { failureRedirect: '/signin/'}),
+  function(req, res) {
+    //req.session.username = req.user.givName;
+    
+    // Successful authentication, redirect home.
+    return res.redirect('/');    
+});
 app.get('/users/oauth/google/callback', 
   passport.authenticate('googleToken', { failureRedirect: '/signin/'}),
   function(req, res) {
     req.session.username = req.user.givName;
+    
     res.setHeader('Set-Cookie', cookie.serialize('username', req.user.givName, {
         //httpOnly: false,
         path : '/', 
         maxAge: 60 * 60 * 24 * 7 // 1 week in number of seconds
     }));
+
     // Successful authentication, redirect home.
     return res.redirect('/');    
   });
