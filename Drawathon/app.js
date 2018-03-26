@@ -35,6 +35,8 @@ const app = express();
 
 //const http = require('http');
 const https = require('https');
+const http = require('http');
+
 const PORT = 3000;
 const MAXPLAYERS = 4;
 var multer  = require('multer');
@@ -82,11 +84,11 @@ passport.use('googleToken', new GoogleStrategy({
         callbackURL: configFile.google.Callback,
     }, function(accessToken, refreshToken, profile, callback) {
 
-        dbo.collection("users").findOne({googleId: profile.id, authProvider: 'google'}, function(err, foundUser) {
+        dbo.collection("users").findOne({googleId: profile.id}, function(err, foundUser) {
             if (err) return callback(err, null);
             if (foundUser) return callback(null, foundUser);
             dbo.collection("users").insertOne(
-            {givName: profile.name.givenName, googleId: profile.id, authProvider: 'google', dispName: profile.displayName},
+            {googleId: profile.id, username: profile.displayName, authProvider: 'google'},
             function (err, res) {
                 if (err) return callback(err, null);
                 return callback(null, res.ops[0]);
@@ -103,11 +105,11 @@ passport.use('facebookToken', new FacebookStrategy({
     enableProof: true
   }, function(accessToken, refreshToken, profile, callback) {
     
-    dbo.collection("users").findOne({facebookId: profile.id, authProvider: 'facebook'}, function(err, foundUser) {
+    dbo.collection("users").findOne({facebookId: profile.id}, function(err, foundUser) {
         if (err) return callback(err, null);
         if (foundUser) return callback(null, foundUser);
         dbo.collection("users").insertOne(
-            {username: profile.displayName, facebookId: profile.id, authProvider: 'facebook'},     
+            {facebookId: profile.id, username: profile.displayName, authProvider: 'facebook'},     
             function (err, res) {
                 if (err) return callback(err, null);
                 return callback(null, res.ops[0]);
@@ -130,7 +132,11 @@ passport.deserializeUser(function(id, done) {
 });
 
 app.use(session({
-    //cookie: {//httpOnly: true, secure: true, sameSite: true},
+    cookie: {
+        httpOnly: true
+        ,secure: true
+        ,sameSite: true
+    },
     secret: 'please change this secret',
     resave: false,
     saveUninitialized: true,
@@ -182,13 +188,15 @@ function generateHash (password, salt){
 
 app.use(function(req, res, next){
     var cookies = cookie.parse(req.headers.cookie || '');
-    var authUser = (req.user)? req.user.givName : '';
+    var authUser = (req.user)? req.user.username : '';
     var username = (req.session.username)? req.session.username : authUser;
 
     res.setHeader('Set-Cookie', cookie.serialize('username', username, {
-          //httpOnly: false,
-          path : '/', 
-          maxAge: 60 * 60 * 24 * 7 // 1 week in number of seconds
+        httpOnly: false,
+        secure: true,
+        sameSite: true,
+        path : '/', 
+        maxAge: 60 * 60 * 24 * 7 // 1 week in number of seconds
     }));
     next();
 });
@@ -228,7 +236,9 @@ app.get('/users/oauth/facebook/callback',
       console.log("sending back req");
     req.session.username = req.user.username;
     res.setHeader('Set-Cookie', cookie.serialize('username', req.session.username, {
-        //httpOnly: false,
+        sameSite: true,
+        secure: true,
+        httpOnly: false,
         path : '/', 
         maxAge: 60 * 60 * 24 * 7 // 1 week in number of seconds
     }));
@@ -242,7 +252,9 @@ app.get('/users/oauth/google/callback',
     req.session.username = req.user.givName;
     
     res.setHeader('Set-Cookie', cookie.serialize('username', req.session.username, {
-        //httpOnly: false,
+        sameSite: true,
+        secure: true,
+        httpOnly: false,
         path : '/', 
         maxAge: 60 * 60 * 24 * 7 // 1 week in number of seconds
     }));
@@ -286,6 +298,9 @@ app.post('/signin/', [checkUsername, checkPassword], function (req, res, next) {
             req.session.username = username;
             // initialize cookie
             res.setHeader('Set-Cookie', cookie.serialize('username', username, {
+                sameSite: true,
+                secure: true,
+                httpOnly: false,
                 path : '/', 
                 maxAge: 60 * 60 * 24 * 7
             }));
@@ -532,9 +547,18 @@ async function mongoSetup() {
 mongoSetup();
 
 
-https.createServer(config, app).listen(process.env.PORT || PORT, function (err) {
-    if (err) console.log(err);
-    else {
-        console.log("HTTPS server on http://localhost:%s", PORT);
-    }        
-})
+if (app.get('env') !== 'development'){
+    http.createServer(app).listen(process.env.PORT || PORT, function (err) {
+        if (err) console.log(err);
+        else {
+            console.log("HTTP server on http://localhost:%s", PORT);
+        }        
+    })
+} else {
+    https.createServer(config, app).listen(process.env.PORT || PORT, function (err) {
+        if (err) console.log(err);
+        else {
+            console.log("HTTPS server on http://localhost:%s", PORT);
+        }        
+    })
+}

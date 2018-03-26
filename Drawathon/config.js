@@ -18,6 +18,7 @@ config.facebook = {};
 config.facebook.appid = '967248243451565';
 config.facebook.clientSecret = '3a20033839729f77f2f0fd569312116a';
 
+
 if (env === 'dev') {
     config.google.Callback = 'https://localhost:3000/users/oauth/google/callback'   
     config.facebook.Callback =  'https://localhost:3000/users/oauth/facebook/callback'
@@ -25,5 +26,6 @@ if (env === 'dev') {
     config.google.Callback = 'https://art-emis.herokuapp.com/users/oauth/google/callback'
     config.facebook.Callback =  'https://art-emis.herokuapp.com/users/oauth/facebook/callback'
 }
+
 
 module.exports = config;
