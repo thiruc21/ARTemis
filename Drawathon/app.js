@@ -26,7 +26,7 @@ const sanitize = require('express-validator/filter');
 
 var GoogleStrategy = require('passport-google-oauth20').Strategy;
 var FacebookStrategy = require('passport-facebook').Strategy;
-//var twitchStrategy = require("passport-twitch").Strategy;
+var TwitchStrategy = require("passport-twitch").Strategy;
 
 var db = null;
 var dbo = null;
@@ -55,19 +55,27 @@ var config = {
 };
 
 /* Twitch Strategy */
-/*passport.use(new twitchStrategy({
-    clientID: 'p8153nxml0rxi29b9xrakz57cp8yrh',
-    clientSecret: 'wdsa7z2dyovn2n2wb7e8n6o4ydgx1j',
-    callbackURL: "http://localhost:3000/users/oauth/google/callback",
+passport.use('twitchToken', new TwitchStrategy({
+    clientID: configFile.twitch.clientid,
+    clientSecret: configFile.twitch.clientSecret,
+    callbackURL: configFile.twitch.Callback,
     scope: "user_read"
   },
-  function(accessToken, refreshToken, profile, done) {
-    console.log("access", accessToken);
-    console.log("profile", profile);
-    console.log("name", profile.displayName);
-    return done(err, user);
+  function(accessToken, refreshToken, profile, callback) {
+    
+    dbo.collection("users").findOne({twitchId: profile.id}, function(err, foundUser) {
+        if (err) return callback(err, null);
+        if (foundUser) return callback(null, foundUser);
+        
+        dbo.collection("users").insertOne(
+        {twitchId: profile.id, username: profile.displayName, authProvider: 'twitch'},
+        function (err, res) {
+            if (err) return callback(err, null);
+            return callback(null, res.ops[0]);
+        });
+    });
   }
-)); */
+)); 
 
 /*
  Google OUATH Strategy, once 'authenticated', user will be directed to google's authentication page, then a user's
@@ -230,10 +238,29 @@ app.get('/users/oauth/facebook/', passport.authenticate('facebookToken', {scope:
     [ 'public_profile']})
 );
 
+app.get('/users/oauth/twitch/', passport.authenticate('twitchToken'));
+
+
+app.get('/users/oauth/twitch/callback', 
+  passport.authenticate('twitchToken', { failureRedirect: '/signin/'}),
+  function(req, res) {
+
+    req.session.username = req.user.username;
+    res.setHeader('Set-Cookie', cookie.serialize('username', req.session.username, {
+        sameSite: true,
+        secure: true,
+        httpOnly: false,
+        path : '/', 
+        maxAge: 60 * 60 * 24 * 7 // 1 week in number of seconds
+    }));
+
+    // Successful authentication, redirect home.
+    return res.redirect('/');    
+});
+
 app.get('/users/oauth/facebook/callback', 
   passport.authenticate('facebookToken', { failureRedirect: '/signin/'}),
   function(req, res) {
-      console.log("sending back req");
     req.session.username = req.user.username;
     res.setHeader('Set-Cookie', cookie.serialize('username', req.session.username, {
         sameSite: true,
