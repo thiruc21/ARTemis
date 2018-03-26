@@ -9,11 +9,12 @@ const fs = require('fs');
 const MongoClient = require('mongodb').MongoClient;
 const ObjectId = require("mongodb").ObjectId;
 
-
+var privateKey = fs.readFileSync( 'server.key' );
+var certificate = fs.readFileSync( 'server.crt' );
 
 const passport = require('passport');
 const google = require('googleapis');
-const config = require('./config');
+const configFile = require('./config');
 
 const validator = require('validator');
 
@@ -32,7 +33,8 @@ var dbo = null;
 
 const app = express();
 
-const http = require('http');
+//const http = require('http');
+const https = require('https');
 const PORT = 3000;
 const MAXPLAYERS = 4;
 var multer  = require('multer');
@@ -43,6 +45,12 @@ app.use(expValidator())
 //app.use(checker());
 app.use(bodyParser.json());
 app.use(express.static('dist'));
+
+
+var config = {
+    key: privateKey,
+    cert: certificate
+};
 
 /* Twitch Strategy */
 /*passport.use(new twitchStrategy({
@@ -69,9 +77,9 @@ app.use(express.static('dist'));
     Step 2: website returned user, and serialized profile in session
 */
 passport.use('googleToken', new GoogleStrategy({ 
-        clientID: config.google.clientid,
-        clientSecret: config.google.cllientSecret,
-        callbackURL: config.google.Callback
+        clientID: configFile.google.clientid,
+        clientSecret: configFile.google.clientSecret,
+        callbackURL: configFile.google.Callback,
     }, function(accessToken, refreshToken, profile, callback) {
 
         dbo.collection("users").findOne({googleId: profile.id, authProvider: 'google'}, function(err, foundUser) {
@@ -88,22 +96,24 @@ passport.use('googleToken', new GoogleStrategy({
 ));
 
 
-passport.use('facebookToken',new FacebookStrategy({
-    clientID: config.facebook.appid,
-    clientSecret: config.facebook.clientSecret,
-    callbackURL: config.facebook.Callback
-  },
-  function(accessToken, refreshToken, profile, cb) {
-    console.log("profile", profile);
-    dbo.collection("users").findOne({googleId: profile.id, authProvider: 'facebook'}, function(err, foundUser) {
+passport.use('facebookToken', new FacebookStrategy({
+    clientID: configFile.facebook.appid, 
+    clientSecret: configFile.facebook.clientSecret,
+    callbackURL: configFile.facebook.Callback,
+    enableProof: true
+  }, function(accessToken, refreshToken, profile, callback) {
+    
+    dbo.collection("users").findOne({facebookId: profile.id, authProvider: 'facebook'}, function(err, foundUser) {
         if (err) return callback(err, null);
         if (foundUser) return callback(null, foundUser);
-        //dbo.collection("users").insertOne(
-            //{givName: profile.name.givenName, googleId: profile.id, authProvider: 'facebook', dispName: profile.displayName},
-            
-    });
-
-  }
+        dbo.collection("users").insertOne(
+            {username: profile.displayName, facebookId: profile.id, authProvider: 'facebook'},     
+            function (err, res) {
+                if (err) return callback(err, null);
+                return callback(null, res.ops[0]);
+            });
+        });
+    }
 ));
 
 /* Serialization for passport to save users into session, called by passport in request flow,
@@ -213,19 +223,25 @@ app.get('/users/oauth/facebook/', passport.authenticate('facebookToken', {scope:
 );
 
 app.get('/users/oauth/facebook/callback', 
-  passport.authenticate('googleToken', { failureRedirect: '/signin/'}),
+  passport.authenticate('facebookToken', { failureRedirect: '/signin/'}),
   function(req, res) {
-    //req.session.username = req.user.givName;
-    
+      console.log("sending back req");
+    req.session.username = req.user.username;
+    res.setHeader('Set-Cookie', cookie.serialize('username', req.session.username, {
+        //httpOnly: false,
+        path : '/', 
+        maxAge: 60 * 60 * 24 * 7 // 1 week in number of seconds
+    }));
     // Successful authentication, redirect home.
     return res.redirect('/');    
 });
+
 app.get('/users/oauth/google/callback', 
   passport.authenticate('googleToken', { failureRedirect: '/signin/'}),
   function(req, res) {
     req.session.username = req.user.givName;
     
-    res.setHeader('Set-Cookie', cookie.serialize('username', req.user.givName, {
+    res.setHeader('Set-Cookie', cookie.serialize('username', req.session.username, {
         //httpOnly: false,
         path : '/', 
         maxAge: 60 * 60 * 24 * 7 // 1 week in number of seconds
@@ -501,12 +517,12 @@ function connect(res, callback) {
 }
 
 async function mongoSetup() {
-    await MongoClient.connect(config.mongo.id, function(err, mongodb) {  
+    await MongoClient.connect(configFile.mongo.id, function(err, mongodb) {  
         if (err) console.log(err);
         if (!mongodb) console.log(err);
         else {
             db = mongodb;
-            dbo = db.db(config.mongo.dbname);
+            dbo = db.db(configFile.mongo.dbname);
             //dbo.collection("users").drop();
             //dbo.collection("games").drop();
            // dbo.collection("game_joined").drop(s;
@@ -516,9 +532,9 @@ async function mongoSetup() {
 mongoSetup();
 
 
-http.createServer(app).listen(process.env.PORT || PORT, function (err) {
+https.createServer(config, app).listen(process.env.PORT || PORT, function (err) {
     if (err) console.log(err);
     else {
-        console.log("HTTP server on http://localhost:%s", PORT);
+        console.log("HTTPS server on http://localhost:%s", PORT);
     }        
 })
