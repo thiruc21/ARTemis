@@ -6,12 +6,13 @@ import { LobbyComponent } from './components/lobby/lobby.component';
 import { ChatComponent } from './components/chat/chat.component';
 import { SignupComponent } from './components/signup/signup.component'
 import { SigninComponent } from './components/signin/signin.component';
+import { CanvasComponent } from './components/canvas/canvas.component';
 
 const routes: Routes = [
   { path: 'game', component:GameComponent } ,
   { path: '', component:MainComponent, pathMatch: 'full' } ,
   { path: 'lobby', component:LobbyComponent } ,
-  { path: 'test', component:ChatComponent } ,
+  { path: 'test', component:CanvasComponent } ,
   { path: 'signin', component:SigninComponent} ,
   { path: 'signup', component:SignupComponent}
 ];
