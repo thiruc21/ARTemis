@@ -19,8 +19,6 @@ const configFile = require('./config');
 const validator = require('validator');
 
 const expValidator = require('express-validator');
-
-
 const checker = require('express-validator/check');
 const sanitize = require('express-validator/filter');
 
@@ -32,7 +30,6 @@ var db = null;
 var dbo = null;
 
 const app = express();
-
 const https = require('https');
 const http = require('http');
 
@@ -43,7 +40,6 @@ var upload = multer({ dest: path.join(__dirname, 'uploads') });
 
 
 app.use(expValidator())
-//app.use(checker());
 app.use(bodyParser.json());
 app.use(express.static('dist'));
 
@@ -81,9 +77,6 @@ passport.use('twitchToken', new TwitchStrategy({
     profile is returned which we process and send back to a callback function
     All frontend needs to do is call '/users/oauth/google/', and check
     appropriate profile set in session.
-
-    Step 1: directed to http://localhost:3000/users/oauth/google
-    Step 2: website returned user, and serialized profile in session
 */
 passport.use('googleToken', new GoogleStrategy({ 
         clientID: configFile.google.clientid,
@@ -157,32 +150,6 @@ app.use(function (req, res, next){
 app.use(passport.initialize());
 app.use(passport.session());
 
-// The following forceSSL middleware code snippet is taken from 
-/** https://medium.com/@ryanchenkie_40935/angular-cli-deployment-host-your-angular-2-app-on-heroku-3f266f13f352 */
-
-// If an incoming request uses
-// a protocol other than HTTPS,
-// redirect that request to the
-// same url but with HTTPS
-const forceSSL = function() {
-    return function (req, res, next) {
-      if (req.headers['x-forwarded-proto'] !== 'https') {
-        return res.redirect(
-         ['https://', req.get('Host'), req.url].join('')
-        );
-      }
-      next();
-    }
-  }
-  
-// Instruct the app
-// to use the forceSSL
-// middleware
-// Allow localhost to work in HTTP, otherwise HTTPS is required
-if (app.get('env') !== 'development'){
-    app.use(forceSSL());
-}
-
 function generateSalt (){
     return crypto.randomBytes(16).toString('base64');
 }
@@ -229,16 +196,11 @@ var checkPassword = function(req, res, next) {
 
 /* uses passport auth to direct appropriately, afterwards callback get is called
 and further redirected to homepage, after req.session.passport.user is set */
-app.get('/users/oauth/google/', passport.authenticate('googleToken', {scope:
-    [ 'profile']})
-);
+app.get('/users/oauth/google/', passport.authenticate('googleToken', {scope:[ 'profile']}));
 
-app.get('/users/oauth/facebook/', passport.authenticate('facebookToken', {scope:
-    [ 'public_profile']})
-);
+app.get('/users/oauth/facebook/', passport.authenticate('facebookToken', {scope:[ 'public_profile']}));
 
 app.get('/users/oauth/twitch/', passport.authenticate('twitchToken'));
-
 
 app.get('/users/oauth/twitch/callback', 
   passport.authenticate('twitchToken', { failureRedirect: '/signin/'}),
@@ -250,10 +212,9 @@ app.get('/users/oauth/twitch/callback',
         secure: true,
         httpOnly: false,
         path : '/', 
-        maxAge: 60 * 60 * 24 * 7 // 1 week in number of seconds
+        maxAge: 60 * 60 * 24 * 7 
     }));
 
-    // Successful authentication, redirect home.
     return res.redirect('/');    
 });
 
@@ -266,9 +227,8 @@ app.get('/users/oauth/facebook/callback',
         secure: true,
         httpOnly: false,
         path : '/', 
-        maxAge: 60 * 60 * 24 * 7 // 1 week in number of seconds
+        maxAge: 60 * 60 * 24 * 7 
     }));
-    // Successful authentication, redirect home.
     return res.redirect('/');    
 });
 
@@ -573,18 +533,47 @@ async function mongoSetup() {
 mongoSetup();
 
 
+
+
+// The following forceSSL middleware code snippet is taken from 
+/** https://medium.com/@ryanchenkie_40935/angular-cli-deployment-host-your-angular-2-app-on-heroku-3f266f13f352 */
+
+// If an incoming request uses
+// a protocol other than HTTPS,
+// redirect that request to the
+// same url but with HTTPS
+const forceSSL = function() {
+    return function (req, res, next) {
+      if (req.headers['x-forwarded-proto'] !== 'https') {
+        return res.redirect(
+         ['https://', req.get('Host'), req.url].join('')
+        );
+      }
+      next();
+    }
+  }
+  
+// Instruct the app
+// to use the forceSSL
+// middleware
+// Allow localhost to work in HTTP, otherwise HTTPS is required
 if (app.get('env') !== 'development'){
-    http.createServer(app).listen(process.env.PORT || PORT, function (err) {
-        if (err) console.log(err);
-        else {
-            console.log("HTTP server on http://localhost:%s", PORT);
-        }        
-    })
-} else {
+    app.use(forceSSL());
+}
+
+
+if (app.get('env') === 'development'){      
     https.createServer(config, app).listen(process.env.PORT || PORT, function (err) {
         if (err) console.log(err);
         else {
-            console.log("HTTPS server on http://localhost:%s", PORT);
+            console.log("HTTPS server on http://localhost:%sin %s mode", PORT, app.settings.env);
+        }        
+    })
+} else {
+    http.createServer(app).listen(process.env.PORT || PORT, function (err) {
+        if (err) console.log(err);
+        else {
+            console.log("HTTP server on http://localhost:%s in %s mode", PORT);
         }        
     })
 }
