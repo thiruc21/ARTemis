@@ -150,8 +150,6 @@ app.use(function (req, res, next){
 app.use(passport.initialize());
 app.use(passport.session());
 
-
-
 function generateSalt (){
     return crypto.randomBytes(16).toString('base64');
 }
