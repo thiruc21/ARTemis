@@ -14,7 +14,7 @@ export class CanvasComponent implements OnInit {
   size:number;
 
   // Canvas Drawing.
-  myEdit: any[];
+  myEdit:any[];
   peerEdit:any[];
 
   // Variables to be accessed by parent. game.component.
@@ -31,14 +31,15 @@ export class CanvasComponent implements OnInit {
   private ctx: CanvasRenderingContext2D; // Rendering context.
 
   ngOnInit() {
-    this.peerEdit = [] // set edit to none.
     this.myEdit = []
+    this.peerEdit = [] // set edit to none.
     this.color  = "black";
     this.pts = {x: 0, y:0, px:0, py:0}
     this.pressed = false;
     this.myPeerId = "";
     this.canvasElem = this.canvas.nativeElement;
     this.ctx = this.canvasElem.getContext('2d');
+    
 
     // Connect to peer.
     this.peer = new Peer({host : "lightpeerjs.herokuapp.com",
@@ -53,13 +54,14 @@ export class CanvasComponent implements OnInit {
       this.myPeerId = this.peer.id;
     },2000);
 
+
     // Assign variables that can be used in the callback
     var peerDraw = this.peerEdit;
     // Receive the data
     this.peer.on('connection', function(connection) {
       connection.on('data', function(data){
-        while (this.data.length > 0) {
-          var smtn = this.data.shift();
+        while (data.length > 0) {
+          var smtn = data.shift();
           peerDraw.push(smtn);
         }
       });
@@ -69,11 +71,9 @@ export class CanvasComponent implements OnInit {
   }
 
   ngAfterViewInit() {
-    const canvasEvent: HTMLCanvasElement = this.canvas.nativeElement;
-    this.ctx = canvasEvent.getContext('2d');
     this.ctx.lineJoin = "round";
     this.ctx.lineWidth = 10;
-    this.bound = canvasEvent.getBoundingClientRect();
+    this.bound = this.canvasElem.getBoundingClientRect();
   }
   mouseDown(event){
     this.pressed = true;
@@ -142,8 +142,8 @@ export class CanvasComponent implements OnInit {
     // Update messages every second
     setTimeout(() => {
      this.update();
-      this.timeOut();
-    }, 200);
+     this.timeOut();
+    }, 1000);
   }
 
   keepAlive(){
@@ -167,8 +167,11 @@ export class CanvasComponent implements OnInit {
    update(){
      console.log(this.myEdit)
     if (this.myEdit.length > 0) {
-      this.peer.connect(this.peerId.nativeElement.value).on('open', function(){
-        this.peer.send(this.myEdit);
+      var myEdit = this.myEdit.slice();
+      this.myEdit = [];
+      var otherPeer = this.peer.connect(this.peerId.nativeElement.value);
+      otherPeer.on('open', function(){
+        otherPeer.send(myEdit);
       });
     }
     while (this.peerEdit.length > 0) {
