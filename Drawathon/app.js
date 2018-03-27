@@ -9,11 +9,12 @@ const fs = require('fs');
 const MongoClient = require('mongodb').MongoClient;
 const ObjectId = require("mongodb").ObjectId;
 
-
+var privateKey = fs.readFileSync( 'server.key' );
+var certificate = fs.readFileSync( 'server.crt' );
 
 const passport = require('passport');
 const google = require('googleapis');
-const config = require('./config');
+const configFile = require('./config');
 
 const validator = require('validator');
 
@@ -24,14 +25,17 @@ const checker = require('express-validator/check');
 const sanitize = require('express-validator/filter');
 
 var GoogleStrategy = require('passport-google-oauth20').Strategy;
-//var twitchStrategy = require("passport-twitch").Strategy;
+var FacebookStrategy = require('passport-facebook').Strategy;
+var TwitchStrategy = require("passport-twitch").Strategy;
 
 var db = null;
 var dbo = null;
 
 const app = express();
 
+const https = require('https');
 const http = require('http');
+
 const PORT = 3000;
 const MAXPLAYERS = 4;
 var multer  = require('multer');
@@ -43,20 +47,34 @@ app.use(expValidator())
 app.use(bodyParser.json());
 app.use(express.static('dist'));
 
+
+var config = {
+    key: privateKey,
+    cert: certificate
+};
+
 /* Twitch Strategy */
-/*passport.use(new twitchStrategy({
-    clientID: 'p8153nxml0rxi29b9xrakz57cp8yrh',
-    clientSecret: 'wdsa7z2dyovn2n2wb7e8n6o4ydgx1j',
-    callbackURL: "http://localhost:3000/users/oauth/google/callback",
+passport.use('twitchToken', new TwitchStrategy({
+    clientID: configFile.twitch.clientid,
+    clientSecret: configFile.twitch.clientSecret,
+    callbackURL: configFile.twitch.Callback,
     scope: "user_read"
   },
-  function(accessToken, refreshToken, profile, done) {
-    console.log("access", accessToken);
-    console.log("profile", profile);
-    console.log("name", profile.displayName);
-    return done(err, user);
+  function(accessToken, refreshToken, profile, callback) {
+    
+    dbo.collection("users").findOne({twitchId: profile.id}, function(err, foundUser) {
+        if (err) return callback(err, null);
+        if (foundUser) return callback(null, foundUser);
+        
+        dbo.collection("users").insertOne(
+        {twitchId: profile.id, username: profile.displayName, authProvider: 'twitch'},
+        function (err, res) {
+            if (err) return callback(err, null);
+            return callback(null, res.ops[0]);
+        });
+    });
   }
-)); */
+)); 
 
 /*
  Google OUATH Strategy, once 'authenticated', user will be directed to google's authentication page, then a user's
@@ -68,16 +86,37 @@ app.use(express.static('dist'));
     Step 2: website returned user, and serialized profile in session
 */
 passport.use('googleToken', new GoogleStrategy({ 
-        clientID: config.google.clientid,
-        clientSecret: config.google.cllientSecret,
-        callbackURL: config.google.Callback
+        clientID: configFile.google.clientid,
+        clientSecret: configFile.google.clientSecret,
+        callbackURL: configFile.google.Callback,
     }, function(accessToken, refreshToken, profile, callback) {
 
-        dbo.collection("users").findOne({googleId: profile.id, authProvider: 'google'}, function(err, foundUser) {
+        dbo.collection("users").findOne({googleId: profile.id}, function(err, foundUser) {
             if (err) return callback(err, null);
             if (foundUser) return callback(null, foundUser);
             dbo.collection("users").insertOne(
-            {givName: profile.name.givenName, googleId: profile.id, authProvider: 'google', dispName: profile.displayName},
+            {googleId: profile.id, username: profile.displayName, authProvider: 'google'},
+            function (err, res) {
+                if (err) return callback(err, null);
+                return callback(null, res.ops[0]);
+            });
+        });
+    }
+));
+
+
+passport.use('facebookToken', new FacebookStrategy({
+    clientID: configFile.facebook.appid, 
+    clientSecret: configFile.facebook.clientSecret,
+    callbackURL: configFile.facebook.Callback,
+    enableProof: true
+  }, function(accessToken, refreshToken, profile, callback) {
+    
+    dbo.collection("users").findOne({facebookId: profile.id}, function(err, foundUser) {
+        if (err) return callback(err, null);
+        if (foundUser) return callback(null, foundUser);
+        dbo.collection("users").insertOne(
+            {facebookId: profile.id, username: profile.displayName, authProvider: 'facebook'},     
             function (err, res) {
                 if (err) return callback(err, null);
                 return callback(null, res.ops[0]);
@@ -100,7 +139,11 @@ passport.deserializeUser(function(id, done) {
 });
 
 app.use(session({
-    //cookie: {//httpOnly: true, secure: true, sameSite: true},
+    cookie: {
+        httpOnly: true
+        ,secure: true
+        ,sameSite: true
+    },
     secret: 'please change this secret',
     resave: false,
     saveUninitialized: true,
@@ -152,13 +195,15 @@ function generateHash (password, salt){
 
 app.use(function(req, res, next){
     var cookies = cookie.parse(req.headers.cookie || '');
-    var authUser = (req.user)? req.user.givName : '';
+    var authUser = (req.user)? req.user.username : '';
     var username = (req.session.username)? req.session.username : authUser;
 
     res.setHeader('Set-Cookie', cookie.serialize('username', username, {
-          //httpOnly: false,
-          path : '/', 
-          maxAge: 60 * 60 * 24 * 7 // 1 week in number of seconds
+        httpOnly: false,
+        secure: true,
+        sameSite: true,
+        path : '/', 
+        maxAge: 60 * 60 * 24 * 7 // 1 week in number of seconds
     }));
     next();
 });
@@ -188,15 +233,58 @@ app.get('/users/oauth/google/', passport.authenticate('googleToken', {scope:
     [ 'profile']})
 );
 
+app.get('/users/oauth/facebook/', passport.authenticate('facebookToken', {scope:
+    [ 'public_profile']})
+);
+
+app.get('/users/oauth/twitch/', passport.authenticate('twitchToken'));
+
+
+app.get('/users/oauth/twitch/callback', 
+  passport.authenticate('twitchToken', { failureRedirect: '/signin/'}),
+  function(req, res) {
+
+    req.session.username = req.user.username;
+    res.setHeader('Set-Cookie', cookie.serialize('username', req.session.username, {
+        sameSite: true,
+        secure: true,
+        httpOnly: false,
+        path : '/', 
+        maxAge: 60 * 60 * 24 * 7 // 1 week in number of seconds
+    }));
+
+    // Successful authentication, redirect home.
+    return res.redirect('/');    
+});
+
+app.get('/users/oauth/facebook/callback', 
+  passport.authenticate('facebookToken', { failureRedirect: '/signin/'}),
+  function(req, res) {
+    req.session.username = req.user.username;
+    res.setHeader('Set-Cookie', cookie.serialize('username', req.session.username, {
+        sameSite: true,
+        secure: true,
+        httpOnly: false,
+        path : '/', 
+        maxAge: 60 * 60 * 24 * 7 // 1 week in number of seconds
+    }));
+    // Successful authentication, redirect home.
+    return res.redirect('/');    
+});
+
 app.get('/users/oauth/google/callback', 
   passport.authenticate('googleToken', { failureRedirect: '/signin/'}),
   function(req, res) {
     req.session.username = req.user.givName;
-    res.setHeader('Set-Cookie', cookie.serialize('username', req.user.givName, {
-        //httpOnly: false,
+    
+    res.setHeader('Set-Cookie', cookie.serialize('username', req.session.username, {
+        sameSite: true,
+        secure: true,
+        httpOnly: false,
         path : '/', 
         maxAge: 60 * 60 * 24 * 7 // 1 week in number of seconds
     }));
+
     // Successful authentication, redirect home.
     return res.redirect('/');    
   });
@@ -236,6 +324,9 @@ app.post('/signin/', [checkUsername, checkPassword], function (req, res, next) {
             req.session.username = username;
             // initialize cookie
             res.setHeader('Set-Cookie', cookie.serialize('username', username, {
+                sameSite: true,
+                secure: true,
+                httpOnly: false,
                 path : '/', 
                 maxAge: 60 * 60 * 24 * 7
             }));
@@ -467,12 +558,12 @@ function connect(res, callback) {
 }
 
 async function mongoSetup() {
-    await MongoClient.connect(config.mongo.id, function(err, mongodb) {  
+    await MongoClient.connect(configFile.mongo.id, function(err, mongodb) {  
         if (err) console.log(err);
         if (!mongodb) console.log(err);
         else {
             db = mongodb;
-            dbo = db.db(config.mongo.dbname);
+            dbo = db.db(configFile.mongo.dbname);
             //dbo.collection("users").drop();
             //dbo.collection("games").drop();
            // dbo.collection("game_joined").drop(s;
@@ -482,9 +573,18 @@ async function mongoSetup() {
 mongoSetup();
 
 
-http.createServer(app).listen(process.env.PORT || PORT, function (err) {
-    if (err) console.log(err);
-    else {
-        console.log("HTTP server on http://localhost:%s", PORT);
-    }        
-})
+if (app.get('env') !== 'development'){
+    http.createServer(app).listen(process.env.PORT || PORT, function (err) {
+        if (err) console.log(err);
+        else {
+            console.log("HTTP server on http://localhost:%s", PORT);
+        }        
+    })
+} else {
+    https.createServer(config, app).listen(process.env.PORT || PORT, function (err) {
+        if (err) console.log(err);
+        else {
+            console.log("HTTPS server on http://localhost:%s", PORT);
+        }        
+    })
+}

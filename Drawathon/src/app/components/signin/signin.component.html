@@ -4,10 +4,18 @@
       <input #user class="username" placeholder="Username">
       <input #pass class="password" type="password" placeholder="Password">
       <button class="button">Submit</button>
-    </form>
-
+    </form> 
+  
   <form action="/users/oauth/google/" method="GET">
     <input type="submit" value="Login from Google">
+  </form>
+
+  <form action="/users/oauth/facebook/" method="GET">
+    <input type="submit" value="Login from facebook">
+  </form>
+
+  <form action="/users/oauth/twitch/" method="GET">
+    <input type="submit" value="Login from twitch">
   </form>
 
   <a class="uplink" routerLink='/signup'>Need an account? Sign Up here!</a>
