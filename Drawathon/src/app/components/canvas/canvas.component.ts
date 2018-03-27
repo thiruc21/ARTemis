@@ -13,6 +13,8 @@ export class CanvasComponent implements OnInit {
   pressed:boolean;
   size:number;
 
+  // Canvas Drawing.
+  myEdit: any[];
   peerEdit:any[];
 
   // Variables to be accessed by parent. game.component.
@@ -30,6 +32,7 @@ export class CanvasComponent implements OnInit {
 
   ngOnInit() {
     this.peerEdit = [] // set edit to none.
+    this.myEdit = []
     this.color  = "black";
     this.pts = {x: 0, y:0, px:0, py:0}
     this.pressed = false;
@@ -48,17 +51,17 @@ export class CanvasComponent implements OnInit {
     });
     setTimeout(() => {
       this.myPeerId = this.peer.id;
-    },3000);
+    },2000);
 
     // Assign variables that can be used in the callback
     var peerDraw = this.peerEdit;
-    var width = this.ctx.lineWidth;
-    var color = this.color;
     // Receive the data
     this.peer.on('connection', function(connection) {
       connection.on('data', function(data){
-        //[this.pts.x, this.pts.y, this.ctx.lineWidth, this.color]
-          peerDraw.push(data);
+        while (this.data.length > 0) {
+          var smtn = this.data.shift();
+          peerDraw.push(smtn);
+        }
       });
     });
     this.timeOut();
@@ -120,11 +123,9 @@ export class CanvasComponent implements OnInit {
     var prevy = this.pts.py;
     var width = this.ctx.lineWidth;
     var color = this.color;
+    this.myEdit.push([this.pts.x, this.pts.y, this.pts.px, this.pts.py, this.ctx.lineWidth, this.color])
     // Connect to other peer and send message
-    var otherPeer = this.peer.connect(this.peerId.nativeElement.value);
-    otherPeer.on('open', function(){
-      otherPeer.send([x, y, prevx, prevy, width, color]);
-    });
+  
   }
 
   clickColor(color){
@@ -142,7 +143,7 @@ export class CanvasComponent implements OnInit {
     setTimeout(() => {
      this.update();
       this.timeOut();
-    }, 100);
+    }, 200);
   }
 
   keepAlive(){
@@ -164,6 +165,12 @@ export class CanvasComponent implements OnInit {
   }
    // Update 
    update(){
+     console.log(this.myEdit)
+    if (this.myEdit.length > 0) {
+      this.peer.connect(this.peerId.nativeElement.value).on('open', function(){
+        this.peer.send(this.myEdit);
+      });
+    }
     while (this.peerEdit.length > 0) {
       var smtn = this.peerEdit.shift();
       this.pDraw(smtn[0], smtn[1], smtn[2],smtn[3],smtn[4],smtn[5]);

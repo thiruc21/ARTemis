@@ -79,7 +79,7 @@ export class MainComponent implements OnInit {
           }
         });*/
         console.log("successfully created");
-        check = false; 
+        check = false;
       }
     });
     setTimeout(() => {
