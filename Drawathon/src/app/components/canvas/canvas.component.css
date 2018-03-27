@@ -20,7 +20,13 @@
     justify-content: space-between;
     align-items: center;
 }
-
+.sizeInput {
+    text-align: center;
+    border-width: 1px;
+    border-style:solid;
+    width:50px;
+    height:15px;
+}
 .color{
     border-width: 1px;
     border-style:solid;
@@ -29,19 +35,16 @@
 }
 
 #small{
-    border-style: none;
     width: 10px;
     height: 10px;
     border-radius: 10px;
 }
 #medium{
-    border-style: none;
     width: 25px;
     height: 25px;
     border-radius: 25px;
 }
 #large{
-    border-style: none;
     width: 50px;
     height: 50px;
     border-radius: 50px;

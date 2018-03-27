@@ -12,7 +12,8 @@ export class CanvasComponent implements OnInit {
   bound:any;
   pressed:boolean;
   size:number;
-
+  customSS:string;
+  cColor:string;
   // Canvas Drawing.
   myEdit:any[];
   peerEdit:any[];
@@ -24,7 +25,7 @@ export class CanvasComponent implements OnInit {
 
   @ViewChild('canvas') public canvas: ElementRef;
   @ViewChild('peer') public peerId:ElementRef;
-
+  @ViewChild('cSize') private customSize:ElementRef;
   constructor() { }
 
   private canvasElem: HTMLCanvasElement;
@@ -34,6 +35,9 @@ export class CanvasComponent implements OnInit {
     this.myEdit = []
     this.peerEdit = [] // set edit to none.
     this.color  = "black";
+    this.cColor = "black";
+    this.customSize.nativeElement.value = 20
+    this.customSS = this.customSize.nativeElement.value.toString() + 'px'
     this.pts = {x: 0, y:0, px:0, py:0}
     this.pressed = false;
     this.myPeerId = "";
@@ -100,30 +104,28 @@ export class CanvasComponent implements OnInit {
   drawPoint() {
     this.ctx.beginPath();
     this.ctx.fillStyle = this.color;
+    var size =  this.size;
+    if (this.size < 0) size = this.customSize.nativeElement.value;
     // Find radius of a circle with diameter = this.ctx.lineWidth then fill
-    this.ctx.arc(this.pts.x, this.pts.y, this.ctx.lineWidth/2, 0, 2*Math.PI, true);
+    this.ctx.arc(this.pts.x, this.pts.y, size/2, 0, 2*Math.PI, true);
     this.ctx.closePath()
     this.ctx.fill();
-
   }
 
   draw() {
+    var size = this.size;
+    if (this.customSize.nativeElement.value < 5) this.customSize.nativeElement.value = 5
+    if (this.customSize.nativeElement.value > 60) this.customSize.nativeElement.value = 60
+    if (this.size < 0) size = this.customSize.nativeElement.value;
     this.ctx.beginPath();
     this.ctx.moveTo(this.pts.px, this.pts.py);
     this.ctx.lineTo(this.pts.x, this.pts.y);
-    this.ctx.lineWidth = this.size;
+    this.ctx.lineWidth = size;
     this.ctx.strokeStyle = this.color;
     this.ctx.closePath();
     this.ctx.stroke();
 
-    // Assign variables that can be used in the callback
-    var x = this.pts.x;
-    var y = this.pts.y;
-    var prevx = this.pts.px;
-    var prevy = this.pts.py;
-    var width = this.ctx.lineWidth;
-    var color = this.color;
-    this.myEdit.push([this.pts.x, this.pts.y, this.pts.px, this.pts.py, this.ctx.lineWidth, this.color])
+    this.myEdit.push([this.pts.x, this.pts.y, this.pts.px, this.pts.py, size, this.color])
     // Connect to other peer and send message
   
   }
@@ -134,7 +136,6 @@ export class CanvasComponent implements OnInit {
   }
 
   clickSize(size){
-    this.ctx.lineWidth = size;
     this.size = size;
   }
 
@@ -143,7 +144,7 @@ export class CanvasComponent implements OnInit {
     setTimeout(() => {
      this.update();
      this.timeOut();
-    }, 1000);
+    }, 300);
   }
 
   keepAlive(){
@@ -165,7 +166,9 @@ export class CanvasComponent implements OnInit {
   }
    // Update 
    update(){
-     console.log(this.myEdit)
+    if (this.customSize.nativeElement.value < 5) this.customSize.nativeElement.value = 5
+    if (this.customSize.nativeElement.value > 60) this.customSize.nativeElement.value = 60
+    this.customSS = this.customSize.nativeElement.value.toString() + 'px'
     if (this.myEdit.length > 0) {
       var myEdit = this.myEdit.slice();
       this.myEdit = [];
