@@ -1,5 +1,6 @@
 .layout {
     display: flex;
+    flex-direction: column;
     justify-content: center;
     align-items: center;
     width: 100%;
@@ -28,4 +29,8 @@
 }
 .password {
     margin: 10px 10px 10px 10px;
+}
+.alert {
+    color:red;
+    font-weight: bold;
 }

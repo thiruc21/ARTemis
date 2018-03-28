@@ -13,6 +13,7 @@ export class SigninComponent implements OnInit {
   apiModule:ApiModule;
   username:string;
   password:string;
+  response:string;
   constructor(public router: Router) { }
 
   ngOnInit() {
@@ -26,12 +27,19 @@ export class SigninComponent implements OnInit {
     e.preventDefault();
     console.log("Signing in with: " + this.username + " , " + this.password);
     var rtr = this.router;
+    // Pointer to own class and a function in it which we use in callback
+    var me:any = this;
+    var respond:(me:this, err:string) => void = this.ServerResponse;
     this.apiModule.signin(this.username, this.password, function(err, res){
-      if (err) console.log("access-denied");
+      if (err) respond(me, "Access denied");
       else {
         console.log(res);
         rtr.navigate(['/']);
       }
     });
+  }
+
+  ServerResponse(me, err) {
+    me.response = err;
   }
 }

@@ -33,3 +33,7 @@
 .uplink {
     color:blue;
 }
+.alert {
+    color:red;
+    font-weight: bold;
+}

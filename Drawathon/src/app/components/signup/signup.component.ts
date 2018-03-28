@@ -25,12 +25,18 @@ export class SignupComponent implements OnInit {
     this.password = this.pass.nativeElement.value;
     console.log("Signing up with: " + this.username + " , " + this.password);
     var rtr = this.router;
+    // Pointer to own class and a function in it which we use in callback
+    var me:any = this;
+    var respond:(me:this, err:string) => void = this.ServerResponse;
     this.apiModule.signup(this.username, this.password, function(err, res){
-      if (err) console.log("access-denied");
+      if (err) respond(me, "Access denied");
       else {
         console.log(res);
         rtr.navigate(['/']);
       }
     })
+  }
+  ServerResponse(me, err) {
+    me.response = err;
   }
 }
