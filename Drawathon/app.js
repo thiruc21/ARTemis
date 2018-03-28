@@ -274,24 +274,21 @@ app.post('/signup/', [checkUsername, checkPassword],  function (req, res, next) 
 app.post('/signin/', [checkUsername, checkPassword], function (req, res, next) {
     var username = req.body.username;
     var password = req.body.password;
-    connect(res, function(err, dbo, db) {
+
+    dbo.collection("users").findOne({username: username, authProvider: 'artemis'}, function(err, user) {
         if (err) return res.status(500).end(err);
-        // retrieve user from the database
-        dbo.collection("users").findOne({username: username, authProvider: 'artemis'}, function(err, user) {
-            if (err) return res.status(500).end(err);
-            if (!user) return res.status(401).end("Access denied, incorrect credentials\n");
-            if (user.hash !== generateHash(password, user.salt)) return res.status(401).end("Access denied, incorrect credentials\n"); 
-            req.session.username = username;
-            // initialize cookie
-            res.setHeader('Set-Cookie', cookie.serialize('username', username, {
-                sameSite: true,
-                secure: true,
-                httpOnly: false,
-                path : '/', 
-                maxAge: 60 * 60 * 24 * 7
-            }));
-            return res.json("User " + username + " signed in");
-        });
+        if (!user) return res.status(401).end("Access denied, incorrect credentials\n");
+        if (user.hash !== generateHash(password, user.salt)) return res.status(401).end("Access denied, incorrect credentials\n"); 
+        req.session.username = username;
+        // initialize cookie
+        res.setHeader('Set-Cookie', cookie.serialize('username', username, {
+            sameSite: true,
+            secure: true,
+            httpOnly: false,
+            path : '/', 
+            maxAge: 60 * 60 * 24 * 7
+        }));
+        return res.json("User " + username + " signed in");
     });
 });
 
@@ -315,27 +312,19 @@ app.post('/api/games/', isAuthenticated, function (req, res, next) {
     var team2Id = req.body.team2Id;
     var host = getAuthUser(req);
 
-    connect(res, function(err, dbo, db) {
-        if (err) return res.status(500).end(err);
-
-        dbo.collection('games').insertOne({title:title, host: host, team1Id:team1Id, 
-            team2Id:team2Id, inLobby: true, numPlayers:0, maxPlayers:MAXPLAYERS},
-            function (err, game) {
-                if (err) return res.status(500).end(err);
-                return res.json(game.ops[0]);
-        });
+    dbo.collection('games').insertOne({title:title, host: host, team1Id:team1Id, 
+        team2Id:team2Id, inLobby: true, numPlayers:0, maxPlayers:MAXPLAYERS},
+        function (err, game) {
+            if (err) return res.status(500).end(err);
+            return res.json(game.ops[0]);
     });
 });
 
 // curl -b cookie.txt localhost:3000/api/games/
-app.get('/api/games/', isAuthenticated, function (req, res, next) { 
-    connect(res, function(err, dbo, db) {
-        if (err) return res.status(500).end(err);        
-
-        dbo.collection("games").find({}).toArray(function(err, games) {
-            if (err) return res.status(500).end(" Server side error");
-            return res.json(games);
-        });
+app.get('/api/games/', isAuthenticated, function (req, res, next) {
+    dbo.collection("games").find({}).toArray(function(err, games) {
+        if (err) return res.status(500).end(" Server side error");
+        return res.json(games);
     });
 });
 
@@ -420,19 +409,16 @@ app.delete('/api/games/:id/joined/', isAuthenticated, function (req, res, next) 
     var gameId = req.params.id;
     var userLeave = req.session.username;
 
-    connect(res, function(err, dbo, db) {
-        if (err) callback(err, dbo, db);
-        dbo.collection("game_joined").deleteOne({gameId: ObjectId(gameId), user: userLeave}, function(err, wrRes) {
-            if (err) return res.status(500).end(err);
-            if (wrRes.deletedCount == 0) return res.status(409).end("User " + userLeave + " is not in the game!");
+    dbo.collection("game_joined").deleteOne({gameId: ObjectId(gameId), user: userLeave}, function(err, wrRes) {
+        if (err) return res.status(500).end(err);
+        if (wrRes.deletedCount == 0) return res.status(409).end("User " + userLeave + " is not in the game!");
 
-            dbo.collection("games").findAndModify({_id: ObjectId(gameId)},
-            [],
-            {"$inc":{ "numPlayers": -1 }},  function(err, upRes) {
-                if (err) return res.status(500).end(err);
-                if (!(upRes.value)) return res.status(409).end("User " + userLeave + " is not in the game!");
-                return res.json("user " + userLeave + " has been removed from game " + gameId);
-            });
+        dbo.collection("games").findAndModify({_id: ObjectId(gameId)},
+        [],
+        {"$inc":{ "numPlayers": -1 }},  function(err, upRes) {
+            if (err) return res.status(500).end(err);
+            if (!(upRes.value)) return res.status(409).end("User " + userLeave + " is not in the game!");
+            return res.json("user " + userLeave + " has been removed from game " + gameId);
         });
     });
 });
@@ -441,19 +427,15 @@ app.delete('/api/games/:id/joined/', isAuthenticated, function (req, res, next) 
 /* Returns every player entry for that game */ 
 app.get('/api/games/:id/joined/', isAuthenticated, function (req, res, next) {
     var gameId = req.params.id;
-    var host = getAuthUser(req);      
-
-    connect(res, function(err, dbo, db) {
-        if (err) return res.status(500).end(err);
+    var host = getAuthUser(req);
         
-        findGames(res, gameId, function(err, game, dbo, db) {
+    findGames(res, gameId, function(err, game, dbo, db) {
+        if (err) return res.status(500).end(err);
+        if (!game) return res.status(409).end("game with id " + gameId + " not found"); 
+        
+        dbo.collection("game_joined").find({gameId: ObjectId(gameId)}).toArray(function(err, games) {
             if (err) return res.status(500).end(err);
-            if (!game) return res.status(409).end("game with id " + gameId + " not found"); 
-            
-            dbo.collection("game_joined").find({gameId: ObjectId(gameId)}).toArray(function(err, games) {
-                if (err) return res.status(500).end(err);
-                return res.json(games);
-            });
+            return res.json(games);
         });
     });
 });
@@ -503,15 +485,10 @@ function team(userEnt) {
 }
 
 function findGames(res, gameId, callback) {
-    connect(res, function(err, dbo, db) {
-        if (err) callback(err, null, dbo, db);
-        else {
-            dbo.collection("games").findOne({_id: ObjectId(gameId)}, function(err, game) {
-                callback(err, game, dbo, db);
-            });  
-        }          
-    });
-}
+    dbo.collection("games").findOne({_id: ObjectId(gameId)}, function(err, game) {
+        callback(err, game, dbo, db);
+    }) 
+};
 
 function connect(res, callback) {
     callback(null, dbo, db);
