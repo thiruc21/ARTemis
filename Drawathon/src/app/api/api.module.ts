@@ -80,16 +80,52 @@ export class ApiModule implements OnInit {
     this.send("POST", "/api/games/", {title: title, team1Id: pId1, team2Id: pId2}, callback);
   }
 
+  public removeGame = function(gameId, callback) {
+    this.send("DELETE", "/api/games/", null, callback)
+  }
+
   public joinGame = function(gameId, canvasId, chatId, callback) {
     this.send("POST", "/api/games/" + gameId + "/joined/", {canvasId:canvasId, chatId:chatId}, callback);
   }
 
-  public leaveGame = function(gameId, callback) {
-    this.send("DELETE", "/api/games/" + gameId + "/joined/", null, callback);
-  }
-
   public getPlayers = function(gameId, callback) {
     this.send("GET", "/api/games/" + gameId + "/joined/", null, callback);
+  }
+
+  public hasStarted = function(gameId, callback) { //Checks if the game has started or not?
+    this.send("GET", "/api/games/" + gameId + "/", null, callback);
+  }
+
+  public kickPlayer = function(gameId, playerId, callback) {
+    this.send("DELETE", "/api/games/" + gameId + "/" + playerId + "/")
+  }
+
+  public sendPeerId = function(gameId, myId, callback) {
+    this.send("POST", "/api/games/" + gameId + "/joined/ids", myId, callback);
+  }
+
+  public getPeerIds = function(gameId, callback) { // This should return a list of peerIds from this user(based of cookie)'s team and the hosts peerId, or all peerId's in the game if host.
+    this.send("GET", "/api/games/" + gameId + "/joined/ids", null, callback);
+  }
+
+  public uploadImage = function(gameId, image, callback) { //Host uploading image
+    this.send("POST", "/api/games/" + gameId + "/image/", image, callback);
+  }
+  
+  public getImage = function(gameId, callback) { //All players downloading image to draw.
+    this.send("GET", "/api/games/" + gameId + "/image/", null, callback);
+  }
+  
+  public sendImage = function(gameId, image, callback) { //Team sending over completed image for comparison
+    this.send("POST", "/api/games/" + gameId + "/joined/image/", image, callback);
+  }
+
+  public getRestults = function(gameId, image, callback) { // Get back results of image comparison. should return null if results not calculated yet.
+    this.send("GET", "/api/games/" + gameId + "/joined/result", null, callback);
+  }
+
+  public leaveGame = function(gameId, callback) {
+    this.send("DELETE", "/api/games/" + gameId + "/joined/", null, callback);
   }
 
   //Local Storage

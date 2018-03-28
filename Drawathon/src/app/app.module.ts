@@ -30,6 +30,7 @@ import { PannelComponent } from './components/pannel/pannel.component';
   imports: [
     BrowserModule,
     HttpClientModule,
+    FormsModule,
     AppRoutingModule
   ],
   providers: [],

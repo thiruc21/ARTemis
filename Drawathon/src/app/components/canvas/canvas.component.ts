@@ -1,19 +1,20 @@
 import { Component, OnInit, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
-
 @Component({
   selector: 'app-canvas',
   templateUrl: './canvas.component.html',
   styleUrls: ['./canvas.component.css']
 })
+
 export class CanvasComponent implements OnInit {
+  
   // Canvas draw elements.
-  color:string;
+  color:string;  
+  cColor:string;
   pts:any;
   bound:any;
   pressed:boolean;
   size:number;
   customSS:string;
-  cColor:string;
   // Canvas Drawing.
   myEdit:any[];
   peerEdit:any[];
@@ -35,7 +36,7 @@ export class CanvasComponent implements OnInit {
     this.myEdit = []
     this.peerEdit = [] // set edit to none.
     this.color  = "black";
-    this.cColor = "black";
+    this.cColor = "sadas";
     this.customSize.nativeElement.value = 20
     this.customSS = this.customSize.nativeElement.value.toString() + 'px'
     this.pts = {x: 0, y:0, px:0, py:0}
@@ -73,7 +74,9 @@ export class CanvasComponent implements OnInit {
     this.timeOut();
     this.keepAlive();
   }
-
+  test(){
+    console.log(this.cColor);
+  }
   ngAfterViewInit() {
     this.ctx.lineJoin = "round";
     this.ctx.lineWidth = 10;

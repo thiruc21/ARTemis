@@ -14,6 +14,7 @@ export class SignupComponent implements OnInit {
   
   username:string;
   password:string;
+  response:string;
   constructor(public router: Router) { }
 
   ngOnInit() {
@@ -21,6 +22,7 @@ export class SignupComponent implements OnInit {
   }
   SignUp(e) {
     e.preventDefault();
+    this.response="";
     this.username = this.user.nativeElement.value;
     this.password = this.pass.nativeElement.value;
     console.log("Signing up with: " + this.username + " , " + this.password);
