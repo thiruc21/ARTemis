@@ -1,0 +1,18 @@
+<div class="layout">
+  <div class="team">
+    <h1>Team 1</h1>
+    <canvas #canvas1 class="canvas" width="600" height="600"></canvas>
+    <p>Members:</p>
+    <div *ngFor="let player1 of team1">
+        <p class="player">{{player1}}</p>
+      </div>
+  </div>
+  <div class="team">
+    <h1>Team 2</h1>
+    <canvas #canvas2 class="canvas" width="600" height="600"></canvas>
+    <p>Members:</p>
+    <div *ngFor="let player2 of team2">
+      <p class="player">{{player2}}</p>
+    </div>
+  </div>
+</div>

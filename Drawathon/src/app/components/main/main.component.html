@@ -14,9 +14,10 @@
   <form [ngStyle]="{ 'display': createD }" class="createGame">
     <p>Create Game</p>
     <input class="inTitle" #title placeholder="Title" required>
-    <button class="createButton" (submit)="createGame($event)">Create</button>
+    <button class="createButton" (click)="createGame()">Create</button>
   </form>
 </div>
 <a routerLink='/lobby'>Lobby Link</a>
 <a routerLink='/game'>Game Link</a>
+<a routerLink='/host'>Host Link</a>
 <a routerLink='/test'>Canvas Element Only (for testing)</a>

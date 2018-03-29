@@ -1,0 +1,12 @@
+.layout {
+    padding: 50px 50px 50px 50px;
+    display: flex;
+    justify-content: space-around;
+    align-items: flex-start;
+}
+.team {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+}

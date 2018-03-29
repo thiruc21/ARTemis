@@ -13,6 +13,7 @@ import { LobbyComponent } from './components/lobby/lobby.component';
 import { SigninComponent } from './components/signin/signin.component';
 import { SignupComponent } from './components/signup/signup.component';
 import { PannelComponent } from './components/pannel/pannel.component';
+import { HostComponent } from './components/host/host.component';
 
 
 @NgModule({
@@ -25,7 +26,8 @@ import { PannelComponent } from './components/pannel/pannel.component';
     LobbyComponent,
     SigninComponent,
     SignupComponent,
-    PannelComponent
+    PannelComponent,
+    HostComponent
   ],
   imports: [
     BrowserModule,
