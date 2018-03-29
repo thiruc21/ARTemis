@@ -92,12 +92,17 @@ export class ApiModule implements OnInit {
     this.send("GET", "/api/games/" + gameId + "/joined/", null, callback);
   }
 
-  public hasStarted = function(gameId, callback) { //Checks if the game has started or not?
-    this.send("GET", "/api/games/" + gameId + "/", null, callback);
+  public leaveGame = function(gameId, playerId, callback) {
+    this.send("DELETE", "/api/games/" + gameId + "/joined/", null, callback);
   }
 
   public kickPlayer = function(gameId, playerId, callback) {
-    this.send("DELETE", "/api/games/" + gameId + "/" + playerId + "/")
+    this.send("DELETE", "/api/games/" + gameId + "/" + playerId + "/", null, callback);
+  } 
+
+  /* to be implemented
+  public hasStarted = function(gameId, callback) { //Checks if the game has started or not?
+    this.send("GET", "/api/games/" + gameId + "/", null, callback);
   }
 
   public sendPeerId = function(gameId, myId, callback) {
@@ -120,14 +125,11 @@ export class ApiModule implements OnInit {
     this.send("POST", "/api/games/" + gameId + "/joined/image/", image, callback);
   }
 
-  public getRestults = function(gameId, image, callback) { // Get back results of image comparison. should return null if results not calculated yet.
+  public getResults = function(gameId, image, callback) { // Get back results of image comparison. should return null if results not calculated yet.
     this.send("GET", "/api/games/" + gameId + "/joined/result", null, callback);
   }
 
-  public leaveGame = function(gameId, callback) {
-    this.send("DELETE", "/api/games/" + gameId + "/joined/", null, callback);
-  }
-
+*/
   //Local Storage
   public pushLobby = function(lobby) {
     localStorage.setItem("lob", JSON.stringify(lobby));
