@@ -100,6 +100,14 @@ export class ApiModule implements OnInit {
     this.send("DELETE", "/api/games/" + gameId + "/" + playerId + "/", null, callback);
   } 
 
+  public uploadImage = function(gameId, image, callback) { //Host uploading image
+    this.sendFiles("POST", "/api/games/" + gameId + "/image/", {file: image}, callback);
+  }
+  
+  public getImage = function(gameId, callback) { //All players downloading image to draw.
+    this.send("GET", "/api/games/" + gameId + "/image/", null, callback);
+  }  
+
   /* to be implemented
   public hasStarted = function(gameId, callback) { //Checks if the game has started or not?
     this.send("GET", "/api/games/" + gameId + "/", null, callback);
@@ -113,14 +121,7 @@ export class ApiModule implements OnInit {
     this.send("GET", "/api/games/" + gameId + "/joined/ids", null, callback);
   }
 
-  public uploadImage = function(gameId, image, callback) { //Host uploading image
-    this.send("POST", "/api/games/" + gameId + "/image/", image, callback);
-  }
-  
-  public getImage = function(gameId, callback) { //All players downloading image to draw.
-    this.send("GET", "/api/games/" + gameId + "/image/", null, callback);
-  }
-  
+
   public sendImage = function(gameId, image, callback) { //Team sending over completed image for comparison
     this.send("POST", "/api/games/" + gameId + "/joined/image/", image, callback);
   }
