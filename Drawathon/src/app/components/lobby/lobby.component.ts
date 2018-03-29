@@ -1,4 +1,4 @@
-import { Component, OnInit, AfterViewInit } from '@angular/core';
+import { Component, OnInit, AfterViewInit, ViewChild, ElementRef } from '@angular/core';
 import { ApiModule } from '../../api/api.module';
 import { Router } from '@angular/router';
 
@@ -9,6 +9,7 @@ import { Router } from '@angular/router';
 })
 export class LobbyComponent implements OnInit {
   public start:boolean = false;
+  @ViewChild('picture') private picture:ElementRef;
   // Variables to hold all related info of the game.
   gameId:string;
   team1:string[];
@@ -17,6 +18,8 @@ export class LobbyComponent implements OnInit {
   user:string;
 
   private api:ApiModule;
+
+  file:File;
 
   players:any;
   lob:any;
@@ -28,6 +31,7 @@ export class LobbyComponent implements OnInit {
 
   ngOnInit() {
     // Set defaults.
+    this.file = null;
     this.api = new ApiModule();
     this.user = this.api.getCurrentUser();
     this.lob = this.api.getLobby();
@@ -95,19 +99,21 @@ export class LobbyComponent implements OnInit {
     },1000);
   }
   startGame() {
-    var check:boolean = this.check;
-    this.api.startGame(this.lob._id, function (err, res) {
-      if (err) console.log(err);
-      else {
-        console.log("starting.");
-        check = false;
-      }
-    });
-    setTimeout(() => {
-      this.check = check;
-      if (this.check == false) this.router.navigate(['/host']);
-    })
-    /*     this.check = false;
-    if (this.check == false) this.router.navigate(['/game']); // Navigate.*/
+    if (this.file) {
+      var check:boolean = this.check;
+      this.api.startGame(this.lob._id, function (err, res) {
+        if (err) console.log(err);
+        else {
+          console.log("starting.");
+          check = false;
+        }
+      });
+      setTimeout(() => {
+        this.check = check;
+        if (this.check == false) this.router.navigate(['/host']);
+      })
+    }
+    else console.log("Please select an image first!");
+
   }
 }
