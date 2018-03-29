@@ -351,14 +351,13 @@ app.post('/api/games/:id/joined/', isAuthenticated, function (req, res, next) {
     var chatId = req.body.chatId;
     var gameId = req.params.id;
 
-    findGames(res, gameId, function(err, game, dbo, db) {
+    findGames(res, gameId, function(err, game) {
         if (err) return res.status(500).end(" Server side error");
         if (!game) return res.status(409).end("game with id " + gameId + " not found"); 
         if (game.numPlayers >= game.maxPlayers) return res.status(409).end("game  " + gameId + " is full");
         if ((game.host === userJoined) && (game.authProvider === provider))
             return res.status(409).end("Joining user " + userJoined + " is already the host");
 
-            
             dbo.collection('games').aggregate([
             {$match: {_id: ObjectId(gameId)}},
             {$lookup:{
@@ -371,11 +370,8 @@ app.post('/api/games/:id/joined/', isAuthenticated, function (req, res, next) {
                   preserveNullAndEmptyArrays: true
                 }}*/
             ]).toArray(function(err, gamesJoined) {
-
             if (err) return res.status(500).end(err);
-
             var gameJoined = gamesJoined[0];
-            //var usersJoined = gameJoined.game_join_info;     
             var teamNum;
             
             team(gameJoined.game_join_info, userJoined, provider, function(err, num) {
@@ -410,7 +406,7 @@ app.delete('/api/games/:id/', isAuthenticated, function (req, res, next) {
     var provider = req.session.authProv;
     var gameId = req.params.id;
 
-    findGames(res, gameId, function(err, game, dbo, db) {
+    findGames(res, gameId, function(err, game) {
         if (err) return res.status(500).end(" Server side error");
         if (!game) return res.status(409).end("game with id " + gameId + " not found"); 
         if (game.host !== host || game.authProvider !== provider) 
@@ -462,7 +458,7 @@ app.delete('/api/games/:gameId/joined/:username', isAuthenticated, function (req
     var gameId = req.params.gameId; 
     var playerKick = req.params.username;
 
-    findGames(res, gameId, function(err, game, dbo, db) {
+    findGames(res, gameId, function(err, game) {
         if (err) return res.status(500).end(" Server side error");
         if (!game) return res.status(409).end("game with id " + gameId + " not found"); 
         if (game.host !== host || game.authProvider !== provider) 
@@ -490,7 +486,7 @@ app.get('/api/games/:id/joined/', isAuthenticated, function (req, res, next) {
     if (errors) return res.status(400).send(errors[0].msg);
     var gameId = req.params.id;
         
-    findGames(res, gameId, function(err, game, dbo, db) {
+    findGames(res, gameId, function(err, game) {
         if (err) return res.status(500).end(err);
         if (!game) return res.status(409).end("game with id " + gameId + " not found"); 
         
@@ -513,7 +509,7 @@ app.post('/api/games/:id/image/', isAuthenticated, upload.single('file'), functi
     var provider = req.session.authProv;
     var file = req.file;
 
-    findGames(res, gameId, function(err, game, dbo, db) {
+    findGames(res, gameId, function(err, game) {
         if (err) return res.status(500).end(" Server side error");
         if (!game) return res.status(409).end("game with id " + gameId + " not found"); 
         if (game.host !== poster || game.authProvider !== provider) 
@@ -543,21 +539,11 @@ app.get('/api/games/:id/image/', isAuthenticated, function (req, res, next) {
         if (err) return res.status(500).end(" Server side error");
         if (image == null) return res.status(409).end(" game id " + gameId + " does not have an image");
 
-        console.log(image);
         var profile = image.file;
         res.setHeader('Content-Type', profile.mimetype);
         res.sendFile(profile.path);        
     });
 });
-
-
-function getAuthUser(req) {
-    return req.session.username;
-}
-
-function getAuthProv(req) {
-    return req.session.authProv;
-}
 
 function team(userEnt, userJoined, provider, callback) {
     var team0 = 0;
@@ -578,7 +564,7 @@ function team(userEnt, userJoined, provider, callback) {
 
 function findGames(res, gameId, callback) {
     dbo.collection("games").findOne({_id: ObjectId(gameId)}, function(err, game) {
-        callback(err, game, dbo, db);
+        callback(err, game);
     }) 
 };
 
@@ -588,8 +574,7 @@ async function mongoSetup() {
         if (!mongodb) console.log(err);
         else {
             db = mongodb;
-            dbo = db.db(configFile.mongo.dbname);
-            
+            dbo = db.db(configFile.mongo.dbname);            
             //dbo.collection("games").drop();
             //dbo.collection("images").drop();            
             //dbo.collection("users").drop();            
@@ -610,7 +595,6 @@ mongoSetup();
 const forceSSL = function() {
     return function (req, res, next) {
       if (req.headers['x-forwarded-proto'] !== 'https') {
-        console.log(req.headers['x-forwarded-proto'])
         return res.redirect(
          ['https://', req.get('Host'), req.url].join('')
         );
@@ -633,7 +617,7 @@ if (app.get('env') === 'development'){
         if (err) console.log(err);
         else {
             console.log("HTTPS server on http://localhost:%s in %s mode", PORT, app.settings.env);
-        }        
+        }
     })
 } else {
     http.createServer(app).listen(process.env.PORT || PORT, function (err) {
