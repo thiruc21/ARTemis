@@ -17,7 +17,6 @@ const google = require('googleapis');
 const configFile = require('./config');
 
 const validator = require('validator');
-
 const expValidator = require('express-validator');
 const checker = require('express-validator/check');
 const sanitize = require('express-validator/filter');
@@ -38,16 +37,11 @@ const MAXPLAYERS = 4;
 var multer  = require('multer');
 var upload = multer({ dest: path.join(__dirname, 'uploads') });
 
-
 app.use(expValidator())
 app.use(bodyParser.json());
 app.use(express.static('dist'));
 
-
-var config = {
-    key: privateKey,
-    cert: certificate
-};
+var config = {key: privateKey, cert: certificate};
 
 /* Twitch Strategy */
 passport.use('twitchToken', new TwitchStrategy({
@@ -181,13 +175,13 @@ var isAuthenticated = function(req, res, next) {
 };
 
 var checkUsername = function(req, res, next) {
-    req.check('username', 'Username is required').exists();
-    req.check('username', 'Please enter a valid alphanumeric username').isAlphanumeric();
+    req.checkBody('username', 'Username is required').exists().notEmpty();
+    req.checkBody('username', 'Please enter a valid alphanumeric username').isAlphanumeric();
     next();
 };
 
 var checkPassword = function(req, res, next) {
-    req.check('password', 'Password is required').exists();
+    req.checkBody('password', 'Password is required').exists().notEmpty();
     next();
 };
 
@@ -243,12 +237,10 @@ app.get('/users/oauth/google/callback',
         path : '/', 
         maxAge: 60 * 60 * 24 * 7 // 1 week in number of seconds
     }));
-
-    // Successful authentication, redirect home.
     return res.redirect('/');    
   });
 
-// curl -H "Content-Type: application/json" -X POST -d '{"username":"alice","password":"alice"}' -c cookie.txt localhost:3000/signup/
+// curl -k -H  "Content-Type: application/json" -X POST -d '{"username":"alice","password":"alice"}' -c cookie.txt https://localhost:3000/signup/
 app.post('/signup/', [checkUsername, checkPassword],  function (req, res, next) {
     var username = req.body.username;
     var password = req.body.password;
@@ -271,8 +263,8 @@ app.post('/signup/', [checkUsername, checkPassword],  function (req, res, next) 
     });
 });
 
-// curl -H "Content-Type: application/json" -X POST -d '{"username":"alice","password":"alice"}' -c cookie.txt localhost:3000/signin/
-// curl -H "Content-Type: application/json" -X POST -d '{"username":"bob","password":"alice"}' -c cookie.txt localhost:3000/signin/
+// curl -k -H "Content-Type: application/json" -X POST -d '{"username":"alice","password":"alice"}' -c cookie.txt https://localhost:3000/signin/
+// curl -k -H "Content-Type: application/json" -X POST -d '{"username":"bob","password":"alice"}' -c cookie.txt https://localhost:3000/signin/
 app.post('/signin/', [checkUsername, checkPassword], function (req, res, next) {
     var username = req.body.username;
     var password = req.body.password;
@@ -284,6 +276,7 @@ app.post('/signin/', [checkUsername, checkPassword], function (req, res, next) {
         if (err) return res.status(500).end(err);
         if (!user) return res.status(401).end("Access denied, incorrect credentials\n");
         if (user.hash !== generateHash(password, user.salt)) return res.status(401).end("Access denied, incorrect credentials\n"); 
+
         req.session.username = username;
         req.session.authProv = 'artemis';
         // initialize cookie
@@ -301,8 +294,7 @@ app.post('/signin/', [checkUsername, checkPassword], function (req, res, next) {
 // Sign out of the current user
 app.get('/signout/', function (req, res, next) {
     req.logOut();
-    req.session.destroy();
-    
+    req.session.destroy();    
     res.setHeader('Set-Cookie', cookie.serialize('username', '', {
           path : '/', 
           maxAge: 60 * 60 * 24 * 7 
@@ -310,31 +302,36 @@ app.get('/signout/', function (req, res, next) {
     res.json("User signed out");
 });
 
-// curl -b cookie.txt -H "Content-Type: application/json" -X POST -d '{"title":"join THIS Lobby lol", "team1Id":123, "team2Id":123}' localhost:3000/api/games/
+// curl -k  -b cookie.txt -H "Content-Type: application/json" -X POST -d '{"title":"join THIS Lobby lol", "team1Id":123, "team2Id":123}' https://localhost:3000/api/games/
 app.post('/api/games/', isAuthenticated, function (req, res, next) {
-    // TODO: sanitize
-    console.log("NOOOOO")
-    var title = req.body.title;
-    var host = getAuthUser(req);
-    var team1Id = req.body.team1Id;
-    var team2Id = req.body.team2Id;    
-
-    req.check('title', 'Every game needs a title!').exists()
-    req.check('title', 'Game titles need to be alphanumeric').isAlphanumeric();
-    req.check('team1Id', 'team2Id', "Each game requires valid teamIds").exists().isInt();
-    //req.check( "Each game requires valid teamIds").exists().isInt();
+    req.checkBody('title', 'Every game needs a title!').exists().notEmpty();
+    //req.checkBody('team1Id', "Each game requires valid teamIds").exists().notEmpty();
+    //req.checkBody('team2Id', "Each game requires valid teamIds").exists().notEmpty();
+    
     var errors = req.validationErrors();
     if (errors) return res.status(400).send(errors[0].msg);
 
-    dbo.collection('games').insertOne({title:title, host: host, team1Id:team1Id, 
-        team2Id:team2Id, inLobby: true, numPlayers:0, maxPlayers:MAXPLAYERS},
-        function (err, game) {
-            if (err) return res.status(500).end(err);
-            return res.json(game.ops[0]);
+    var title = req.body.title;
+    var host = req.session.username;
+    var provider = req.session.authProv;    
+    var team1Id = req.body.team1Id;
+    var team2Id = req.body.team2Id;
+
+    // Check if game has already been created
+    dbo.collection("games").findOne({host: host, authProvider:provider}, function(err, game) {
+        if (err) return res.status(500).end(err);
+        if (game) return res.status(409).end("User " + host + " already has a hosted game");
+        
+        dbo.collection('games').insertOne({title:title, host: host, authProvider:provider, team1Id:team1Id, 
+            team2Id:team2Id, inLobby: true, numPlayers:0, maxPlayers:MAXPLAYERS},
+            function (err, game) {
+                if (err) return res.status(500).end(err);
+                return res.json(game.ops[0]);
+        });
     });
 });
 
-// curl -b cookie.txt localhost:3000/api/games/
+// curl -k -b cookie.txt https://localhost:3000/api/games/
 app.get('/api/games/', isAuthenticated, function (req, res, next) {
     dbo.collection("games").find({inLobby:true}).toArray(function(err, games) {
         if (err) return res.status(500).end(" Server side error");
@@ -342,56 +339,60 @@ app.get('/api/games/', isAuthenticated, function (req, res, next) {
     });
 });
 
-// curl -b cookie.txt -H "Content-Type: application/json" -X POST -d '{"canvasId": 123, "chatId": 123}' localhost:3000/api/games/5aad97f9f4e28b075083ef9c/joined/
+// curl -k -b cookie.txt -H "Content-Type: application/json" -X POST -d '{"canvasId": 123, "chatId": 123}' https://localhost:3000/api/games/5aad97f9f4e28b075083ef9c/joined/
 app.post('/api/games/:id/joined/', isAuthenticated, function (req, res, next) {
-    // TODO: sanitize
-    var canvasId = req.body.canvasId;
-    var chatId = req.body.chatId;
+    req.checkParams('id', 'game id required!').exists().notEmpty();
+    var errors = req.validationErrors();
+    if (errors) return res.status(400).send(errors[0].msg);
+
     var userJoined = req.session.username;
     var provider = req.session.authProv;
+    var canvasId = req.body.canvasId;
+    var chatId = req.body.chatId;
     var gameId = req.params.id;
 
     findGames(res, gameId, function(err, game, dbo, db) {
         if (err) return res.status(500).end(" Server side error");
         if (!game) return res.status(409).end("game with id " + gameId + " not found"); 
         if (game.numPlayers >= game.maxPlayers) return res.status(409).end("game  " + gameId + " is full");
-
-        if ((game.host !== userJoined) || (game.authProvider !== provider))
+        if ((game.host === userJoined) && (game.authProvider === provider))
             return res.status(409).end("Joining user " + userJoined + " is already the host");
 
+            
             dbo.collection('games').aggregate([
+            {$match: {_id: ObjectId(gameId)}},
             {$lookup:{
                 from: 'game_joined',
                 localField: '_id',
                 foreignField: 'gameId',
                 as: "game_join_info"
-             }}/*,            
-             {
-                $unwind: {
+             }}/*,{$unwind: {
                   path: "$game_join_info",
                   preserveNullAndEmptyArrays: true
-                }
-              }*/
+                }}*/
             ]).toArray(function(err, gamesJoined) {
+
             if (err) return res.status(500).end(err);
 
             var gameJoined = gamesJoined[0];
-            var usersJoined = gameJoined.game_join_info;            
-            var teamNum = 0;
+            //var usersJoined = gameJoined.game_join_info;     
+            var teamNum;
             
-            if (usersJoined.length > 0) teamNum = team(usersJoined);    
-            var players = parseInt(game.numPlayers) + 1;
-
-            // CHECK if user is in the game
-            dbo.collection("games").update(
-                {_id: ObjectId(gameId)},{$set: {"numPlayers": players} }, { "new": true}, function(err, wrRes){
-                    if (err) return res.status(500).end(err);
-
-                dbo.collection("game_joined").insertOne(
-                    {user:userJoined, authProvider:provider, gameId:ObjectId(gameId), points:0, wins:0, teamNum:teamNum, canvasId:canvasId, chatId:chatId}, 
-                    function (err, userEntry) {
+            team(gameJoined.game_join_info, userJoined, provider, function(err, num) {
+                if (err) return res.status(409).end(err);
+                var teamNum = num;                
+                var players = parseInt(game.numPlayers) + 1;
+            
+                dbo.collection("games").update(
+                    {_id: ObjectId(gameId)},{$set: {"numPlayers": players} }, { "new": true}, function(err, wrRes){
                         if (err) return res.status(500).end(err);
-                        return res.json(userEntry.ops[0]);
+    
+                    dbo.collection("game_joined").insertOne(
+                        {user:userJoined, authProvider:provider, gameId:ObjectId(gameId), points:0, wins:0, teamNum:teamNum, canvasId:canvasId, chatId:chatId}, 
+                        function (err, userEntry) {
+                            if (err) return res.status(500).end(err);
+                            return res.json(userEntry.ops[0]);
+                    });
                 });
             });
         });     
@@ -399,8 +400,12 @@ app.post('/api/games/:id/joined/', isAuthenticated, function (req, res, next) {
 });
 
 
-// curl -b cookie.txt -H "Content-Type: application/json" -X DELETE localhost:3000/api/games/5aad97f9f4e28b075083ef9c/
+// curl -k -b cookie.txt -H "Content-Type: application/json" -X DELETE https://localhost:3000/api/games/5aad97f9f4e28b075083ef9c/
 app.delete('/api/games/:id/', isAuthenticated, function (req, res, next) {
+    req.checkParams('id', 'game id required!').exists().notEmpty();
+    var errors = req.validationErrors();
+    if (errors) return res.status(400).send(errors[0].msg);
+
     var host = req.session.username;
     var provider = req.session.authProv;
     var gameId = req.params.id;
@@ -419,13 +424,16 @@ app.delete('/api/games/:id/', isAuthenticated, function (req, res, next) {
     });    
 });
 
-// curl -b cookie.txt -H -X delete localhost:3000/api/games/5aae9368eccb1357c708bbd0/joined/
+// curl -k -b cookie.txt -H -X delete  https://localhost:3000/api/games/5aae9368eccb1357c708bbd0/joined/
 // KICK player themself
 app.delete('/api/games/:id/joined/', isAuthenticated, function (req, res, next) {
+    req.checkParams('id', 'game id required!').exists().notEmpty();
+    var errors = req.validationErrors();
+    if (errors) return res.status(400).send(errors[0].msg);
+
     var userLeave = req.session.username;
     var provider = req.session.authProv;
-    var gameId = req.params.id;    
-
+    var gameId = req.params.id;   
     dbo.collection("game_joined").deleteOne({gameId: ObjectId(gameId), user: userLeave, authProvider:provider}, function(err, wrRes) {
         if (err) return res.status(500).end(err);
         if (wrRes.deletedCount == 0) return res.status(409).end("User " + userLeave + " is not in the game!");
@@ -440,9 +448,15 @@ app.delete('/api/games/:id/joined/', isAuthenticated, function (req, res, next) 
     });
 });
 
-// curl -b cookie.txt -H -X delete localhost:3000/api/games/5aae9368eccb1357c708bbd0/joined/alice
+// curl -k -b cookie.txt -H -X delete https://localhost:3000/api/games/5aae9368eccb1357c708bbd0/joined/alice
 /* Allow host to kick a play from the game */
 app.delete('/api/games/:gameId/joined/:username', isAuthenticated, function (req, res, next) {
+    req.checkParams('gameId', 'game id required!').exists().notEmpty();
+    req.checkParams('username', 'username required!').exists().notEmpty();
+
+    var errors = req.validationErrors();
+    if (errors) return res.status(400).send(errors[0].msg);
+
     var host = req.session.username;
     var provider = req.session.authProv;
     var gameId = req.params.gameId; 
@@ -468,11 +482,13 @@ app.delete('/api/games/:gameId/joined/:username', isAuthenticated, function (req
         });
     });
 })
-// curl -b cookie.txt localhost:3000/api/games/5aaee8a6a459c0149b14c809/joined
+// curl -k -b cookie.txt https://localhost:3000/api/games/5aaee8a6a459c0149b14c809/joined
 /* Returns every player entry for that game */ 
 app.get('/api/games/:id/joined/', isAuthenticated, function (req, res, next) {
+    req.checkParams('id', 'game id required!').exists().notEmpty();
+    var errors = req.validationErrors();
+    if (errors) return res.status(400).send(errors[0].msg);
     var gameId = req.params.id;
-    var host = getAuthUser(req);
         
     findGames(res, gameId, function(err, game, dbo, db) {
         if (err) return res.status(500).end(err);
@@ -485,25 +501,55 @@ app.get('/api/games/:id/joined/', isAuthenticated, function (req, res, next) {
     });
 });
 
-/*
-app.post('/api/images/', isAuthenticated, upload.single('file'), function (req, res, next) {
-    dbo.collection().insert(new ImageData(req), function (err, image) {       
+// curl -k -b cookie.txt -X POST 'https://localhost:3000/api/games/5abd3cf22b3db66bcc0e2ef9/image/' -H 'content-type: multipart/form-data' -F 'file=@/home/shadman/ARTemis/Drawathon/uploads/user.png'
+// 'file=@/home/shadman/ARTemis/Drawathon/uploads/user.png'
+app.post('/api/games/:id/image/', isAuthenticated, upload.single('file'), function (req, res, next) {
+    req.checkParams('id', 'game id required!').exists().notEmpty();
+    var errors = req.validationErrors();
+    if (errors) return res.status(400).send(errors[0].msg);
+
+    var gameId = req.params.id;
+    var poster = req.session.username;
+    var provider = req.session.authProv;
+    var file = req.file;
+
+    findGames(res, gameId, function(err, game, dbo, db) {
         if (err) return res.status(500).end(" Server side error");
-        return res.json(new Image(image));
+        if (!game) return res.status(409).end("game with id " + gameId + " not found"); 
+        if (game.host !== poster || game.authProvider !== provider) 
+            return res.status(409).end("User " + poster + " is not the host of this game");
+
+        dbo.collection("images").findOne({gameId: gameId} ,function(err, image) {
+            if (err) return res.status(500).end("Server side error");
+            if (image) return res.status(409).end("Game " + gameId + " already has a posted image");            
+
+            dbo.collection("images").insertOne({gameId:gameId, file:file}, function (err, image) {       
+                if (err) return res.status(500).end(" Server side error");
+                return res.json(image.ops[0]);
+            });
+        });
     });
 });
 
-app.get('/api/images/:id/image/', isAuthenticated, function (req, res, next) {
-    var imageId = req.params.id; 
-    images.findOne({_id: imageId}, function(err, image){
+// curl -k -b cookie.txt 'https://localhost:3000/api/games/5abd3cf22b3db66bcc0e2ef9/image/'
+app.get('/api/games/:id/image/', isAuthenticated, function (req, res, next) {
+    req.checkParams('id', 'game id required!').exists().notEmpty();
+    var errors = req.validationErrors();
+    if (errors) return res.status(400).send(errors[0].msg);
+
+    var gameId = req.params.id;
+
+    dbo.collection("images").findOne({gameId: gameId}, function(err, image){
         if (err) return res.status(500).end(" Server side error");
-        if (image === null) return res.status(404).end(" image id #" + imageId + " does not exists");
-        var profile = image.picture;
+        if (image == null) return res.status(409).end(" game id " + gameId + " does not have an image");
+
+        console.log(image);
+        var profile = image.file;
         res.setHeader('Content-Type', profile.mimetype);
         res.sendFile(profile.path);        
     });
 });
-*/
+
 
 function getAuthUser(req) {
     return req.session.username;
@@ -513,19 +559,21 @@ function getAuthProv(req) {
     return req.session.authProv;
 }
 
-function team(userEnt) {
+function team(userEnt, userJoined, provider, callback) {
     var team0 = 0;
     var team1 = 0;
-    var i = 0;   
-    for (i; i < userEnt.length; i++) { 
-        if ((userEnt[i]).teamNum === team1) {
-            team1++;
-        } else {
-            team0++;
-        }
+    var i = 0;
+    var user;
+    for (i; i < userEnt.length; i++) {
+        user = (userEnt[i]);
+        if (user.user === userJoined && user.authProvider === provider) 
+            return callback("user is already in the game", null);
+        
+        if (user.teamNum === 1) team1++;
+        else team0++;
     }
-    if (team1 < team0) return 1;
-    return 0;
+    if (team1 < team0) return callback(null, 1);
+    return callback(null, 0);
 }
 
 function findGames(res, gameId, callback) {
@@ -541,15 +589,15 @@ async function mongoSetup() {
         else {
             db = mongodb;
             dbo = db.db(configFile.mongo.dbname);
-            //dbo.collection("users").drop();
+            
             //dbo.collection("games").drop();
+            //dbo.collection("images").drop();            
+            //dbo.collection("users").drop();            
             //dbo.collection("game_joined").drop();
         }        
     });
 }
 mongoSetup();
-
-
 
 
 // The following forceSSL middleware code snippet is taken from 
