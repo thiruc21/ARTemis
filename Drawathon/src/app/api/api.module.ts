@@ -92,7 +92,7 @@ export class ApiModule implements OnInit {
     this.send("GET", "/api/games/" + gameId + "/joined/", null, callback);
   }
 
-  public leaveGame = function(gameId, playerId, callback) {
+  public leaveGame = function(gameId, callback) {
     this.send("DELETE", "/api/games/" + gameId + "/joined/", null, callback);
   }
 
@@ -109,6 +109,10 @@ export class ApiModule implements OnInit {
   }  
 
   /* to be implemented
+  public startGame = function(gameId, callback) {
+    this.send("POST", "/api/games/" + gameId + "/start/", null, callback);
+  }
+  
   public hasStarted = function(gameId, callback) { //Checks if the game has started or not?
     this.send("GET", "/api/games/" + gameId + "/", null, callback);
   }

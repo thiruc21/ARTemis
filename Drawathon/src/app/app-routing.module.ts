@@ -7,6 +7,7 @@ import { ChatComponent } from './components/chat/chat.component';
 import { SignupComponent } from './components/signup/signup.component'
 import { SigninComponent } from './components/signin/signin.component';
 import { CanvasComponent } from './components/canvas/canvas.component';
+import { HostComponent } from './components/host/host.component';
 
 const routes: Routes = [
   { path: 'game', component:GameComponent } ,
@@ -14,6 +15,7 @@ const routes: Routes = [
   { path: 'lobby', component:LobbyComponent } ,
   { path: 'test', component:CanvasComponent } ,
   { path: 'signin', component:SigninComponent} ,
+  { path: 'host', component:HostComponent},
   { path: 'signup', component:SignupComponent}
 ];
 @NgModule({
