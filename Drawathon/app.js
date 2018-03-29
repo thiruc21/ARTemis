@@ -181,16 +181,13 @@ var isAuthenticated = function(req, res, next) {
 };
 
 var checkUsername = function(req, res, next) {
-    req.check('username', 'Please enter a valid username').exists().isAlphanumeric();
-    var errors = req.validationErrors();
-    if (errors) return res.status(400).send(errors[0].msg);
+    req.check('username', 'Username is required').exists();
+    req.check('username', 'Please enter a valid alphanumeric username').isAlphanumeric();
     next();
 };
 
 var checkPassword = function(req, res, next) {
-    req.check('password', 'Please enter a valid password').exists().isAlphanumeric();
-    var errors = req.validationErrors();
-    if (errors) return res.status(400).send(errors[0].msg);
+    req.check('password', 'Password is required').exists();
     next();
 };
 
@@ -207,6 +204,7 @@ app.get('/users/oauth/twitch/callback',
   function(req, res) {
 
     req.session.username = req.user.username;
+    req.session.authProv = 'twitch';
     res.setHeader('Set-Cookie', cookie.serialize('username', req.session.username, {
         sameSite: true,
         secure: true,
@@ -222,6 +220,7 @@ app.get('/users/oauth/facebook/callback',
   passport.authenticate('facebookToken', { failureRedirect: '/signin/'}),
   function(req, res) {
     req.session.username = req.user.username;
+    req.session.authProv = 'facebook';
     res.setHeader('Set-Cookie', cookie.serialize('username', req.session.username, {
         sameSite: true,
         secure: true,
@@ -236,7 +235,7 @@ app.get('/users/oauth/google/callback',
   passport.authenticate('googleToken', { failureRedirect: '/signin/'}),
   function(req, res) {
     req.session.username = req.user.givName;
-    
+    req.session.authProv = 'google';
     res.setHeader('Set-Cookie', cookie.serialize('username', req.session.username, {
         sameSite: true,
         secure: true,
@@ -252,7 +251,10 @@ app.get('/users/oauth/google/callback',
 // curl -H "Content-Type: application/json" -X POST -d '{"username":"alice","password":"alice"}' -c cookie.txt localhost:3000/signup/
 app.post('/signup/', [checkUsername, checkPassword],  function (req, res, next) {
     var username = req.body.username;
-    var password = req.body.password;    
+    var password = req.body.password;
+
+    var errors = req.validationErrors();
+    if (errors) return res.status(400).send(errors[0].msg);
 
     dbo.collection("users").findOne({username: username, authProvider: 'artemis'}, function(err, user) {
         if (err) return res.status(500).end(err);
@@ -275,11 +277,15 @@ app.post('/signin/', [checkUsername, checkPassword], function (req, res, next) {
     var username = req.body.username;
     var password = req.body.password;
 
+    var errors = req.validationErrors();
+    if (errors) return res.status(400).send(errors[0].msg);
+
     dbo.collection("users").findOne({username: username, authProvider: 'artemis'}, function(err, user) {
         if (err) return res.status(500).end(err);
         if (!user) return res.status(401).end("Access denied, incorrect credentials\n");
         if (user.hash !== generateHash(password, user.salt)) return res.status(401).end("Access denied, incorrect credentials\n"); 
         req.session.username = username;
+        req.session.authProv = 'artemis';
         // initialize cookie
         res.setHeader('Set-Cookie', cookie.serialize('username', username, {
             sameSite: true,
@@ -307,10 +313,18 @@ app.get('/signout/', function (req, res, next) {
 // curl -b cookie.txt -H "Content-Type: application/json" -X POST -d '{"title":"join THIS Lobby lol", "team1Id":123, "team2Id":123}' localhost:3000/api/games/
 app.post('/api/games/', isAuthenticated, function (req, res, next) {
     // TODO: sanitize
+    console.log("NOOOOO")
     var title = req.body.title;
-    var team1Id = req.body.team1Id;
-    var team2Id = req.body.team2Id;
     var host = getAuthUser(req);
+    var team1Id = req.body.team1Id;
+    var team2Id = req.body.team2Id;    
+
+    req.check('title', 'Every game needs a title!').exists()
+    req.check('title', 'Game titles need to be alphanumeric').isAlphanumeric();
+    req.check('team1Id', 'team2Id', "Each game requires valid teamIds").exists().isInt();
+    //req.check( "Each game requires valid teamIds").exists().isInt();
+    var errors = req.validationErrors();
+    if (errors) return res.status(400).send(errors[0].msg);
 
     dbo.collection('games').insertOne({title:title, host: host, team1Id:team1Id, 
         team2Id:team2Id, inLobby: true, numPlayers:0, maxPlayers:MAXPLAYERS},
@@ -322,7 +336,7 @@ app.post('/api/games/', isAuthenticated, function (req, res, next) {
 
 // curl -b cookie.txt localhost:3000/api/games/
 app.get('/api/games/', isAuthenticated, function (req, res, next) {
-    dbo.collection("games").find({}).toArray(function(err, games) {
+    dbo.collection("games").find({inLobby:true}).toArray(function(err, games) {
         if (err) return res.status(500).end(" Server side error");
         return res.json(games);
     });
@@ -333,14 +347,16 @@ app.post('/api/games/:id/joined/', isAuthenticated, function (req, res, next) {
     // TODO: sanitize
     var canvasId = req.body.canvasId;
     var chatId = req.body.chatId;
-    var userJoined = getAuthUser(req);
+    var userJoined = req.session.username;
+    var provider = req.session.authProv;
     var gameId = req.params.id;
 
     findGames(res, gameId, function(err, game, dbo, db) {
         if (err) return res.status(500).end(" Server side error");
         if (!game) return res.status(409).end("game with id " + gameId + " not found"); 
         if (game.numPlayers >= game.maxPlayers) return res.status(409).end("game  " + gameId + " is full");
-        if (game.host == userJoined) 
+
+        if ((game.host !== userJoined) || (game.authProvider !== provider))
             return res.status(409).end("Joining user " + userJoined + " is already the host");
 
             dbo.collection('games').aggregate([
@@ -372,7 +388,7 @@ app.post('/api/games/:id/joined/', isAuthenticated, function (req, res, next) {
                     if (err) return res.status(500).end(err);
 
                 dbo.collection("game_joined").insertOne(
-                    {user:userJoined, gameId:ObjectId(gameId), points:0, wins:0, teamNum:teamNum, canvasId:canvasId, chatId:chatId}, 
+                    {user:userJoined, authProvider:provider, gameId:ObjectId(gameId), points:0, wins:0, teamNum:teamNum, canvasId:canvasId, chatId:chatId}, 
                     function (err, userEntry) {
                         if (err) return res.status(500).end(err);
                         return res.json(userEntry.ops[0]);
@@ -385,16 +401,17 @@ app.post('/api/games/:id/joined/', isAuthenticated, function (req, res, next) {
 
 // curl -b cookie.txt -H "Content-Type: application/json" -X DELETE localhost:3000/api/games/5aad97f9f4e28b075083ef9c/
 app.delete('/api/games/:id/', isAuthenticated, function (req, res, next) {
-    var host = getAuthUser(req);
+    var host = req.session.username;
+    var provider = req.session.authProv;
     var gameId = req.params.id;
 
     findGames(res, gameId, function(err, game, dbo, db) {
         if (err) return res.status(500).end(" Server side error");
         if (!game) return res.status(409).end("game with id " + gameId + " not found"); 
-        if (game.host !== host) 
-            return res.status(409).end("User " + host + " is not the host");
+        if (game.host !== host || game.authProvider !== provider) 
+            return res.status(409).end("User " + host + " is not the host of this game");
 
-        dbo.collection("games").deleteOne({_id: ObjectId(gameId), host: host}, function(err, wrRes) {
+        dbo.collection("games").deleteOne({_id: ObjectId(gameId), host:host, authProvider:provider}, function(err, wrRes) {
             if (err) return res.status(500).end(err);
             if (wrRes.deletedCount === 0) return res.status(409).end("User " + host + " was not deleted");
             return res.json("Game " + game.title + " has been removed");
@@ -405,11 +422,11 @@ app.delete('/api/games/:id/', isAuthenticated, function (req, res, next) {
 // curl -b cookie.txt -H -X delete localhost:3000/api/games/5aae9368eccb1357c708bbd0/joined/
 // KICK player themself
 app.delete('/api/games/:id/joined/', isAuthenticated, function (req, res, next) {
-    //TODO Sanitize
-    var gameId = req.params.id;
     var userLeave = req.session.username;
+    var provider = req.session.authProv;
+    var gameId = req.params.id;    
 
-    dbo.collection("game_joined").deleteOne({gameId: ObjectId(gameId), user: userLeave}, function(err, wrRes) {
+    dbo.collection("game_joined").deleteOne({gameId: ObjectId(gameId), user: userLeave, authProvider:provider}, function(err, wrRes) {
         if (err) return res.status(500).end(err);
         if (wrRes.deletedCount == 0) return res.status(409).end("User " + userLeave + " is not in the game!");
 
@@ -423,6 +440,34 @@ app.delete('/api/games/:id/joined/', isAuthenticated, function (req, res, next) 
     });
 });
 
+// curl -b cookie.txt -H -X delete localhost:3000/api/games/5aae9368eccb1357c708bbd0/joined/alice
+/* Allow host to kick a play from the game */
+app.delete('/api/games/:gameId/joined/:username', isAuthenticated, function (req, res, next) {
+    var host = req.session.username;
+    var provider = req.session.authProv;
+    var gameId = req.params.gameId; 
+    var playerKick = req.params.username;
+
+    findGames(res, gameId, function(err, game, dbo, db) {
+        if (err) return res.status(500).end(" Server side error");
+        if (!game) return res.status(409).end("game with id " + gameId + " not found"); 
+        if (game.host !== host || game.authProvider !== provider) 
+            return res.status(409).end("User " + host + " is not the host of this game");
+
+        dbo.collection("game_joined").deleteOne({gameId: ObjectId(gameId), user: playerKick, authProvider:provider}, function(err, wrRes) {
+            if (err) return res.status(500).end(err);
+            if (wrRes.deletedCount == 0) return res.status(409).end("User " + playerKick + " is not in the game!");
+
+            dbo.collection("games").findAndModify({_id: ObjectId(gameId)}, [], 
+            {"$inc":{ "numPlayers": -1 }},  function(err, upRes) {
+                if (err) return res.status(500).end(err);
+                if (!(upRes.value)) return res.status(409).end(" number of players could not be reduced ingame");
+                return res.json("user " + playerKick + " has been removed from game " + gameId);
+
+            });
+        });
+    });
+})
 // curl -b cookie.txt localhost:3000/api/games/5aaee8a6a459c0149b14c809/joined
 /* Returns every player entry for that game */ 
 app.get('/api/games/:id/joined/', isAuthenticated, function (req, res, next) {
@@ -442,13 +487,9 @@ app.get('/api/games/:id/joined/', isAuthenticated, function (req, res, next) {
 
 /*
 app.post('/api/images/', isAuthenticated, upload.single('file'), function (req, res, next) {
-    connect(res, function(err, dbo, db) {
-        if (err) return res.status(500).end(err);
-
-        dbo.collection().insert(new ImageData(req), function (err, image) {       
-            if (err) return res.status(500).end(" Server side error");
-            return res.json(new Image(image));
-        });
+    dbo.collection().insert(new ImageData(req), function (err, image) {       
+        if (err) return res.status(500).end(" Server side error");
+        return res.json(new Image(image));
     });
 });
 
@@ -466,7 +507,10 @@ app.get('/api/images/:id/image/', isAuthenticated, function (req, res, next) {
 
 function getAuthUser(req) {
     return req.session.username;
-    //return req.session.username? req.session.username : req.user.givName;
+}
+
+function getAuthProv(req) {
+    return req.session.authProv;
 }
 
 function team(userEnt) {
@@ -490,10 +534,6 @@ function findGames(res, gameId, callback) {
     }) 
 };
 
-function connect(res, callback) {
-    callback(null, dbo, db);
-}
-
 async function mongoSetup() {
     await MongoClient.connect(configFile.mongo.id, function(err, mongodb) {  
         if (err) console.log(err);
@@ -503,7 +543,7 @@ async function mongoSetup() {
             dbo = db.db(configFile.mongo.dbname);
             //dbo.collection("users").drop();
             //dbo.collection("games").drop();
-           // dbo.collection("game_joined").drop(s;
+            //dbo.collection("game_joined").drop();
         }        
     });
 }
@@ -522,6 +562,7 @@ mongoSetup();
 const forceSSL = function() {
     return function (req, res, next) {
       if (req.headers['x-forwarded-proto'] !== 'https') {
+        console.log(req.headers['x-forwarded-proto'])
         return res.redirect(
          ['https://', req.get('Host'), req.url].join('')
         );
@@ -543,7 +584,7 @@ if (app.get('env') === 'development'){
     https.createServer(config, app).listen(process.env.PORT || PORT, function (err) {
         if (err) console.log(err);
         else {
-            console.log("HTTPS server on http://localhost:%sin %s mode", PORT, app.settings.env);
+            console.log("HTTPS server on http://localhost:%s in %s mode", PORT, app.settings.env);
         }        
     })
 } else {
