@@ -98,6 +98,7 @@ export class ApiModule implements OnInit {
   }
 
   /* Returns every player entry for that game (including their peerids) */
+
   public getPlayers = function(gameId, callback) {
     this.send("GET", "/api/games/" + gameId + "/joined/", null, callback);
   }
