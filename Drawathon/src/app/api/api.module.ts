@@ -106,7 +106,15 @@ export class ApiModule implements OnInit {
   
   public getImage = function(gameId, callback) { //All players downloading image to draw.
     this.send("GET", "/api/games/" + gameId + "/image/", null, callback);
-  }  
+  }
+
+  public sendHostIds = function(gameId, team1Id, team2Id, callback) {
+    this.send("PATCH", "/api/games/" + gameId + "/host/", {team1Id:team1Id, team2Id:team2Id}, callback);
+  }
+
+  public sendPeerIds = function(gameId, chatId, canvasId, callback) {
+    this.send("PATCH", "/api/games/" + gameId + "/joined/", {chatId:chatId, canvasId:canvasId}, callback);
+  }
 
   /* to be implemented
   public startGame = function(gameId, callback) {
@@ -117,11 +125,9 @@ export class ApiModule implements OnInit {
     this.send("GET", "/api/games/" + gameId + "/", null, callback);
   }
 
-  public sendPeerId = function(gameId, myId, callback) {
-    this.send("POST", "/api/games/" + gameId + "/joined/ids", myId, callback);
-  }
-
-  public getPeerIds = function(gameId, callback) { // This should return a list of peerIds from this user(based of cookie)'s team and the hosts peerId, or all peerId's in the game if host.
+  // This should return a list of peerIds from this user(based of cookie)'s team and the 
+  // hosts peerId, or all peerId's in the game if host.
+  public getPeerIds = function(gameId, callback) { 
     this.send("GET", "/api/games/" + gameId + "/joined/ids", null, callback);
   }
 

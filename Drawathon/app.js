@@ -365,10 +365,7 @@ app.post('/api/games/:id/joined/', isAuthenticated, function (req, res, next) {
                 localField: '_id',
                 foreignField: 'gameId',
                 as: "game_join_info"
-             }}/*,{$unwind: {
-                  path: "$game_join_info",
-                  preserveNullAndEmptyArrays: true
-                }}*/
+             }}/*,{$unwind: {path: "$game_join_info",preserveNullAndEmptyArrays: true }}*/
             ]).toArray(function(err, gamesJoined) {
             if (err) return res.status(500).end(err);
             var gameJoined = gamesJoined[0];
@@ -395,6 +392,78 @@ app.post('/api/games/:id/joined/', isAuthenticated, function (req, res, next) {
     });
 });
 
+app.get('/api/games/:id/', isAuthenticated, function (req, res, next) {
+    var errors = req.validationErrors();
+    if (errors) return res.status(400).send(errors[0].msg);
+    var gameId = req.params.id;
+    findGames(res, gameId, function(err, game) {
+        if (err) return res.status(500).end(" Server side error");
+        if (!game) return res.status(409).end("game with id " + gameId + " not found"); 
+        return res.json(game);
+    });
+});
+
+// curl -k -b cookie.txt -H "Content-Type: application/json" -X PATCH -d '{"team1Id": 1233, "team2Id": 12123}' https://localhost:3000/api/games/5aad97f9f4e28b075083ef9c/host/
+app.patch('/api/games/:id/host/', isAuthenticated, function (req, res, next) {
+    req.checkParams('id', 'game id required!').exists().notEmpty();
+    req.checkBody('team1Id', "Host requires a canvas id for team 1").exists().notEmpty();
+    req.checkBody('team2Id', "Host requires a canvas id for team 2").exists().notEmpty();
+
+    var errors = req.validationErrors();
+    if (errors) return res.status(400).send(errors[0].msg);
+
+    var gameId = req.params.id;
+    var poster = req.session.username;
+    var provider = req.session.authProv;
+    var team1Id = req.body.team1Id;
+    var team2Id = req.body.team2Id;
+
+    findGames(res, gameId, function(err, game) {
+        if (err) return res.status(500).end(" Server side error");
+        if (!game) return res.status(409).end("game with id " + gameId + " not found"); 
+        if (game.host !== poster || game.authProvider !== provider) 
+            return res.status(409).end("User " + poster + " is not the host of this game");
+
+        dbo.collection("games").updateOne(
+            {_id: ObjectId(gameId)},{$set: {"team1Id": team1Id,"team2Id": team2Id}}, { "new": true}, function(err, wrRes){
+                if (err) return res.status(500).end(err);
+                return res.json("Canvas ids posted");
+        });
+    });
+});
+
+// curl -k -b cookie.txt -H "Content-Type: application/json" -X PATCH -d '{"canvasId": "123123", "chatId": "12412sdad"}' https://localhost:3000/api/games/5abd897b49790f305b870aab/joined/
+app.patch('/api/games/:id/joined/', isAuthenticated, function (req, res, next) {
+    req.checkParams('id', 'game id required!').exists().notEmpty();
+    req.checkBody('chatId', "Each player requires a chat id").exists().notEmpty();
+    req.checkBody('canvasId', "Each player requires a canvas id").exists().notEmpty();
+    var errors = req.validationErrors();
+    if (errors) return res.status(400).send(errors[0].msg);
+
+    var gameId = req.params.id;
+    var joinedUser = req.session.username;
+    var provider = req.session.authProv;    
+    var chatId = req.body.chatId;
+    var canvasId = req.body.canvasId;
+
+    findGames(res, gameId, function(err, game) {
+        if (err) return res.status(500).end(" Server side error");
+        if (!game) return res.status(409).end("game with id " + gameId + " not found"); 
+
+        dbo.collection("game_joined").findOne({gameId:ObjectId(gameId), user:joinedUser, authProvider:provider},  function(err, gameJoined) {
+            if (err) return res.status(500).end(" Server side error");
+            if (!gameJoined) return res.status(409).end("User " + joinedUser + " not found"); 
+
+            dbo.collection("game_joined").updateOne(
+                {gameId: ObjectId(gameId), user:joinedUser, authProvider:provider},
+                {$set: {"chatId": chatId,"canvasId": canvasId}}, { "new": true}, function(err, wrRes){
+                    if (err) return res.status(500).end(err);
+                    return res.json("Peer ids posted");
+            });
+
+        });
+    });
+});
 
 // curl -k -b cookie.txt -H "Content-Type: application/json" -X DELETE https://localhost:3000/api/games/5aad97f9f4e28b075083ef9c/
 app.delete('/api/games/:id/', isAuthenticated, function (req, res, next) {
