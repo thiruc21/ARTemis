@@ -101,7 +101,6 @@ export class ApiModule implements OnInit {
   }
 
   public startGame = function(gameId, callback) {
-    console.log("TODO");
   }
 
   public leaveGame = function(gameId, callback) {

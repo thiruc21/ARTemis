@@ -86,7 +86,10 @@ export class LobbyComponent implements OnInit {
       else if (this.left == false) this.router.navigate['/game']; // Else we are done waiting for new game, go forward.
     }, 2000);
   }
-
+  debug() {
+    this.left = true;
+    this.check = false;
+  }
   leave(){
     var check:boolean = this.check;
     if (this.host == this.user) {

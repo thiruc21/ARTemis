@@ -38,30 +38,7 @@ export class MainComponent implements OnInit {
     }
     else {
       this.createD = "grid"; // Im commentint out repeated lines and making it DRY as fk.
-      // Temp references to allow usage inside the callback.
-      /*var games:string[] = this.games;
-      var gamesData:any[] = this.gamesData;
-      var check:boolean = this.check;
-
-      this.api.getGames(function(err, res) {
-        if (err) console.log(err);
-        else if (res) {
-          check = true; // Short poll for updates.
-          if (res.length > 0) { // If there is a game availabe.
-            res.forEach(function(element) {
-              if (element.numPlayers < 4){ // No full games.
-                games.push(element.title + " by " + element.host);
-                gamesData.push(element);
-              }
-            });
-          }
-        }
-        else check = true;
-      });
-      setTimeout(() => {
-        this.check = check;
-        this.timeOut();       // Short poll timer loop.
-      },2000);*/
+      this.check = true;
       this.update();
     }
   }

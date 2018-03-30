@@ -11,6 +11,7 @@
     <input type="file" class="picture" #picture>
     <a (click)="startGame()" [ngStyle]="{ 'display': hostD }" class="startButton">Start</a>
     <button class="leaveButton" (click)="leave()">Leave Lobby</button>
+    <button (click)="debug()">Debug</button>
   </div>
   <div class="teamRight">
     <div *ngFor="let player2 of team2" class="teamPlayer">
