@@ -31,12 +31,8 @@ var dbo = null;
 const app = express();
 const https = require('https');
 const http = require('http');
-var PORT;
-if (app.get('env') === 'development') { 
-    PORT = 3000;
-} else {
-    PORT = process.env.PORT
-}
+
+const PORT = 3000;
 const MAXPLAYERS = 4;
 var multer  = require('multer');
 var upload = multer({ dest: path.join(__dirname, 'uploads') });
@@ -657,14 +653,35 @@ async function mongoSetup() {
 }
 mongoSetup();
 
-https.createServer(config, app).listen(PORT, function (err) {
-    if (err) console.log(err);
-    else {
-        console.log("HTTPS server on https://localhost:%s in %s mode", PORT, app.settings.env);
-    }
-})
 
-/**if (app.get('env') === 'development'){      
+// The following forceSSL middleware code snippet is taken from 
+/** https://medium.com/@ryanchenkie_40935/angular-cli-deployment-host-your-angular-2-app-on-heroku-3f266f13f352 */
+
+// If an incoming request uses
+// a protocol other than HTTPS,
+// redirect that request to the
+// same url but with HTTPS
+const forceSSL = function() {
+    return function (req, res, next) {
+      if (req.headers['x-forwarded-proto'] !== 'https') {
+        return res.redirect(
+         ['https://', req.get('Host'), req.url].join('')
+        );
+      }
+      next();
+    }
+  }
+  
+// Instruct the app
+// to use the forceSSL
+// middleware
+// Allow localhost to work in HTTP, otherwise HTTPS is required
+if (app.get('env') !== 'development'){
+    app.use(forceSSL());
+}
+
+
+if (app.get('env') === 'development'){      
     https.createServer(config, app).listen(process.env.PORT || PORT, function (err) {
         if (err) console.log(err);
         else {
@@ -675,7 +692,7 @@ https.createServer(config, app).listen(PORT, function (err) {
     http.createServer(app).listen(process.env.PORT || PORT, function (err) {
         if (err) console.log(err);
         else {
-            console.log("HTTP server on http://localhost:%s in %s mode", PORT);
+            console.log("HTTP server on http://localhost:%s in %s mode", process.env.PORT);
         }        
     })
-}**/
+}
