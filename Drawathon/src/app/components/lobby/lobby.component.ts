@@ -75,7 +75,6 @@ export class LobbyComponent implements OnInit {
         this.team1 = [];
         this.team2 = [];
         this.players = players;
-        console.log(this.players);
         var i = 0;
         for (i = 0; i < this.players.length; i++) {
           if (this.team1.length <= this.team2.length) this.team1.push(this.players[i].user);
@@ -90,7 +89,7 @@ export class LobbyComponent implements OnInit {
 
   leave(){
     var check:boolean = this.check;
-    if (this.host = this.user) {
+    if (this.host == this.user) {
       this.api.removeGame(this.lob._id, function(err){
         if (err) console.log(err);
         else {

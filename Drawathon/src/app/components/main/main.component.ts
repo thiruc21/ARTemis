@@ -89,6 +89,7 @@ export class MainComponent implements OnInit {
   clickGame(i) { //User is joing a lobby at index i.
     var check:boolean = this.check;
     this.api.pushLobby(this.gamesData[i]);
+    console.log(i, this.gamesData[i]);
     this.api.joinGame(this.gamesData[i]._id, "null", "null", function(err, res){ //Join game with null cavnasId and chatId.
       if (err) console.log(err);
       else {
@@ -104,7 +105,6 @@ export class MainComponent implements OnInit {
 
   timeOut() {
     // Check for new lobbys every 3 seconds.
-    console.log("updating thangs.")
     setTimeout(() => {
       if (this.check) this.update(); // Only continue if check is true.
     }, 3000);
@@ -123,7 +123,7 @@ export class MainComponent implements OnInit {
       else {
         if (res && res.length > 0) {
           res.forEach(function(element) {
-          if (element.numPlayers < 4 /*&& element.host != user*/){
+          if (element.numPlayers < 4){
             games.push(element.title + " by " + element.host);
             gamesData.push(element);
           }
@@ -139,6 +139,6 @@ export class MainComponent implements OnInit {
         this.check = check;
       };
       if (this.check) this.timeOut(); // Only continue if check is true.
-    }, 1000);
+    }, 2000);
   }
 }
