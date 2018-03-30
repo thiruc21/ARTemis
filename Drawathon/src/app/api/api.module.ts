@@ -88,6 +88,16 @@ export class ApiModule implements OnInit {
     this.send("POST", "/api/games/" + gameId + "/joined/", {canvasId:canvasId, chatId:chatId}, callback);
   }
 
+//public getPeerIds = function(gameId, callback) { 
+  //  this.send("GET", "/api/games/" + gameId + "/joined/ids", null, callback);
+  //}
+
+  /* Returns information about the game  (including the host's peerids) */
+  public getGameInfo = function(gameId, callback) {
+    this.send("GET", "/api/games/"  + gameId + "/" , null, callback);
+  }
+
+  /* Returns every player entry for that game (including their peerids) */
   public getPlayers = function(gameId, callback) {
     this.send("GET", "/api/games/" + gameId + "/joined/", null, callback);
   }
@@ -108,10 +118,12 @@ export class ApiModule implements OnInit {
     this.send("GET", "/api/games/" + gameId + "/image/", null, callback);
   }
 
+  /* Patch the host's ids for the game they are hosting */
   public sendHostIds = function(gameId, team1Id, team2Id, callback) {
     this.send("PATCH", "/api/games/" + gameId + "/host/", {team1Id:team1Id, team2Id:team2Id}, callback);
   }
 
+  /* Patch the player's ids for the game thay have joined */
   public sendPeerIds = function(gameId, chatId, canvasId, callback) {
     this.send("PATCH", "/api/games/" + gameId + "/joined/", {chatId:chatId, canvasId:canvasId}, callback);
   }
@@ -120,21 +132,7 @@ export class ApiModule implements OnInit {
   public startGame = function(gameId, callback) {
     this.send("POST", "/api/games/" + gameId + "/start/", null, callback);
   }
-  
-  public hasStarted = function(gameId, callback) { //Checks if the game has started or not?
-    this.send("GET", "/api/games/" + gameId + "/", null, callback);
-  }
-
-  // This should return a list of peerIds from this user(based of cookie)'s team and the 
-  // hosts peerId, or all peerId's in the game if host.
-  public getPeerIds = function(gameId, callback) { 
-    this.send("GET", "/api/games/" + gameId + "/joined/ids", null, callback);
-  }
-
-
-  public sendImage = function(gameId, image, callback) { //Team sending over completed image for comparison
-    this.send("POST", "/api/games/" + gameId + "/joined/image/", image, callback);
-  }
+    }
 
   public getResults = function(gameId, image, callback) { // Get back results of image comparison. should return null if results not calculated yet.
     this.send("GET", "/api/games/" + gameId + "/joined/result", null, callback);

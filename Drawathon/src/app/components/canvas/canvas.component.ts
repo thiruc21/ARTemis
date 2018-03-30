@@ -8,7 +8,7 @@ import { Component, OnInit, ViewChild, ElementRef, AfterViewInit } from '@angula
 export class CanvasComponent implements OnInit {
   
   // Canvas draw elements.
-  color:string;  
+  color:string;
   cColor:string;
   pts:any;
   bound:any;
@@ -22,7 +22,7 @@ export class CanvasComponent implements OnInit {
   // Variables to be accessed by parent. game.component.
   public bg:string = "white";
   public myPeerId:string;
-  public peer;
+  public peer:any;
 
   @ViewChild('canvas') public canvas: ElementRef;
   @ViewChild('peer') public peerId:ElementRef;

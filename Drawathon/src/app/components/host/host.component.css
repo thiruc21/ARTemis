@@ -1,5 +1,5 @@
 .layout {
-    padding: 50px 50px 50px 50px;
+    padding: 10px 10px 10px 10px;
     display: flex;
     justify-content: space-around;
     align-items: flex-start;
@@ -9,4 +9,11 @@
     flex-direction: column;
     justify-content: flex-start;
     align-items: center;
+}
+.canvas {
+    max-width: 800px;
+    max-height: 800px;
+    min-width: 500px;
+    min-height: 500px;
+    background-color: white;
 }
