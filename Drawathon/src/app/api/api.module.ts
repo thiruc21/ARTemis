@@ -88,6 +88,10 @@ export class ApiModule implements OnInit {
     this.send("POST", "/api/games/" + gameId + "/joined/", {canvasId:canvasId, chatId:chatId}, callback);
   }
 
+  public startGame = function(gameId, callback) {
+    console.log("TODO");
+  }
+
 //public getPeerIds = function(gameId, callback) { 
   //  this.send("GET", "/api/games/" + gameId + "/joined/ids", null, callback);
   //}

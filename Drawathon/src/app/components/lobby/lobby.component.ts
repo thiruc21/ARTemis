@@ -114,6 +114,5 @@ export class LobbyComponent implements OnInit {
       })
     }
     else console.log("Please select an image first!");
-
   }
 }
