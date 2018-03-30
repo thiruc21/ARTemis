@@ -87,7 +87,7 @@ export class LobbyComponent implements OnInit {
     }, 2000);
   }
   debug() {
-    this.left = true;
+    this.left = false;
     this.check = false;
   }
   leave(){
