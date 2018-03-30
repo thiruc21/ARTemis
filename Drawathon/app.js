@@ -651,10 +651,10 @@ async function mongoSetup() {
         else {
             db = mongodb;
             dbo = db.db(configFile.mongo.dbname);            
-            //dbo.collection("games").drop();
-            //dbo.collection("images").drop();            
-            //dbo.collection("users").drop();            
-            //dbo.collection("game_joined").drop();
+            /*dbo.collection("games").drop();
+            dbo.collection("images").drop();            
+            dbo.collection("users").drop();            
+            dbo.collection("game_joined").drop(); //  */
         }        
     });
 }
