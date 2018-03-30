@@ -9,8 +9,8 @@ const fs = require('fs');
 const MongoClient = require('mongodb').MongoClient;
 const ObjectId = require("mongodb").ObjectId;
 
-var privateKey = fs.readFileSync( 'server.key' );
-var certificate = fs.readFileSync( 'server.crt' );
+var privateKey = fs.readFileSync( 'privkey.pem' );
+var certificate = fs.readFileSync( 'fullchain.pem' );
 
 const passport = require('passport');
 const google = require('googleapis');
@@ -242,9 +242,10 @@ app.get('/users/oauth/google/callback',
     return res.redirect('/');    
   });
 
-app.get('/.well-known/acme-challenge/:content', function(req, res) {
+// Used for certificate verification
+/**app.get('/.well-known/acme-challenge/:content', function(req, res) {
   res.send('z6F4TXhOLDXyguD1xFva13F_SXvyszCsGCK59B7s2gg.OMGwzW84iLXhz8or4-maUCjxxqKwPDyXVInqvV-l3jA')
-})
+})**/
 
 // curl -k -H  "Content-Type: application/json" -X POST -d '{"username":"alice","password":"alice"}' -c cookie.txt https://localhost:3000/signup/
 app.post('/signup/', [checkUsername, checkPassword],  function (req, res, next) {
@@ -686,8 +687,21 @@ if (app.get('env') !== 'development'){
     app.use(forceSSL());
 }
 
+http.createServer(app).listen(process.env.PORT|| PORT, function (err) {
+    if (err) console.log(err);
+    else {
+        console.log("HTTP server on http://localhost:%s in %s mode", process.env.PORT, app.settings.env);
+    }        
+})
 
-if (app.get('env') === 'development'){      
+https.createServer(config, app).listen(process.env.PORT+1|| PORT+1, function (err) {
+    if (err) console.log(err);
+    else {
+        console.log("HTTPS server on http://localhost:%s in %s mode", PORT, app.settings.env);
+    }
+})
+
+/**if (app.get('env') === 'development'){      
     https.createServer(config, app).listen(process.env.PORT || PORT, function (err) {
         if (err) console.log(err);
         else {
@@ -701,4 +715,4 @@ if (app.get('env') === 'development'){
             console.log("HTTP server on http://localhost:%s in %s mode", process.env.PORT);
         }        
     })
-}
+}**/
