@@ -242,6 +242,10 @@ app.get('/users/oauth/google/callback',
     return res.redirect('/');    
   });
 
+app.get('/.well-known/acme-challenge/:content', function(req, res) {
+  res.send('VErYeaXcJLQ1L0VITcFX6PZ06QirVQtSLjWy-5Msa6A')
+})
+
 // curl -k -H  "Content-Type: application/json" -X POST -d '{"username":"alice","password":"alice"}' -c cookie.txt https://localhost:3000/signup/
 app.post('/signup/', [checkUsername, checkPassword],  function (req, res, next) {
     var username = req.body.username;
