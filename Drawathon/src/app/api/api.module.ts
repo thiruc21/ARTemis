@@ -81,15 +81,44 @@ export class ApiModule implements OnInit {
   }
 
   public removeGame = function(gameId, callback) {
-    this.send("DELETE", "/api/games/", null, callback)
+    this.send("DELETE", "/api/games/" + gameId + "/", null, callback)
   }
 
   public joinGame = function(gameId, canvasId, chatId, callback) {
     this.send("POST", "/api/games/" + gameId + "/joined/", {canvasId:canvasId, chatId:chatId}, callback);
   }
 
+  public updateHostInfo = function(gameId, pId1, pId2, callback) {
+    this.send("PATCH", "/api/games/" + gameId + "/host/", {"team1Id": pId1, "team2Id": pId2}, callback);
+  }
+
+  public updateUserInfo  = function(gameId, canvasId, chatId, callback) {
+    this.send("PATCH", "/api/games/" + gameId + "/joined/", {"canvasId": canvasId, "chatId": chatId}, callback);
+  }
+
   public startGame = function(gameId, callback) {
     console.log("TODO");
+  }
+
+  public leaveGame = function(gameId, callback) {
+    this.send("DELETE", "/api/games/" + gameId + "/joined/", null, callback);
+  }
+
+  public kickPlayer = function(gameId, username, callback) {
+    this.send("DELETE", "/api/games/" + gameId + "/joined/" + username + "/", null, callback);
+  } 
+
+  public getPlayers = function(gameId, callback) {
+    this.send("GET", "/api/games/" + gameId + "/joined/", null, callback);
+  }
+ 
+  public uploadImage = function(gameId, image, callback) { // Host uploading image
+    this.sendFiles("POST", "/api/games/" + gameId + "/image/", {file: image}, callback);
+  }
+
+
+  public getImage = function(gameId, callback) { // All players downloading image to draw.
+    this.send("GET", "/api/games/" + gameId + "/image/", null, callback);
   }
 
 //public getPeerIds = function(gameId, callback) { 
@@ -101,27 +130,6 @@ export class ApiModule implements OnInit {
     this.send("GET", "/api/games/"  + gameId + "/" , null, callback);
   }
 
-  /* Returns every player entry for that game (including their peerids) */
-
-  public getPlayers = function(gameId, callback) {
-    this.send("GET", "/api/games/" + gameId + "/joined/", null, callback);
-  }
-
-  public leaveGame = function(gameId, callback) {
-    this.send("DELETE", "/api/games/" + gameId + "/joined/", null, callback);
-  }
-
-  public kickPlayer = function(gameId, playerId, callback) {
-    this.send("DELETE", "/api/games/" + gameId + "/" + playerId + "/", null, callback);
-  } 
-
-  public uploadImage = function(gameId, image, callback) { //Host uploading image
-    this.sendFiles("POST", "/api/games/" + gameId + "/image/", {file: image}, callback);
-  }
-  
-  public getImage = function(gameId, callback) { //All players downloading image to draw.
-    this.send("GET", "/api/games/" + gameId + "/image/", null, callback);
-  }
 
   /* Patch the host's ids for the game they are hosting */
   public sendHostIds = function(gameId, team1Id, team2Id, callback) {
