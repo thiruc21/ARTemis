@@ -19,10 +19,14 @@ export class CanvasComponent implements OnInit {
   myEdit:any[];
   peerEdit:any[];
 
+
   // Variables to be accessed by parent. game.component.
   public bg:string = "white";
   public myPeerId:string;
-  public peer:any;
+  public myPeers:string[];
+  peer:any;
+  public recieved:boolean;
+  public singlePlayer:boolean;
 
   @ViewChild('canvas') public canvas: ElementRef;
   @ViewChild('peer') public peerId:ElementRef;
@@ -41,7 +45,10 @@ export class CanvasComponent implements OnInit {
     this.customSS = this.customSize.nativeElement.value.toString() + 'px'
     this.pts = {x: 0, y:0, px:0, py:0}
     this.pressed = false;
-    this.myPeerId = "";
+    this.myPeerId = "null";
+    this.myPeers = [null, null];
+    this.recieved = false;
+    this.singlePlayer = true;
     this.canvasElem = this.canvas.nativeElement;
     this.ctx = this.canvasElem.getContext('2d');
     
@@ -143,9 +150,11 @@ export class CanvasComponent implements OnInit {
   }
 
   timeOut(){
-    // Update messages every second
     setTimeout(() => {
-     this.update();
+     if (this.recieved) this.update();
+     else {
+
+     }
      this.timeOut();
     }, 300);
   }
@@ -169,15 +178,22 @@ export class CanvasComponent implements OnInit {
   }
    // Update 
    update(){
+     console.log(this.myPeers)
     if (this.customSize.nativeElement.value < 5) this.customSize.nativeElement.value = 5
     if (this.customSize.nativeElement.value > 60) this.customSize.nativeElement.value = 60
     this.customSS = this.customSize.nativeElement.value.toString() + 'px'
     if (this.myEdit.length > 0) {
       var myEdit = this.myEdit.slice();
       this.myEdit = [];
-      var otherPeer = this.peer.connect(this.peerId.nativeElement.value);
-      otherPeer.on('open', function(){
-        otherPeer.send(myEdit);
+      if (this.singlePlayer == false) {
+        var otherPeer = this.peer.connect(this.myPeers[0]);
+        otherPeer.on('open', function(){
+          otherPeer.send(myEdit);
+        });
+      }
+      var hostPeer = this.peer.connect(this.myPeers[1]);
+      hostPeer.on('open', function(){
+        hostPeer.send(myEdit);
       });
     }
     while (this.peerEdit.length > 0) {

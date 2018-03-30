@@ -25,6 +25,7 @@ export class LobbyComponent implements OnInit {
   lob:any;
 
   check:boolean;
+  left:boolean;
   hostD:string;
 
   constructor(public router: Router) { }
@@ -32,6 +33,7 @@ export class LobbyComponent implements OnInit {
   ngOnInit() {
     // Set defaults.
     this.file = null;
+    this.left = false;
     this.api = new ApiModule();
     this.user = this.api.getCurrentUser();
     this.lob = this.api.getLobby();
@@ -41,36 +43,48 @@ export class LobbyComponent implements OnInit {
     this.gameId = this.lob._id;
     this.team1 = [];
     this.team2 = [];
+  
     if (this.host == this.user) this.hostD = "flex";
     else this.team1.push(this.user);
 
-    var players = this.players;
-    this.api.getPlayers(this.lob._id, function(err, res){
-      players = res;
-    });
     this.check = true;
     this.timeOut();
   }
   
   timeOut() {
+    // Check if new players are in.
     var players = this.players;
     this.api.getPlayers(this.lob._id, function(err, res){
       if (err) console.log(err);
       else players = res;
     });
-    // Check for new lobbys every three seconds.
+    var check = this.check;
+    if (this.user != this.host) {// If not host, check if game has started.
+      this.api.getGame(this.gameId, function(err, res) {
+        if (err) console.log(err);
+        else {
+          if (res.inLobby == false) {
+            check = false;
+          }
+        }
+      });
+    }
+    // Check for new lobbys every two seconds.
     setTimeout(() => {
       if (players) {
         this.team1 = [];
         this.team2 = [];
         this.players = players;
+        console.log(this.players);
         var i = 0;
         for (i = 0; i < this.players.length; i++) {
           if (this.team1.length <= this.team2.length) this.team1.push(this.players[i].user);
           else this.team2.push(this.players[i].user); // Even distribution of teamMembers.
         }
       }
+      this.check = check;
       if (this.check) this.timeOut(); // Only continue if check is true.
+      else if (this.left == false) this.router.navigate['/game']; // Else we are done waiting for new game, go forward.
     }, 2000);
   }
 
@@ -96,9 +110,13 @@ export class LobbyComponent implements OnInit {
     }
     setTimeout(() => {
       this.check = check;
-      if (this.check == false) this.router.navigate(['/']); // Navigate.
+      if (this.check == false) {
+        this.left = true;
+        this.router.navigate(['/']); // Navigate.
+      }
     },1000);
   }
+
   startGame() {
     var input:HTMLInputElement = this.picture.nativeElement;
     this.file = input.files[0];
@@ -114,7 +132,10 @@ export class LobbyComponent implements OnInit {
       })
       setTimeout(() => {
         this.check = check;
-        if (this.check == false) this.router.navigate(['/host']);
+        if (this.check == false) {
+          this.left = true;
+          this.router.navigate(['/host']);
+        }
       }, 1000);
     }
     else console.log("Please select an image first!");

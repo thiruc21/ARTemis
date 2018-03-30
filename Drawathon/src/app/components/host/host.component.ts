@@ -69,7 +69,10 @@ export class HostComponent implements OnInit {
     setTimeout(() => {
       this.myPeerId[0] = this.peer[0].id;
       this.myPeerId[1] = this.peer[1].id;
-      console.log(this.myPeerId);
+      this.api.updateHostInfo(this.game._id, this.myPeerId[0], this.myPeerId[1], function(err) {
+        if (err) console.log(err);
+        else console.log("sent peerIds");
+      });
     },1000);
     // End off with initing the canvasi;
     this.canvasElem[0] = this.canvas1.nativeElement;

@@ -76,6 +76,10 @@ export class ApiModule implements OnInit {
     this.send("GET", "/api/games/",null, callback);
   }
 
+  public getGame = function(gameId, callback) {
+    this.send("GET", "/api/games/" + gameId + "/", null, callback);
+  }
+
   public addGame = function(title, pId1, pId2, callback) {
     this.send("POST", "/api/games/", {title: title, team1Id: pId1, team2Id: pId2}, callback);
   }

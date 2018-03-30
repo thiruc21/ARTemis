@@ -9,6 +9,8 @@ import { ApiModule } from '../../api/api.module';
 export class ChatComponent implements OnInit {
   messages:string[];
   public myPeerId:string;
+  public myPeer:string;
+  public recieved:boolean; 
   peer;
   public disabled:boolean = false;
   btnDisplay:string;
@@ -25,7 +27,7 @@ export class ChatComponent implements OnInit {
     if (this.textelem.disabled) this.btnDisplay = "none";
     else this.btnDisplay = "flex";
     this.messages = [];
-    this.myPeerId = "";
+    this.myPeerId = "null";
     this.peer = new Peer({host : "lightpeerjs.herokuapp.com",
                           secure : true,
                           path : "/peerjs",
@@ -55,15 +57,18 @@ export class ChatComponent implements OnInit {
     me.messages.push(data);
   }
   submitMessage() {
-    var text = this.textarea.nativeElement.value;
-    var me = this.api.getCurrentUser();
-    this.messages.push(me + ": " + text);
-    this.textarea.nativeElement.value = "";
-    // Connect to other peer and send message
-    var otherPeer = this.peer.connect(this.peerId.nativeElement.value);
-    otherPeer.on('open', function(){
-      otherPeer.send(me + ": " + text);
-    });
+    console.log(this.myPeer);
+    if (this.recieved && this.myPeer != "null") {
+      var text = this.textarea.nativeElement.value;
+      var me = this.api.getCurrentUser();
+      this.messages.push(me + ": " + text);
+      this.textarea.nativeElement.value = "";
+      // Connect to other peer and send message
+      var otherPeer = this.peer.connect(this.peerId.nativeElement.value);
+      otherPeer.on('open', function(){
+        otherPeer.send(me + ": " + text);
+      });
+    }
   }
 
   timeOut(){
