@@ -38,6 +38,7 @@ export class LobbyComponent implements OnInit {
     this.players = [];
     this.hostD = "none";
     this.host = this.lob.host;
+    this.gameId = this.lob._id;
     this.team1 = [];
     this.team2 = [];
     if (this.host == this.user) this.hostD = "flex";
@@ -99,19 +100,22 @@ export class LobbyComponent implements OnInit {
     },1000);
   }
   startGame() {
+    var input:HTMLInputElement = this.picture.nativeElement;
+    this.file = input.files[0];
+    console.log(this.file);
     if (this.file) {
       var check:boolean = this.check;
-      this.api.startGame(this.lob._id, function (err, res) {
-        if (err) console.log(err);
-        else {
+      this.api.uploadImage(this.gameId, this.file, function(err) {
+        if (err) console.log(err)
+        {
           console.log("starting.");
           check = false;
         }
-      });
+      })
       setTimeout(() => {
         this.check = check;
         if (this.check == false) this.router.navigate(['/host']);
-      })
+      }, 1000);
     }
     else console.log("Please select an image first!");
   }

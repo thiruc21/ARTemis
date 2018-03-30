@@ -150,15 +150,15 @@ export class ApiModule implements OnInit {
   public getResults = function(gameId, image, callback) { // Get back results of image comparison. should return null if results not calculated yet.
     this.send("GET", "/api/games/" + gameId + "/joined/result", null, callback);
   }
-
 */
+
   //Local Storage
   public pushLobby = function(lobby) {
     localStorage.setItem("lob", JSON.stringify(lobby));
   }
 
   public getLobby = function() {
-      return JSON.parse(localStorage.getItem('lob'));
+    return JSON.parse(localStorage.getItem('lob'));
   }
 
   public pushStroke = function(x, y, px, py, color) {

@@ -37,9 +37,9 @@ export class MainComponent implements OnInit {
       this.check = false; // No need to check.
     }
     else {
-      this.createD = "grid";
+      this.createD = "grid"; // Im commentint out repeated lines and making it DRY as fk.
       // Temp references to allow usage inside the callback.
-      var games:string[] = this.games;
+      /*var games:string[] = this.games;
       var gamesData:any[] = this.gamesData;
       var check:boolean = this.check;
 
@@ -49,7 +49,7 @@ export class MainComponent implements OnInit {
           check = true; // Short poll for updates.
           if (res.length > 0) { // If there is a game availabe.
             res.forEach(function(element) {
-              if (element.numPlayers < 4 /*&& element.host != user*/){ // No full games.
+              if (element.numPlayers < 4){ // No full games.
                 games.push(element.title + " by " + element.host);
                 gamesData.push(element);
               }
@@ -61,7 +61,8 @@ export class MainComponent implements OnInit {
       setTimeout(() => {
         this.check = check;
         this.timeOut();       // Short poll timer loop.
-      },2000);
+      },2000);*/
+      this.update();
     }
   }
   // Make a new game.
@@ -70,7 +71,7 @@ export class MainComponent implements OnInit {
     var api = this.api;
     var check:boolean = this.check;
     // Add game.
-    this.api.addGame(label, "132", "123", function(err, res) {
+    this.api.addGame(label, "null", "null", function(err, res) { //Create game with 2 null peerIds that can be filled later. No generated peerIds will hold value of null.
       if (err) console.log(err);
       else {
         api.pushLobby(res); // Store lobby that user enters into local Storage.
@@ -88,7 +89,7 @@ export class MainComponent implements OnInit {
   clickGame(i) { //User is joing a lobby at index i.
     var check:boolean = this.check;
     this.api.pushLobby(this.gamesData[i]);
-    this.api.joinGame(this.gamesData[i]._id, "123", "123", function(err, res){
+    this.api.joinGame(this.gamesData[i]._id, "null", "null", function(err, res){ //Join game with null cavnasId and chatId.
       if (err) console.log(err);
       else {
         console.log('successfully joined.');
@@ -97,7 +98,7 @@ export class MainComponent implements OnInit {
     });
     setTimeout(() => {
       this.check = check;
-      if (this.check==false) this.router.navigate(['/lobby']); // Navigate.
+      if (this.check == false) this.router.navigate(['/lobby']); // Navigate.
     },1500);
   }
 
@@ -113,8 +114,12 @@ export class MainComponent implements OnInit {
     // temp values.
     var games:string[] = [];
     var gamesData:any[] = [];
+    var check:boolean = this.check;
     this.api.getGames(function(err, res) {
-      if (err) console.log(err)
+      if (err) {
+        console.log(err)
+        check = false;
+      }
       else {
         if (res && res.length > 0) {
           res.forEach(function(element) {
@@ -129,10 +134,11 @@ export class MainComponent implements OnInit {
     // Confirm results and update after delay.
     setTimeout(() => {
       if (games.length > 0) {
-        this.games = games
-        this.games.push(this.games.pop())
+        this.games = games;
+        this.gamesData = gamesData;
+        this.check = check;
       };
       if (this.check) this.timeOut(); // Only continue if check is true.
-    }, 1500);
+    }, 1000);
   }
 }

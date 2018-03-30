@@ -1,7 +1,7 @@
 <app-pannel></app-pannel>
 <div class="layout">
   <app-canvas #canvas class="gcanvas"></app-canvas>
-  <img class="gimg" src="assets/sample.png" alt="Image not found">
+  <img class="gimg" src="/api/games/{{gameId}}/image/" alt="Image not found">
   <div class="gtimer">
     <p>{{timeText}}</p>
     <h1>{{timeVal}}</h1>

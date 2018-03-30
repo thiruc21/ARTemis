@@ -7,7 +7,6 @@ import { ApiModule } from '../../api/api.module';
   selector: 'app-game',
   templateUrl: './game.component.html',
   styleUrls: ['./game.component.css'],
-  //<app-lobby [ngStyle]="{ 'display':lobbyD }" class="lobby"></app-lobby>
 
 })
 export class GameComponent implements OnInit {
@@ -19,7 +18,6 @@ export class GameComponent implements OnInit {
   timeText:string;
   timeVal:number;
   // Controls display of lobby and game.
-  lobbyD:string;
   gameD:string;
   // Variables to hold all related info of the game.
   gameId:string;
@@ -38,11 +36,10 @@ export class GameComponent implements OnInit {
 
   ngOnInit() {
     // Set defaults.
-    //this.lobbyD = "grid";
     this.gameD = "grid";
     this.api = new ApiModule();
     //var gameId = lob._id;
-
+    this.gameId = this.api.getLobby()._id;
     //this.canvasPeer= new Peer({host : "lightpeerjs.herokuapp.com",
     //secure : true,
     //path : "/peerjs",
