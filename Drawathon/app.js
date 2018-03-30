@@ -31,8 +31,12 @@ var dbo = null;
 const app = express();
 const https = require('https');
 const http = require('http');
-
-const PORT = 3000;
+var PORT;
+if (app.get('env') === 'development') { 
+    PORT = 3000;
+} else {
+    PORT = process.env.PORT
+}
 const MAXPLAYERS = 4;
 var multer  = require('multer');
 var upload = multer({ dest: path.join(__dirname, 'uploads') });
@@ -653,7 +657,7 @@ async function mongoSetup() {
 }
 mongoSetup();
 
-https.createServer(config, app).listen(process.env.PORT || PORT, function (err) {
+https.createServer(config, app).listen(PORT, function (err) {
     if (err) console.log(err);
     else {
         console.log("HTTPS server on https://localhost:%s in %s mode", PORT, app.settings.env);
