@@ -687,21 +687,7 @@ if (app.get('env') !== 'development'){
     app.use(forceSSL());
 }
 
-http.createServer(app).listen(process.env.PORT|| PORT, function (err) {
-    if (err) console.log(err);
-    else {
-        console.log("HTTP server on http://localhost:%s in %s mode", process.env.PORT, app.settings.env);
-    }        
-})
-
-https.createServer(config, app).listen(process.env.PORT+1|| PORT+1, function (err) {
-    if (err) console.log(err);
-    else {
-        console.log("HTTPS server on http://localhost:%s in %s mode", PORT, app.settings.env);
-    }
-})
-
-/**if (app.get('env') === 'development'){      
+if (app.get('env') === 'development'){      
     https.createServer(config, app).listen(process.env.PORT || PORT, function (err) {
         if (err) console.log(err);
         else {
@@ -715,4 +701,4 @@ https.createServer(config, app).listen(process.env.PORT+1|| PORT+1, function (er
             console.log("HTTP server on http://localhost:%s in %s mode", process.env.PORT);
         }        
     })
-}**/
+}
