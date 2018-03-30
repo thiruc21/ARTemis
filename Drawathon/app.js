@@ -125,7 +125,9 @@ passport.deserializeUser(function(id, done) {
     });    
 });
 
+app.enable('trust proxy');
 app.use(session({
+    proxy: true,
     cookie: {
         httpOnly: true
         ,secure: true
