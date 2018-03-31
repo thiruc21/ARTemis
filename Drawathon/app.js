@@ -595,7 +595,7 @@ function addToClarifai (imagePath, gameID) {
         id: gameID
         }).then(
         function(response) {
-            console.log(response);
+            //console.log(response);
             console.log("Image uploaded to clarifai");
         },
         function(err) {
@@ -632,7 +632,7 @@ function compareImages(otherImage, gameID){
             // Find the similarity for the image ID of this game, then return the score
             for (var index = 0; index < response.hits.length; index++) {
                 // Get the image with the current game's ID
-                if (response.hits[index].input.id == "5abee2a4951282643c5706a4") {
+                if (response.hits[index].input.id == gameID) {
                     score = response.hits[index].score;
                     //console.log(response.hits[index]);
                     console.log("Similarity score is " + score)
