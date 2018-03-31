@@ -70,25 +70,27 @@ export class GameComponent implements OnInit {
   }
 
   timeOut() {
+    // Temp Variables.
     var sent = this.sent;
     var canvasPeer:any[] = this.canvasPeer;
     var chatPeer:any = this.chatPeer;
+    var singlePlayer:boolean = true;
+    var user = this.user;
+    var team = this.teamNum;
+
     if (this.sent == false) { // Update for sending peer Data.
       console.log("waiting on send")
       if (this.canvas.myPeerId != "null" && this.chat.myPeerId != "null") {
         this.api.updateUserInfo(this.gameId, this.canvas.myPeerId, this.chat.myPeerId, function (err, res) {
           if (err) console.log("err") 
           else {
-            console.log("sent         " + res);
+            console.log("sent: " + res);
             sent = true;
           }
         });
       }
     } else if (this.recieved == false) { // Update for recieveing peer Data.
-      console.log("waiting on recieve")
-      var singlePlayer:boolean = true;
-      var user = this.user;
-      var team = this.teamNum;
+      console.log("waiting on recieve");
       this.api.getPlayers(this.gameId, function (err, players) {
         if (err) console.log(err);
         else {
@@ -131,7 +133,6 @@ export class GameComponent implements OnInit {
       }
     }
     setTimeout(() => {
-
       this.teamNum = team;
       this.sent = sent;
       console.log("chat: " + chatPeer);
@@ -141,21 +142,19 @@ export class GameComponent implements OnInit {
       if (this.recieved) {
         this.canvasPeer = canvasPeer;
         this.chatPeer = chatPeer;
+        this.canvas.singlePlayer = singlePlayer;
         this.canvas.myPeers = this.canvasPeer;
         this.canvas.recieved = this.recieved;
         this.chat.myPeer = this.chatPeer;
         this.chat.recieved = this.recieved;
       }
-
       console.log("bools: " + this.sent + " "  + this.recieved);
-
       if (this.sent == false || this.recieved == false) this.timeOut() // Update loop.
       else {
-        console.log("HIYAAAAAA")
         console.log("all connections made with: " + this.canvasPeer, this.chatPeer);
         this.timer();
       }
-    }, 1000);
+    }, 1500);
   }
 
   timer() {

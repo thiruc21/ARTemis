@@ -36,6 +36,15 @@
     justify-content: center;
 }
 
+
+.kickImg {
+    width: 10px;
+    height: 10px;
+    display:flex;
+    align-self: flex-start;
+    justify-self: flex-end;
+}
+
 .hostCenter {
     grid-area: 1 / 2 / span 1 / span 1;
     display: flex;

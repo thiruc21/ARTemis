@@ -129,8 +129,8 @@ export class HostComponent implements OnInit {
     this.ctx[i].beginPath();
     this.ctx[i].moveTo(px, py);
     this.ctx[i].lineTo(x, y);
-    this.ctx[i].strokeStyle = color;
     this.ctx[i].lineWidth = size;
+    this.ctx[i].strokeStyle = color;
     this.ctx[i].closePath();
     this.ctx[i].stroke();
   }
