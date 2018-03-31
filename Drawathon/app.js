@@ -179,15 +179,15 @@ var isAuthenticated = function(req, res, next) {
 };
 
 var checkUsername = function(req, res, next) {
-    req.checkBody('username', 'Username is required').exists().notEmpty();
-    req.checkBody('username', 'Please enter a valid alphanumeric username').isAlphanumeric();
-    req.checkBody('username', 'Username must be atleast atleast 5 characters and a max of 24 characters').isLength({min:5, max: 24})
+    req.checkBody('username', ' Username is required').exists().notEmpty();
+    req.checkBody('username', ' Please enter a valid alphanumeric username').isAlphanumeric();
+    req.checkBody('username', ' Username must be atleast 5 characters and a max of 24 characters').isLength({min:5, max: 24})
     next();
 };
 
 var checkPassword = function(req, res, next) {
-    req.checkBody('password', 'Password is required').exists().notEmpty();
-    req.checkBody('password', 'Password must be atleast atleast 5 characters and a max of 40 characters').isLength({min:5, max: 40})
+    req.checkBody('password', ' Password is required').exists().notEmpty();
+    req.checkBody('password', ' Password must be atleast 5 characters and a max of 40 characters').isLength({min:5, max: 40})
     next();
 };
 
@@ -271,7 +271,7 @@ app.post('/signup/', [checkUsername, checkPassword],  function (req, res, next) 
         var salt = generateSalt();
         var hash = generateHash(password, salt);
         dbo.collection("users").update({username: username, authProvider: 'artemis'}, 
-            {username: username, authProvider: 'artemis', salt:salt, haslength:hash}, 
+            {username: username, authProvider: 'artemis', salt:salt, hash:hash}, 
             {upsert: true}, function(n, nMod) {
                 if (err) return res.status(500).end(err);
                 return res.json("User " + username + " signed up");
@@ -751,10 +751,10 @@ async function mongoSetup() {
         else {
             db = mongodb;
             dbo = db.db(configFile.mongo.dbname);            
-            /*dbo.collection("games").drop();
-            dbo.collection("images").drop();            
-            dbo.collection("users").drop();            
-            dbo.collection("game_joined").drop(); //  */
+            //dbo.collection("games").drop();
+            //dbo.collection("images").drop();            
+            //dbo.collection("users").drop();            
+            //dbo.collection("game_joined").drop(); //  */
         }        
     });
 }
