@@ -58,7 +58,7 @@ export class CanvasComponent implements OnInit {
                           secure : true,
                           path : "/peerjs",
                           port : 443,
-                          debug: true});     
+                          debug: false});     
     this.peer.on('open', function(id){
       console.log(id);
     });
@@ -178,7 +178,6 @@ export class CanvasComponent implements OnInit {
   }
    // Update 
    update(){
-     console.log(this.myPeers)
     if (this.customSize.nativeElement.value < 5) this.customSize.nativeElement.value = 5
     if (this.customSize.nativeElement.value > 60) this.customSize.nativeElement.value = 60
     this.customSS = this.customSize.nativeElement.value.toString() + 'px'

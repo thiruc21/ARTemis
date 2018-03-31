@@ -61,11 +61,17 @@ export class HostComponent implements OnInit {
                           path : "/peerjs",
                           port : 443,
                           debug: true});
-        this.peer[1] = new Peer({host : "lightpeerjs.herokuapp.com",
+    this.peer[1] = new Peer({host : "lightpeerjs.herokuapp.com",
                           secure : true,
                           path : "/peerjs",
                           port : 443,
                           debug: true});
+    this.peer[0].on('open', function(id){
+      console.log(id);
+    });
+    this.peer[1].on('open', function(id){
+      console.log(id);
+    });
     setTimeout(() => {
       this.myPeerId[0] = this.peer[0].id;
       this.myPeerId[1] = this.peer[1].id;
@@ -99,6 +105,8 @@ export class HostComponent implements OnInit {
       });
     });
     this.check = true;
+    this.keepAlive(0);
+    this.keepAlive(1);
     this.timeOut();
   }
   timeOut() {
@@ -125,5 +133,13 @@ export class HostComponent implements OnInit {
     this.ctx[i].lineWidth = size;
     this.ctx[i].closePath();
     this.ctx[i].stroke();
+  }
+  keepAlive(i){
+    // Keep the peer alive as long as on page
+    setTimeout(() => {
+       // Connect to other peer and send message
+       var conn = this.peer[i].connect(this.myPeerId[i]);
+       this.keepAlive(i);
+    }, 25000);
   }
 }

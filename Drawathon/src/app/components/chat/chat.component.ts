@@ -32,13 +32,13 @@ export class ChatComponent implements OnInit {
                           secure : true,
                           path : "/peerjs",
                           port : 443,
-                          debug: true});     
+                          debug: false});     
     this.peer.on('open', function(id){
       console.log(id);
     });
     setTimeout(() => {
       this.myPeerId = this.peer.id;
-    },3000);
+    },2000);
     //var messages:string[] = this.messages;
     var me:any = this;
     var func:(me:this, data:string) => void = this.addMessage;

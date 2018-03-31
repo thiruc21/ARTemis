@@ -10,9 +10,9 @@ import { CanvasComponent } from './components/canvas/canvas.component';
 import { HostComponent } from './components/host/host.component';
 
 const routes: Routes = [
-  { path: 'game', component:GameComponent } ,
   { path: '', component:MainComponent, pathMatch: 'full' } ,
   { path: 'lobby', component:LobbyComponent } ,
+  { path: 'game', component:GameComponent } ,
   { path: 'test', component:CanvasComponent } ,
   { path: 'signin', component:SigninComponent} ,
   { path: 'host', component:HostComponent},

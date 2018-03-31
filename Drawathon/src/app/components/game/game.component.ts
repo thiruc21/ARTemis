@@ -34,7 +34,8 @@ export class GameComponent implements OnInit {
   // Boolean's for sending and recieving;
   sent:boolean;
   recieved:boolean;
-
+  
+  teamNum:number;
   // Api module.
   api:ApiModule;
 
@@ -56,7 +57,7 @@ export class GameComponent implements OnInit {
 
     this.sent = false;
     this.recieved = false;
-
+    this.teamNum = null;
     this.timeOut(); // Update loop.
 
     if (this.gameD == "grid"){
@@ -65,33 +66,33 @@ export class GameComponent implements OnInit {
       this.canvas.bg = "grey";
       this.chat.disabled = true;
     }
-    this.timer(); // Seperate for countdown purposes only.
+    
   }
 
   timeOut() {
     var sent = this.sent;
-    var recieved = this.recieved;
     var canvasPeer:any[] = this.canvasPeer;
     var chatPeer:any = this.chatPeer;
-
     if (this.sent == false) { // Update for sending peer Data.
+      console.log("waiting on send")
       if (this.canvas.myPeerId != "null" && this.chat.myPeerId != "null") {
         this.api.updateUserInfo(this.gameId, this.canvas.myPeerId, this.chat.myPeerId, function (err, res) {
           if (err) console.log("err") 
           else {
-            console.log("sent" , res);
+            console.log("sent         " + res);
             sent = true;
           }
         });
       }
     } else if (this.recieved == false) { // Update for recieveing peer Data.
+      console.log("waiting on recieve")
+      var singlePlayer:boolean = true;
       var user = this.user;
+      var team = this.teamNum;
       this.api.getPlayers(this.gameId, function (err, players) {
         if (err) console.log(err);
         else {
-          var team = 0;
-          var otherPlayer;
-          var singlePlayer:boolean = true;
+          var otherPlayer = null;
           players.forEach(function(player){
             if (user == player.user) {
               team = player.teamNum;
@@ -101,35 +102,42 @@ export class GameComponent implements OnInit {
             if (team == player.teamNum && user != player.user) {
               otherPlayer = player;
               singlePlayer = false;
+              console.log(singlePlayer);
             }
           });
-          if ((otherPlayer.canvasId != "null" && otherPlayer.chatId != "null") || singlePlayer) {
+          if (singlePlayer == false) {
             canvasPeer[0] = otherPlayer.canvasId;
             chatPeer = otherPlayer.chatId;
-            this.api.getGame(this.gameId, function(err, res) {
-              if (err) console.log(err);
-              else {
-                if (team == 0) {
-                  if (res.team1Id != "null") {
-                    canvasPeer[1] = res.team1Id;
-                    recieved = true;
-                  }
-                }
-                else {
-                  if (res.team2Id != "null") {
-                    canvasPeer[1] = res.team2Id;
-                    recieved = true;
-                  }
-                }
-              }
-            });
           }
         }
       });
+      if (this.teamNum != null) {
+        var t = this.teamNum;
+        this.api.getGame(this.gameId, function(err, res) {
+          if (err) console.log(err);
+          else {
+            if (t == 0) {
+              if (res.team1Id != "null") {
+                canvasPeer[1] = res.team1Id;
+              }
+            }
+            else {
+              if (res.team2Id != "null") {
+                canvasPeer[1] = res.team2Id;
+              }
+            }
+          }
+        });
+      }
     }
     setTimeout(() => {
+
+      this.teamNum = team;
       this.sent = sent;
-      this.recieved = recieved;
+      console.log("chat: " + chatPeer);
+      console.log("canvas: " + canvasPeer);
+      console.log("singleP?: " + singlePlayer);
+      this.recieved = (canvasPeer[1] != null && (singlePlayer || (canvasPeer[0] != null && chatPeer != null)));
       if (this.recieved) {
         this.canvasPeer = canvasPeer;
         this.chatPeer = chatPeer;
@@ -138,9 +146,16 @@ export class GameComponent implements OnInit {
         this.chat.myPeer = this.chatPeer;
         this.chat.recieved = this.recieved;
       }
-      if (this.sent == false || this.recieved == false) this.timeOut(); // Update loop.
-      else console.log("all connections made with: " + this.canvasPeer, this.chatPeer);
-    }, 1500);
+
+      console.log("bools: " + this.sent + " "  + this.recieved);
+
+      if (this.sent == false || this.recieved == false) this.timeOut() // Update loop.
+      else {
+        console.log("HIYAAAAAA")
+        console.log("all connections made with: " + this.canvasPeer, this.chatPeer);
+        this.timer();
+      }
+    }, 1000);
   }
 
   timer() {

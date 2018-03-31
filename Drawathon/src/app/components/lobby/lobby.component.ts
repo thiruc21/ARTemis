@@ -83,13 +83,18 @@ export class LobbyComponent implements OnInit {
       }
       this.check = check;
       if (this.check) this.timeOut(); // Only continue if check is true.
-      else if (this.left == false) this.router.navigate['/game']; // Else we are done waiting for new game, go forward.
+      else {
+        if (this.left == false) this.router.navigate(['/game']);
+       }  // Else we are done waiting for new game, go forward.
     }, 2000);
   }
   debug() {
+    console.log("clicked debug");
     this.left = false;
     this.check = false;
+    this.router.navigate(['/game']);
   }
+
   leave(){
     var check:boolean = this.check;
     if (this.host == this.user) {
