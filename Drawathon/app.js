@@ -312,11 +312,11 @@ app.get('/signout/', function (req, res, next) {
     res.json("User signed out");
 });
 
+
+
 // curl -k  -b cookie.txt -H "Content-Type: application/json" -X POST -d '{"title":"join THIS Lobby lol", "team1Id":123, "team2Id":123}' https://localhost:3000/api/games/
 app.post('/api/games/', isAuthenticated, function (req, res, next) {
     req.checkBody('title', 'Every game needs a title!').exists().notEmpty();
-    //req.checkBody('team1Id', "Each game requires valid teamIds").exists().notEmpty();
-    //req.checkBody('team2Id', "Each game requires valid teamIds").exists().notEmpty();
     
     var errors = req.validationErrors();
     if (errors) return res.status(400).send(errors[0].msg);
@@ -324,16 +324,14 @@ app.post('/api/games/', isAuthenticated, function (req, res, next) {
     var title = req.body.title;
     var host = req.session.username;
     var provider = req.session.authProv;    
-    var team1Id = req.body.team1Id;
-    var team2Id = req.body.team2Id;
 
     // Check if game has already been created
     dbo.collection("games").findOne({host: host, authProvider:provider}, function(err, game) {
         if (err) return res.status(500).end(err);
         if (game) return res.status(409).end("User " + host + " already has a hosted game");
         
-        dbo.collection('games').insertOne({title:title, host: host, authProvider:provider, team1Id:team1Id, 
-            team2Id:team2Id, inLobby: true, numPlayers:0, maxPlayers:MAXPLAYERS},
+        dbo.collection('games').insertOne({title:title, host: host, authProvider:provider,
+            inLobby: true, numPlayers:0, maxPlayers:MAXPLAYERS},
             function (err, game) {
                 if (err) return res.status(500).end(err);
                 return res.json(game.ops[0]);
@@ -349,7 +347,7 @@ app.get('/api/games/', isAuthenticated, function (req, res, next) {
     });
 });
 
-// curl -k -b cookie.txt -H "Content-Type: application/json" -X POST -d '{"canvasId": 123, "chatId": 123}' https://localhost:3000/api/games/5aad97f9f4e28b075083ef9c/joined/
+// curl -k -b cookie.txt -H "Content-Type: application/json" -X POST -d  https://localhost:3000/api/games/5aad97f9f4e28b075083ef9c/joined/
 app.post('/api/games/:id/joined/', isAuthenticated, function (req, res, next) {
     req.checkParams('id', 'game id required!').exists().notEmpty();
     var errors = req.validationErrors();
@@ -405,12 +403,11 @@ app.post('/api/games/:id/joined/', isAuthenticated, function (req, res, next) {
 // curl -k -b cookie.txt -H "Content-Type: application/json" -X PATCH -d '{"action": "Start"}' https://localhost:3000/api/games/5aad97f9f4e28b075083ef9c/
 app.patch('/api/games/:id/', isAuthenticated, function (req, res, next) {
     req.checkParams('id', 'game id required!').exists().notEmpty();
-    req.checkBody('action', 'no action found!').exists().notEmpty();
-    req.checkBody('action', 'Valid Action required for patch!').isIn(['Start'])
+    req.checkBody('action', 'Valid Action required for patch!').exists().notEmpty().isIn(['Start'])
+    
     var errors = req.validationErrors();
     if (errors) return res.status(400).send(errors[0].msg);
     
-
     var host = req.session.username;
     var provider = req.session.authProv;
     var gameId = req.params.id;
@@ -444,6 +441,7 @@ app.get('/api/games/:id/', isAuthenticated, function (req, res, next) {
 // curl -k -b cookie.txt -H "Content-Type: application/json" -X PATCH -d '{"team1Id": 1233, "team2Id": 12123}' https://localhost:3000/api/games/5aad97f9f4e28b075083ef9c/host/
 app.patch('/api/games/:id/host/', isAuthenticated, function (req, res, next) {
     req.checkParams('id', 'game id required!').exists().notEmpty();
+    req.checkBody('action', 'Valid Action required for patch!').exists().notEmpty().isIn(['generateId'])
     req.checkBody('team1Id', "Host requires a canvas id for team 1").exists().notEmpty();
     req.checkBody('team2Id', "Host requires a canvas id for team 2").exists().notEmpty();
 
@@ -473,6 +471,7 @@ app.patch('/api/games/:id/host/', isAuthenticated, function (req, res, next) {
 // curl -k -b cookie.txt -H "Content-Type: application/json" -X PATCH -d '{"canvasId": "123123", "chatId": "12412sdad"}' https://localhost:3000/api/games/5abd897b49790f305b870aab/joined/
 app.patch('/api/games/:id/joined/', isAuthenticated, function (req, res, next) {
     req.checkParams('id', 'game id required!').exists().notEmpty();
+    req.checkBody('action', 'Valid Action required for patch!').exists().notEmpty().isIn(['generateId']);
     req.checkBody('chatId', "Each player requires a chat id").exists().notEmpty();
     req.checkBody('canvasId', "Each player requires a canvas id").exists().notEmpty();
     var errors = req.validationErrors();
