@@ -11,11 +11,11 @@
       </a>
     </div>
   </div>
-  <form [ngStyle]="{ 'display': createD }" class="createGame">
+  <div [ngStyle]="{ 'display': createD }" class="createGame">
     <p>Create Game</p>
     <input class="inTitle" #title placeholder="Title" required>
     <button class="createButton" (click)="createGame()">Create</button>
-  </form>
+  </div>
 </div>
 <a routerLink='/lobby'>Lobby Link</a>
 <a routerLink='/game'>Game Link</a>
