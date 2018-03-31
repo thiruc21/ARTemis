@@ -29,7 +29,7 @@ export class LobbyComponent implements OnInit {
   uploaded:boolean;
   left:boolean;
   hostD:string;
-
+  startText:string;
   constructor(public router: Router) { }
 
   ngOnInit() {
@@ -47,7 +47,7 @@ export class LobbyComponent implements OnInit {
     this.team1 = [];
     this.team2 = [];
     this.uploaded = false;
-  
+    this.startText = "Upload"
     if (this.host == this.user) this.hostD = "flex";
     else this.team1.push(this.user);
 
@@ -58,6 +58,7 @@ export class LobbyComponent implements OnInit {
   timeOut() {
     // Check if new players are in.
     var players:any[] = this.players;
+    var rtr = this.router
     this.api.getPlayers(this.lob._id, function(err, res){
       if (err) console.log(err);
       else players = res;
@@ -68,7 +69,6 @@ export class LobbyComponent implements OnInit {
         if (err) console.log(err);
         else {
           if (res.inLobby == false) {
-            console.log("in game");
             check = false;
           }
         }
@@ -143,7 +143,8 @@ export class LobbyComponent implements OnInit {
     },1000);
   }
 
-  startGame() {
+
+  uploadImg() {
     var input:HTMLInputElement = this.picture.nativeElement;
     var uploaded:boolean = false;
     this.file = input.files[0];
@@ -153,13 +154,29 @@ export class LobbyComponent implements OnInit {
       if (this.uploaded == false) {
         this.api.uploadImage(this.gameId, this.file, function(err) {
           if (err) console.log(err)
-          {
-            console.log("starting.");
+          else {
+            console.log("Image uploaded");
             uploaded = true;
           }
         });
       }
-      this.api.startGame(this.gameId, function(err, res){
+      setTimeout(() => {
+       this.uploaded = uploaded;
+       if (this.uploaded) {
+         this.startText = "Start";
+         var image:HTMLInputElement = this.picture.nativeElement;
+         image.style.display = "none";
+       }
+      }, 1500);
+  } else console.log("Please select an image first!");
+}
+
+  startGame() {
+    if (this.startText == "Upload"){
+      this.uploadImg();
+    } else {
+    var check:boolean = this.check;
+    this.api.startGame(this.gameId, function(err, res){
         if (err) console.log(err)
         else {
           check = false;
@@ -167,15 +184,14 @@ export class LobbyComponent implements OnInit {
       })
       setTimeout(() => {
         this.check = check;
-        this.uploaded = uploaded;
         if (this.check == false && this.uploaded) {
           this.left = true;
           this.router.navigate(['/host']);
         }
-      }, 1000);
+      }, 2000);
     }
-    else console.log("Please select an image first!");
   }
+   
 
   kick(teamNum, index) {
     if (teamNum == 1) {

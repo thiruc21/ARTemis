@@ -59,7 +59,9 @@ passport.use('twitchToken', new TwitchStrategy({
         if (foundUser) return callback(null, foundUser);
         
         dbo.collection("users").insertOne(
-        {twitchId: profile.id, username: profile.displayName, authProvider: 'twitch'},
+        {twitchId: profile.id, username: profile.displayName
+            , authProvider:'twitch'
+        },
         function (err, res) {
             if (err) return callback(err, null);
             return callback(null, res.ops[0]);
@@ -84,7 +86,9 @@ passport.use('googleToken', new GoogleStrategy({
             if (err) return callback(err, null);
             if (foundUser) return callback(null, foundUser);
             dbo.collection("users").insertOne(
-            {googleId: profile.id, username: profile.displayName, authProvider: 'google'},
+            {googleId: profile.id, username: profile.displayName
+                , authProvider: 'google'
+            },
             function (err, res) {
                 if (err) return callback(err, null);
                 return callback(null, res.ops[0]);
@@ -160,9 +164,9 @@ function generateHash (password, salt){
 
 app.use(function(req, res, next){
     var cookies = cookie.parse(req.headers.cookie || '');
+    
     var authUser = (req.user)? req.user.username : '';
     var username = (req.session.username)? req.session.username : authUser;
-
     res.setHeader('Set-Cookie', cookie.serialize('username', username, {
         httpOnly: false,
         secure: true,
@@ -209,7 +213,7 @@ app.get('/users/oauth/twitch/', passport.authenticate('twitchToken'));
 app.get('/users/oauth/twitch/callback', 
   passport.authenticate('twitchToken', { failureRedirect: '/signin/'}),
   function(req, res) {
-
+    req.session.uid = ObjectId(req.user._id);
     req.session.username = req.user.username;
     req.session.authProv = 'twitch';
     res.setHeader('Set-Cookie', cookie.serialize('username', req.session.username, {
@@ -226,6 +230,8 @@ app.get('/users/oauth/twitch/callback',
 app.get('/users/oauth/facebook/callback', 
   passport.authenticate('facebookToken', { failureRedirect: '/signin/'}),
   function(req, res) {
+
+    req.session.uid = ObjectId(req.user._id);
     req.session.username = req.user.username;
     req.session.authProv = 'facebook';
     res.setHeader('Set-Cookie', cookie.serialize('username', req.session.username, {
@@ -241,7 +247,8 @@ app.get('/users/oauth/facebook/callback',
 app.get('/users/oauth/google/callback', 
   passport.authenticate('googleToken', { failureRedirect: '/signin/'}),
   function(req, res) {
-    req.session.username = req.user.givName;
+    req.session.uid = ObjectId(req.user._id);
+    req.session.username = req.user.username;
     req.session.authProv = 'google';
     res.setHeader('Set-Cookie', cookie.serialize('username', req.session.username, {
         sameSite: true,
@@ -250,6 +257,8 @@ app.get('/users/oauth/google/callback',
         path : '/', 
         maxAge: 60 * 60 * 24 * 7 // 1 week in number of seconds
     }));
+
+
     return res.redirect('/');    
   });
 
@@ -294,7 +303,6 @@ app.post('/signin/', [checkUsername, checkPassword], function (req, res, next) {
         if (err) return res.status(500).end(err);
         if (!user) return res.status(401).end("Access denied, incorrect credentials\n");
         if (user.hash !== generateHash(password, user.salt)) return res.status(401).end("Access denied, incorrect credentials\n"); 
-        if (user.lastAccess) console.log(user.lastAccess);
         
         req.session.uid = ObjectId(user._id);
         req.session.username = username;
@@ -326,10 +334,10 @@ app.get('/signout/', isAuthenticated, function (req, res, next) {
     res.json("User signed out");
 });
 
-// curl -k  -b cookie.txt -H "Content-Type: application/json" -X POST -d '{"title":"join THIS Lobby lol", "team1Id":123, "team2Id":123}' https://localhost:3000/api/games/
+// curl -k  -b cookie.txt -H "Content-Type: application/json" -X POST -d '{"title":"join THIS Lobby lol"}' https://localhost:3000/api/games/
 app.post('/api/games/', isAuthenticated, function (req, res, next) {
     req.checkBody('title', 'Every game needs a title!').exists().notEmpty();
-    
+
     var errors = req.validationErrors();
     if (errors) return res.status(400).send(errors[0].msg);
 
@@ -359,7 +367,7 @@ app.get('/api/games/', isAuthenticated, function (req, res, next) {
     });
 });
 
-// curl -k -b cookie.txt -H "Content-Type: application/json" -X POST -d  https://localhost:3000/api/games/5aad97f9f4e28b075083ef9c/joined/
+// curl -k -b cookie.txt -H "Content-Type: application/json" -X POST  https://localhost:3000/api/games/5aad97f9f4e28b075083ef9c/joined/
 app.post('/api/games/:id/joined/', [isAuthenticated, checkGameId], function (req, res, next) {
     
     var errors = req.validationErrors();
@@ -410,16 +418,20 @@ app.post('/api/games/:id/joined/', [isAuthenticated, checkGameId], function (req
     });
 });
 
-// curl -k -b cookie.txt -H "Content-Type: application/json" -X PATCH -d '{"action": "Start"}' https://localhost:3000/api/games/5abffc298dd2d4558f58e312/
+// curl -k -b cookie.txt -H "Content-Type: application/json" -X PATCH -d '{"action": "Start", "time": 120}' https://localhost:3000/api/games/5abffc298dd2d4558f58e312/
 app.patch('/api/games/:id/', [isAuthenticated, checkGameId], function (req, res, next) {
-    req.checkBody('action', 'Valid Action required for patch!').exists().notEmpty().isIn(['Start'])
+    req.checkBody('action', 'Valid Action required for patch!').exists().notEmpty().isIn(['Start', 'End'])
+    req.checkBody('time', 'Every game needs a time limit!').exists().notEmpty().isNumeric();
     
     var errors = req.validationErrors();
     if (errors) return res.status(400).send(errors[0].msg);
     
+    var time = req.body.time;
     var host = req.session.username;
     var provider = req.session.authProv;
     var gameId = req.params.id;
+
+    var endTime = new Date().getTime() + time;
     findGames(res, gameId, function(err, game) {
         if (err) return res.status(500).end(" Server side error");
         if (!game) return res.status(409).end("game with id " + gameId + " not found"); 
@@ -427,14 +439,17 @@ app.patch('/api/games/:id/', [isAuthenticated, checkGameId], function (req, res,
             return res.status(409).end("User " + host + " is not the host of this game");
         if (game.numPlayers < 2) return res.status(409).end("game with id" + gameId + " has less than 2 joined players"); 
         if (!game.inLobby) return res.status(409).end("game with id" + gameId + " has already started"); 
-        
-        dbo.collection("games").updateOne({_id: ObjectId(gameId)},{$set: {inLobby: false}} ,function(err, wrRes){
+
+        dbo.collection("games").updateOne({_id: ObjectId(gameId)},
+        {$set: {inLobby: false, endTime: endTime}},  {"new": true}, function(err, wrRes){
             if (err) return res.status(500).end(err);
+            if (wrRes.modifiedCount = 0) return res.status(409).end("game with id" + gameId + " could not be modified"); 
             return res.json("Game started!");
         }); 
     });
 });
 
+//  curl -k -b cookie.txt https://localhost:3000/api/games/5ac00b6b0a1f625c9a601d55/
 app.get('/api/games/:id/', [isAuthenticated, checkGameId], function (req, res, next) {
     var errors = req.validationErrors();
     if (errors) return res.status(400).send(errors[0].msg);
@@ -531,10 +546,8 @@ app.delete('/api/games/:id/', [isAuthenticated, checkGameId], function (req, res
                 if (err) return res.status(500).end(err);
                 if (delRes.deletedCount !== game.numPlayers) return res.status(409).end("game" + gameId + " lobby could not kick all players")
                 //removeFromClarifai(gameId, function(err, resp) {
-                //    if (err) return res.status(500).end(err);
-                
+                //    if (err) return res.status(500).end(err)
                 //});
-
                 return res.json("Game " + game.title + " has been removed");
             });
         });

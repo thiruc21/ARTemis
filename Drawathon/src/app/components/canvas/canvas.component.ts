@@ -184,7 +184,7 @@ export class CanvasComponent implements OnInit {
   }
    // Update 
    update(){
-     console.log("Canvas - Single Player?: " + this.singlePlayer);
+    console.log("Canvas - Single Player?: " + this.singlePlayer);
     if (this.customSize.nativeElement.value < 5) this.customSize.nativeElement.value = 5
     if (this.customSize.nativeElement.value > 60) this.customSize.nativeElement.value = 60
     this.customSS = this.customSize.nativeElement.value.toString() + 'px'
