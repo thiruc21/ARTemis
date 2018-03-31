@@ -75,6 +75,7 @@ export class LobbyComponent implements OnInit {
     }
     // Check for new lobbys every two seconds.
     setTimeout(() => {
+      this.check = check;
       if (players) {
         this.team1 = [];
         this.team2 = [];
@@ -84,23 +85,21 @@ export class LobbyComponent implements OnInit {
           if (this.team1.length <= this.team2.length) this.team1.push(this.players[i].user);
           else this.team2.push(this.players[i].user); // Even distribution of teamMembers.
         }
+        this.players.forEach(function(player) {
+          if (this.user = player.user && (this.user != this.host)) {
+            console.log("was kicked in the shin");
+            this.left = true;
+            this.check = false;
+            this.router.navigate(['/']);
+          }
+        });
       }
-    
-      this.check = check;
-      this.players.forEach(function(player) {
-        if (this.user = player.user && (this.user != this.host)) {
-          console.log("kicking self out");
-          this.left = true;
-          this.check = false;
-          this.router.navigate(['/']);
-        }
-      });
       if (this.check) this.timeOut(); // Only continue if check is true.
       else {
         if (this.left == false) this.router.navigate(['/game']);
         
        }  // Else we are done waiting for new game, go forward.
-    }, 2000);
+    }, 3000);
   }
   debug() {
     console.log("clicked debug");
