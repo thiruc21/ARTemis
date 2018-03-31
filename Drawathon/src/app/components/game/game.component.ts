@@ -104,10 +104,9 @@ export class GameComponent implements OnInit {
             if (team == player.teamNum && user != player.user) {
               otherPlayer = player;
               singlePlayer = false;
-              console.log(singlePlayer);
             }
           });
-          if (singlePlayer == false) {
+          if (singlePlayer == false && otherPlayer.canvasId && otherPlayer.chatId) {
             canvasPeer[0] = otherPlayer.canvasId;
             chatPeer = otherPlayer.chatId;
           }
@@ -119,12 +118,12 @@ export class GameComponent implements OnInit {
           if (err) console.log(err);
           else {
             if (t == 0) {
-              if (res.team1Id != "null") { //Change to null
+              if (res.team1Id) { //Change to null
                 canvasPeer[1] = res.team1Id;
               }
             }
             else {
-              if (res.team2Id != "null") {
+              if (res.team2Id) {
                 canvasPeer[1] = res.team2Id;
               }
             }

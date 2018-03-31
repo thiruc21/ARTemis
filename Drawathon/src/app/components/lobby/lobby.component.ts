@@ -88,6 +88,7 @@ export class LobbyComponent implements OnInit {
       this.check = check;
       console.log(this.user in this.players);
       if (!(this.user in this.players) && (this.user != this.host)) {
+        console.log("kicking self out");
         this.left = true;
         this.check = false;
         this.router.navigate(['/']);

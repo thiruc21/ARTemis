@@ -48,7 +48,7 @@ export class MainComponent implements OnInit {
     var api = this.api;
     var check:boolean = this.check;
     // Add game.
-    this.api.addGame(label, "null", "null", function(err, res) { //Create game with 2 null peerIds that can be filled later. No generated peerIds will hold value of null.
+    this.api.addGame(label, function(err, res) { //Create game with 2 null peerIds that can be filled later. No generated peerIds will hold value of null.
       if (err) console.log(err);
       else {
         api.pushLobby(res); // Store lobby that user enters into local Storage.
@@ -67,7 +67,7 @@ export class MainComponent implements OnInit {
     var check:boolean = this.check;
     this.api.pushLobby(this.gamesData[i]);
     console.log(i, this.gamesData[i]);
-    this.api.joinGame(this.gamesData[i]._id, "null", "null", function(err, res){ //Join game with null cavnasId and chatId.
+    this.api.joinGame(this.gamesData[i]._id, function(err, res){ //Join game with null cavnasId and chatId.
       if (err) console.log(err);
       else {
         console.log('successfully joined.');
