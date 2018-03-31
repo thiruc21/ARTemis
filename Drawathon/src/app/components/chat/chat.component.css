@@ -3,7 +3,7 @@
     height: 600px;
     display: grid;
     background-color: silver;
-    grid-template-rows: 50px 1fr 50px;
+    grid-template-rows: 50px 500px 50px;
     grid-template-columns: 1fr; 
 }
 .chatTitle {
@@ -22,6 +22,9 @@
     grid-area: 2 / 1 / span 1 / span 1;
     color:white;
     background: grey;
+    overflow: hidden;
+    overflow-y: scroll;
+
     display: flex;
     font-size: 15px;
     text-align: center;
@@ -33,6 +36,7 @@
     grid-area: 3 / 1 / span 1 / span 1;
     color: black;
     resize: none;
+    height: 50px;
     font-size: 15px;
     background: white;
 }
@@ -45,6 +49,7 @@
     justify-content: flex-start;
     align-items: center;
     border-radius: 5px;
+    min-height:20px;
     height: auto;
     width: 400px;
     background-color: skyblue;

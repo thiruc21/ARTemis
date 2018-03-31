@@ -15,14 +15,17 @@ export class ChatComponent implements OnInit {
   public disabled:boolean = false;
   btnDisplay:string;
   textelem:HTMLTextAreaElement;
+  divelem:HTMLDivElement;
   private api:ApiModule;
   constructor() { }
   @ViewChild('textarea') public textarea:ElementRef;
   @ViewChild('peer') public peerId:ElementRef;
+  @ViewChild('content') public container:ElementRef;
 
   ngOnInit() {
     this.api = new ApiModule();
     this.textelem = this.textarea.nativeElement;
+    this.divelem = this.container.nativeElement;
     //this.textelem.disabled = this.disabled;
     if (this.textelem.disabled) this.btnDisplay = "none";
     else this.btnDisplay = "flex";
@@ -56,10 +59,11 @@ export class ChatComponent implements OnInit {
   // Push the message, connect to the peer, and send message to the peer
   addMessage(me, data) {
     me.messages.push(data);
+    this.divelem.scrollTo(0, this.divelem.scrollHeight);
+    this.divelem.scrollBy(0, 50);
   }
   submitMessage() {
-    console.log(this.myPeer);
-    if (this.recieved && this.myPeer != "null") {
+    if (this.recieved && this.myPeer != "null" && this.textelem.value != "") {
       var text = this.textelem.value;
       var me = this.api.getCurrentUser();
       this.messages.push(me + ": " + text);
@@ -69,6 +73,8 @@ export class ChatComponent implements OnInit {
       otherPeer.on('open', function(){
         otherPeer.send(me + ": " + text);
       });
+      this.divelem.scrollTo(0, this.divelem.scrollHeight);
+      this.divelem.scrollBy(0, 50);
     }
   }
   enter() {
