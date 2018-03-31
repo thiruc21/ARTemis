@@ -295,7 +295,7 @@ app.post('/signin/', [checkUsername, checkPassword], function (req, res, next) {
         if (!user) return res.status(401).end("Access denied, incorrect credentials\n");
         if (user.hash !== generateHash(password, user.salt)) return res.status(401).end("Access denied, incorrect credentials\n"); 
         if (user.lastAccess) console.log(user.lastAccess);
-        // current_date: new Date()
+        
         req.session.uid = ObjectId(user._id);
         req.session.username = username;
         req.session.authProv = 'artemis';
@@ -410,7 +410,7 @@ app.post('/api/games/:id/joined/', [isAuthenticated, checkGameId], function (req
     });
 });
 
-// curl -k -b cookie.txt -H "Content-Type: application/json" -X PATCH -d '{"action": "Start"}' https://localhost:3000/api/games/5aad97f9f4e28b075083ef9c/
+// curl -k -b cookie.txt -H "Content-Type: application/json" -X PATCH -d '{"action": "Start"}' https://localhost:3000/api/games/5abffc298dd2d4558f58e312/
 app.patch('/api/games/:id/', [isAuthenticated, checkGameId], function (req, res, next) {
     req.checkBody('action', 'Valid Action required for patch!').exists().notEmpty().isIn(['Start'])
     
@@ -428,7 +428,7 @@ app.patch('/api/games/:id/', [isAuthenticated, checkGameId], function (req, res,
         if (game.numPlayers < 2) return res.status(409).end("game with id" + gameId + " has less than 2 joined players"); 
         if (!game.inLobby) return res.status(409).end("game with id" + gameId + " has already started"); 
         
-        dbo.collection("games").updateOne({gameId: ObjectId(gameId)},{$set: {inLobby: false}} ,function(err, wrRes){
+        dbo.collection("games").updateOne({_id: ObjectId(gameId)},{$set: {inLobby: false}} ,function(err, wrRes){
             if (err) return res.status(500).end(err);
             return res.json("Game started!");
         }); 
@@ -522,19 +522,20 @@ app.delete('/api/games/:id/', [isAuthenticated, checkGameId], function (req, res
         if (!game) return res.status(409).end("game with id " + gameId + " not found"); 
         if (game.host !== host || game.authProvider !== provider) 
             return res.status(409).end("User " + host + " is not the host of this game");
-
+        
         dbo.collection("games").deleteOne({_id: ObjectId(gameId), host:host, authProvider:provider}, function(err, wrRes) {
             if (err) return res.status(500).end(err);
             if (wrRes.deletedCount === 0) return res.status(409).end("game " + gameId + " was not deleted");
-            
+
             dbo.collection("game_joined").deleteMany({gameId: ObjectId(gameId)}, function(err, delRes) {
                 if (err) return res.status(500).end(err);
-                if (delRes.deletedCount === 0) return res.status(409).end("game" + gameId + " lobby could not be deleted")
-            
-                removeFromClarifai(gameId, function(err, resp) {
-                    if (err) return res.status(500).end(err);
-                    return res.json("Game " + game.title + " has been removed");
-                });
+                if (delRes.deletedCount !== game.numPlayers) return res.status(409).end("game" + gameId + " lobby could not kick all players")
+                //removeFromClarifai(gameId, function(err, resp) {
+                //    if (err) return res.status(500).end(err);
+                
+                //});
+
+                return res.json("Game " + game.title + " has been removed");
             });
         });
     });    
