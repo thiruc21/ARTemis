@@ -32,7 +32,6 @@ import { HostComponent } from './components/host/host.component';
   imports: [
     BrowserModule,
     HttpClientModule,
-    FormsModule,
     AppRoutingModule
   ],
   providers: [],
