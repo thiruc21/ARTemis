@@ -410,7 +410,7 @@ app.post('/api/games/:id/joined/', [isAuthenticated, checkGameId], function (req
     });
 });
 
-// curl -k -b cookie.txt -H "Content-Type: application/json" -X PATCH -d '{"action": "Start"}' https://localhost:3000/api/games/5aad97f9f4e28b075083ef9c/
+// curl -k -b cookie.txt -H "Content-Type: application/json" -X PATCH -d '{"action": "Start"}' https://localhost:3000/api/games/5abffc298dd2d4558f58e312/
 app.patch('/api/games/:id/', [isAuthenticated, checkGameId], function (req, res, next) {
     req.checkBody('action', 'Valid Action required for patch!').exists().notEmpty().isIn(['Start'])
     
@@ -428,7 +428,7 @@ app.patch('/api/games/:id/', [isAuthenticated, checkGameId], function (req, res,
         if (game.numPlayers < 2) return res.status(409).end("game with id" + gameId + " has less than 2 joined players"); 
         if (!game.inLobby) return res.status(409).end("game with id" + gameId + " has already started"); 
         
-        dbo.collection("games").updateOne({gameId: ObjectId(gameId)},{$set: {inLobby: false}} ,function(err, wrRes){
+        dbo.collection("games").updateOne({_id: ObjectId(gameId)},{$set: {inLobby: false}} ,function(err, wrRes){
             if (err) return res.status(500).end(err);
             return res.json("Game started!");
         }); 
@@ -751,7 +751,7 @@ async function mongoSetup() {
         else {
             db = mongodb;
             dbo = db.db(configFile.mongo.dbname);            
-            //dbo.collection("games").drop();
+            dbo.collection("games").drop();
             //dbo.collection("images").drop();            
             //dbo.collection("users").drop();            
             //dbo.collection("game_joined").drop(); //  */
