@@ -527,7 +527,7 @@ app.delete('/api/games/:id/', [isAuthenticated, checkGameId], function (req, res
             if (err) return res.status(500).end(err);
             if (wrRes.deletedCount === 0) return res.status(409).end("game " + gameId + " was not deleted");
 
-            dbo.collection("game_joined").deleteMany({gameId: gameId}, function(err, delRes) {
+            dbo.collection("game_joined").deleteMany({gameId: ObjectId(gameId)}, function(err, delRes) {
                 if (err) return res.status(500).end(err);
                 if (delRes.deletedCount !== game.numPlayers) return res.status(409).end("game" + gameId + " lobby could not kick all players")
                 //removeFromClarifai(gameId, function(err, resp) {
@@ -751,7 +751,7 @@ async function mongoSetup() {
         else {
             db = mongodb;
             dbo = db.db(configFile.mongo.dbname);            
-            dbo.collection("games").drop();
+            //dbo.collection("games").drop();
             //dbo.collection("images").drop();            
             //dbo.collection("users").drop();            
             //dbo.collection("game_joined").drop(); //  */
