@@ -85,7 +85,7 @@ export class LobbyComponent implements OnInit {
       }
       this.check = check;
       console.log(this.user in this.players);
-      if (!(this.user in this.players)) {
+      if (!(this.user in this.players) && (this.user != this.host)) {
         this.left = true;
         this.check = false;
       }
@@ -144,7 +144,8 @@ export class LobbyComponent implements OnInit {
           console.log("starting.");
           check = false;
         }
-      })
+      });
+
       setTimeout(() => {
         this.check = check;
         if (this.check == false) {
