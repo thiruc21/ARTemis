@@ -402,7 +402,35 @@ app.post('/api/games/:id/joined/', isAuthenticated, function (req, res, next) {
     });
 });
 
+// curl -k -b cookie.txt -H "Content-Type: application/json" -X PATCH -d '{"action": "Start"}' https://localhost:3000/api/games/5aad97f9f4e28b075083ef9c/
+app.patch('/api/games/:id/', isAuthenticated, function (req, res, next) {
+    req.checkParams('id', 'game id required!').exists().notEmpty();
+    req.checkBody('action', 'no action found!').exists().notEmpty();
+    req.checkBody('action', 'Valid Action required for patch!').isIn(['Start'])
+    var errors = req.validationErrors();
+    if (errors) return res.status(400).send(errors[0].msg);
+    
+
+    var host = req.session.username;
+    var provider = req.session.authProv;
+    var gameId = req.params.id;
+    findGames(res, gameId, function(err, game) {
+        if (err) return res.status(500).end(" Server side error");
+        if (!game) return res.status(409).end("game with id " + gameId + " not found"); 
+        if (game.host !== host || game.authProvider !== provider)
+            return res.status(409).end("User " + host + " is not the host of this game");
+        if (game.numPlayers < 2) return res.status(409).end("game with id" + gameId + " has less than 2 joined players"); 
+        if (!game.inLobby) return res.status(409).end("game with id" + gameId + " has already started"); 
+        
+        dbo.collection("games").updateOne({gameId: ObjectId(gameId)},{$set: {inLobby: true}} ,function(err, wrRes){
+            if (err) return res.status(500).end(err);
+            return res.json("Game started!");
+        }); 
+    });
+});
+
 app.get('/api/games/:id/', isAuthenticated, function (req, res, next) {
+    req.checkParams('id', 'game id required!').exists().notEmpty();
     var errors = req.validationErrors();
     if (errors) return res.status(400).send(errors[0].msg);
     var gameId = req.params.id;
@@ -466,7 +494,7 @@ app.patch('/api/games/:id/joined/', isAuthenticated, function (req, res, next) {
 
             dbo.collection("game_joined").updateOne(
                 {gameId: ObjectId(gameId), user:joinedUser, authProvider:provider},
-                {$set: {"chatId": chatId,"canvasId": canvasId}}, { "new": true}, function(err, wrRes){
+                {$set: {"chatId": chatId,"canvasId": canvasId}}, {"new": true}, function(err, wrRes){
                     if (err) return res.status(500).end(err);
                     return res.json("Peer ids posted");
             });
