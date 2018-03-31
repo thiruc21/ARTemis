@@ -26,6 +26,7 @@ export class LobbyComponent implements OnInit {
   lob:any;
 
   check:boolean;
+  uploaded:boolean;
   left:boolean;
   hostD:string;
 
@@ -45,6 +46,7 @@ export class LobbyComponent implements OnInit {
     this.title = this.lob.title;
     this.team1 = [];
     this.team2 = [];
+    this.uploaded = false;
   
     if (this.host == this.user) this.hostD = "flex";
     else this.team1.push(this.user);
@@ -88,11 +90,12 @@ export class LobbyComponent implements OnInit {
       if (!(this.user in this.players) && (this.user != this.host)) {
         this.left = true;
         this.check = false;
+        this.router.navigate(['/']);
       }
       if (this.check) this.timeOut(); // Only continue if check is true.
       else {
         if (this.left == false) this.router.navigate(['/game']);
-        else this.router.navigate(['/']);
+        
        }  // Else we are done waiting for new game, go forward.
     }, 2000);
   }
@@ -134,21 +137,30 @@ export class LobbyComponent implements OnInit {
 
   startGame() {
     var input:HTMLInputElement = this.picture.nativeElement;
+    var uploaded:boolean = false;
     this.file = input.files[0];
     console.log(this.file);
     if (this.file) {
       var check:boolean = this.check;
-      this.api.uploadImage(this.gameId, this.file, function(err) {
+      if (this.uploaded == false) {
+        this.api.uploadImage(this.gameId, this.file, function(err) {
+          if (err) console.log(err)
+          {
+            console.log("starting.");
+            uploaded = true;
+          }
+        });
+      }
+      this.api.startGame(this.gameId, function(err, res){
         if (err) console.log(err)
-        {
-          console.log("starting.");
+        else {
           check = false;
         }
-      });
-
+      })
       setTimeout(() => {
         this.check = check;
-        if (this.check == false) {
+        this.uploaded = uploaded;
+        if (this.check == false && this.uploaded) {
           this.left = true;
           this.router.navigate(['/host']);
         }

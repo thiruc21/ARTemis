@@ -119,7 +119,7 @@ export class GameComponent implements OnInit {
           if (err) console.log(err);
           else {
             if (t == 0) {
-              if (res.team1Id != "null") {
+              if (res.team1Id != "null") { //Change to null
                 canvasPeer[1] = res.team1Id;
               }
             }
