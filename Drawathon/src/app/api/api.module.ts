@@ -30,7 +30,7 @@ export class ApiModule implements OnInit {
     });
     var xhr = new XMLHttpRequest();
     xhr.onload = function() {
-        if (xhr.status !== 200) callback("[" + xhr.status + "]" + xhr.responseText, null);
+        if (xhr.status !== 200) callback("[" + xhr.status + "] " + xhr.responseText, null);
         else callback(null, JSON.parse(xhr.responseText));
     };
     xhr.open(method, url, true);
@@ -40,7 +40,7 @@ export class ApiModule implements OnInit {
   private send(method, url, data, callback){
       var xhr = new XMLHttpRequest();
       xhr.onload = function() {
-          if (xhr.status !== 200) callback("[" + xhr.status + "]" + xhr.responseText, null);
+          if (xhr.status !== 200) callback("[" + xhr.status + "] " + xhr.responseText, null);
           else {
             callback(null, JSON.parse(xhr.responseText));
           }

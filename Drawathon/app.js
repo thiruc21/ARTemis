@@ -179,15 +179,17 @@ var isAuthenticated = function(req, res, next) {
 };
 
 var checkUsername = function(req, res, next) {
-    req.checkBody('username', ' Username is required').exists().notEmpty();
-    req.checkBody('username', ' Please enter a valid alphanumeric username').isAlphanumeric();
-    req.checkBody('username', ' Username must be atleast 5 characters and a max of 24 characters').isLength({min:5, max: 24})
+    req.checkBody('username', 'Username is required').exists().notEmpty();
+    req.checkBody('username', 'Please enter a valid alphanumeric username').isAlphanumeric();
+    req.checkBody('username', 'Username must be atleast 5 characters and a max of 24 characters').isLength({min:5})
+    req.checkBody('username', 'Username must be atleast 5 characters and a max of 24 characters').isLength({max: 24})
     next();
 };
 
 var checkPassword = function(req, res, next) {
-    req.checkBody('password', ' Password is required').exists().notEmpty();
-    req.checkBody('password', ' Password must be atleast 5 characters and a max of 40 characters').isLength({min:5, max: 40})
+    req.checkBody('password', 'Password is required').exists().notEmpty();
+    req.checkBody('password', 'Password must be atleast 5 characters long').isLength({min:5})
+    req.checkBody('password', 'Password must be a max of 40 characters').isLength({max: 40})
     next();
 };
 
