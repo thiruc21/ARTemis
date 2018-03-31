@@ -138,7 +138,8 @@ export class HostComponent implements OnInit {
     // Keep the peer alive as long as on page
     setTimeout(() => {
        // Connect to other peer and send message
-       var conn = this.peer[i].connect(this.myPeerId[i]);
+       var conn = this.peer[i].socket.send({
+				    type: 'ping'});
        this.keepAlive(i);
     }, 25000);
   }

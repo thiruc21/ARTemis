@@ -494,6 +494,13 @@ app.delete('/api/games/:id/', isAuthenticated, function (req, res, next) {
         dbo.collection("games").deleteOne({_id: ObjectId(gameId), host:host, authProvider:provider}, function(err, wrRes) {
             if (err) return res.status(500).end(err);
             if (wrRes.deletedCount === 0) return res.status(409).end("User " + host + " was not deleted");
+            // Note: Below needs to use promises to avoid async problems
+            //var score = compareImages(file.path, gameId);
+            //console.log("Final score is " + score);
+
+            // Note: Removing as below needs to be done after the game is over
+            // Removing a game from Clarifai
+            // removeFromClarifai(gameId);
             return res.json("Game " + game.title + " has been removed");
         });
     });    
@@ -588,7 +595,7 @@ function addToClarifai (imagePath, gameID) {
         id: gameID
         }).then(
         function(response) {
-            //console.log(response);
+            console.log(response);
             console.log("Image uploaded to clarifai");
         },
         function(err) {
@@ -664,14 +671,6 @@ app.post('/api/games/:id/image/', isAuthenticated, upload.single('file'), functi
             dbo.collection("images").insertOne({gameId:gameId, file:file}, function (err, image) {       
                 if (err) return res.status(500).end(" Server side error");
                 addToClarifai(file.path, gameId);
-
-                // Note: Below needs to use promises to avoid async problems, put this in func for endgame
-                //var score = compareImages(file.path, gameId);
-                //console.log("Final score is " + score);
-
-                // Note: Removing as below needs to be done after the game is over
-                // Removing a game from Clarifai
-                // removeFromClarifai(gameId);
                 return res.json(image.ops[0]);
             });
         });
