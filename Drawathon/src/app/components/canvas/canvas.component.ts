@@ -151,6 +151,7 @@ export class CanvasComponent implements OnInit {
 
   timeOut(){
     setTimeout(() => {
+      console.log("canvas recieved?: " + this.recieved);
      if (this.recieved) this.update();
      else {
 
@@ -163,7 +164,8 @@ export class CanvasComponent implements OnInit {
     // Keep the peer alive as long as on page
     setTimeout(() => {
        // Connect to other peer and send message
-       var conn = this.peer.connect(this.peerId.nativeElement.value);
+       var conn = this.peer.socket.send({
+        type: 'ping'});
        this.keepAlive();
     }, 25000);
   }
@@ -178,6 +180,7 @@ export class CanvasComponent implements OnInit {
   }
    // Update 
    update(){
+     console.log("Canvas - Single Player?: " + this.singlePlayer);
     if (this.customSize.nativeElement.value < 5) this.customSize.nativeElement.value = 5
     if (this.customSize.nativeElement.value > 60) this.customSize.nativeElement.value = 60
     this.customSS = this.customSize.nativeElement.value.toString() + 'px'

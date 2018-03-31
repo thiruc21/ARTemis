@@ -129,8 +129,8 @@ export class HostComponent implements OnInit {
     this.ctx[i].beginPath();
     this.ctx[i].moveTo(px, py);
     this.ctx[i].lineTo(x, y);
-    this.ctx[i].strokeStyle = color;
     this.ctx[i].lineWidth = size;
+    this.ctx[i].strokeStyle = color;
     this.ctx[i].closePath();
     this.ctx[i].stroke();
   }
@@ -138,7 +138,8 @@ export class HostComponent implements OnInit {
     // Keep the peer alive as long as on page
     setTimeout(() => {
        // Connect to other peer and send message
-       var conn = this.peer[i].connect(this.myPeerId[i]);
+       var conn = this.peer[i].socket.send({
+				    type: 'ping'});
        this.keepAlive(i);
     }, 25000);
   }

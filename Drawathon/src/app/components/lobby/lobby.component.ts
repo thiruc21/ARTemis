@@ -11,6 +11,7 @@ export class LobbyComponent implements OnInit {
   public start:boolean = false;
   @ViewChild('picture') private picture:ElementRef;
   // Variables to hold all related info of the game.
+  title:string;
   gameId:string;
   team1:string[];
   team2:string[];
@@ -41,6 +42,7 @@ export class LobbyComponent implements OnInit {
     this.hostD = "none";
     this.host = this.lob.host;
     this.gameId = this.lob._id;
+    this.title = this.lob.title;
     this.team1 = [];
     this.team2 = [];
   
@@ -82,9 +84,15 @@ export class LobbyComponent implements OnInit {
         }
       }
       this.check = check;
+      console.log(this.user in this.players);
+      if (!(this.user in this.players)) {
+        this.left = true;
+        this.check = false;
+      }
       if (this.check) this.timeOut(); // Only continue if check is true.
       else {
         if (this.left == false) this.router.navigate(['/game']);
+        else this.router.navigate(['/']);
        }  // Else we are done waiting for new game, go forward.
     }, 2000);
   }
@@ -146,5 +154,22 @@ export class LobbyComponent implements OnInit {
       }, 1000);
     }
     else console.log("Please select an image first!");
+  }
+
+  kick(teamNum, index) {
+    if (teamNum == 1) {
+      console.log("Kicking player " + this.team1[index]);
+      this.api.kickPlayer(this.gameId, this.team1[index], function(err, res){
+        if (err) console.log(err);
+        else console.log(res);
+      });
+    }
+    else {
+      console.log("Kicking player " + this.team2[index]);
+      this.api.kickPlayer(this.gameId, this.team1[index], function(err, res){
+        if (err) console.log(err);
+        else console.log(res);
+      });
+    }
   }
 }
