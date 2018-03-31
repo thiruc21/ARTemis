@@ -290,11 +290,14 @@ app.post('/signin/', [checkUsername, checkPassword], function (req, res, next) {
     var errors = req.validationErrors();
     if (errors) return res.status(400).send(errors[0].msg);
 
-    dbo.collection("users").findOne({username: username, authProvider: 'artemis'}, function(err, user) {
+    dbo.collection("users").findOneAndUpdate({username: username, authProvider: 'artemis'},
+    {$set: {lastAccess: new Date()}}, {returnNewDocument: true}, function(err, user) {
         if (err) return res.status(500).end(err);
         if (!user) return res.status(401).end("Access denied, incorrect credentials\n");
         if (user.hash !== generateHash(password, user.salt)) return res.status(401).end("Access denied, incorrect credentials\n"); 
-
+    
+        // current_date: new Date()
+        req.session.uid = ObjectID(user._id);
         req.session.username = username;
         req.session.authProv = 'artemis';
         // initialize cookie
@@ -311,7 +314,6 @@ app.post('/signin/', [checkUsername, checkPassword], function (req, res, next) {
 
 // Sign out of the current user
 app.get('/signout/', isAuthenticated, function (req, res, next) {
-
     req.logOut();
     req.session.destroy();    
     res.setHeader('Set-Cookie', cookie.serialize('username', '', {
@@ -362,10 +364,7 @@ app.post('/api/games/:id/joined/', [isAuthenticated, checkGameId], function (req
 
     var userJoined = req.session.username;
     var provider = req.session.authProv;
-    var canvasId = req.body.canvasId;
-
-    //var chatId = req.body.chatId;
-    //var gameId = req.params.id;
+    var gameId = req.params.id;
 
     findGames(res, gameId, function(err, game) {
         if (err) return res.status(500).end(" Server side error");
@@ -426,7 +425,7 @@ app.patch('/api/games/:id/', [isAuthenticated, checkGameId], function (req, res,
         if (game.numPlayers < 2) return res.status(409).end("game with id" + gameId + " has less than 2 joined players"); 
         if (!game.inLobby) return res.status(409).end("game with id" + gameId + " has already started"); 
         
-        dbo.collection("games").updateOne({gameId: ObjectId(gameId)},{$set: {inLobby: true}} ,function(err, wrRes){
+        dbo.collection("games").updateOne({gameId: ObjectId(gameId)},{$set: {inLobby: false}} ,function(err, wrRes){
             if (err) return res.status(500).end(err);
             return res.json("Game started!");
         }); 
@@ -444,7 +443,7 @@ app.get('/api/games/:id/', [isAuthenticated, checkGameId], function (req, res, n
     });
 });
 
-// curl -k -b cookie.txt -H "Content-Type: application/json" -X PATCH -d '{"team1Id": 1233, "team2Id": 12123}' https://localhost:3000/api/games/5aad97f9f4e28b075083ef9c/host/
+// curl -k -b cookie.txt -H "Content-Type: application/json" -X PATCH -d '{"action":'generateId', 'team1Id": 1233, "team2Id": 12123}' https://localhost:3000/api/games/5aad97f9f4e28b075083ef9c/host/
 app.patch('/api/games/:id/host/', [isAuthenticated, checkGameId], function (req, res, next) {
     req.checkBody('action', 'Valid Action required for patch!').exists().notEmpty().isIn(['generateId'])
     req.checkBody('team1Id', "Host requires a canvas id for team 1").exists().notEmpty();
@@ -636,7 +635,7 @@ function addToClarifai (imagePath, gameID) {
 }
 
 // Remove image from clarifai's image collection
-function removeFromClarifai (gameID){
+function removeFromClarifai (gameID, callback){
     appC.inputs.delete(gameID).then(
         function(response) {
             //console.log(response);
