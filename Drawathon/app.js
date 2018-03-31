@@ -8,7 +8,6 @@ const crypto = require('crypto');
 const fs = require('fs');
 const MongoClient = require('mongodb').MongoClient;
 const ObjectId = require("mongodb").ObjectId;
-
 var privateKey = fs.readFileSync( 'privkey.pem' );
 var certificate = fs.readFileSync( 'fullchain.pem' );
 
@@ -31,6 +30,10 @@ var dbo = null;
 const app = express();
 const https = require('https');
 const http = require('http');
+
+const Clarifai = require('clarifai');
+
+var appC = new Clarifai.App({apiKey:'b7d7c87a413f4343a71acb1de57af30d'})
 
 const PORT = 3000;
 const MAXPLAYERS = 4;
@@ -573,6 +576,70 @@ app.get('/api/games/:id/joined/', isAuthenticated, function (req, res, next) {
     });
 });
 
+
+// Add image to clarifai's image collection
+// Takes in image path of uploaded game picture and game ID
+function addToClarifai (imagePath, gameID) {
+    console.log("Image's path");
+    console.log(imagePath);
+    var data = fs.readFileSync(imagePath);
+    appC.inputs.create({
+        base64: data.toString('base64'),
+        id: gameID
+        }).then(
+        function(response) {
+            //console.log(response);
+            console.log("Image uploaded to clarifai");
+        },
+        function(err) {
+            console.log(err);
+        }
+      );
+     
+}
+
+// Remove image from clarifai's image collection
+function removeFromClarifai (gameID){
+    appC.inputs.delete(gameID).then(
+        function(response) {
+            //console.log(response);
+            console.log("Deleted image for game ID:" + gameID + " from clarifai")
+        },
+        function(err) {
+            console.log(err);
+        }
+      );
+}
+
+// Compare another image with the image for the game stored in Clarifai
+// Takes in the image path of users drawing and game ID of the iamge
+function compareImages(otherImage, gameID){
+    console.log("Image's path");
+    console.log(otherImage);
+    var data = fs.readFileSync(otherImage);
+    appC.inputs.search({ input: {base64: data.toString('base64')} }).then(
+        function(response) {
+            var score = 0;
+            //console.log(response);
+            console.log("Calculated image similarity score");
+            // Find the similarity for the image ID of this game, then return the score
+            for (var index = 0; index < response.hits.length; index++) {
+                // Get the image with the current game's ID
+                if (response.hits[index].input.id == "5abee2a4951282643c5706a4") {
+                    score = response.hits[index].score;
+                    //console.log(response.hits[index]);
+                    console.log("Similarity score is " + score)
+                    return score;
+                } 
+            }
+            return score;
+        },
+        function(err) {
+            console.log(err);
+        }
+    );
+}
+
 // curl -k -b cookie.txt -X POST 'https://localhost:3000/api/games/5abd3cf22b3db66bcc0e2ef9/image/' -H 'content-type: multipart/form-data' -F 'file=@/home/shadman/ARTemis/Drawathon/uploads/user.png'
 // 'file=@/home/shadman/ARTemis/Drawathon/uploads/user.png'
 app.post('/api/games/:id/image/', isAuthenticated, upload.single('file'), function (req, res, next) {
@@ -584,7 +651,6 @@ app.post('/api/games/:id/image/', isAuthenticated, upload.single('file'), functi
     var poster = req.session.username;
     var provider = req.session.authProv;
     var file = req.file;
-
     findGames(res, gameId, function(err, game) {
         if (err) return res.status(500).end(" Server side error");
         if (!game) return res.status(409).end("game with id " + gameId + " not found"); 
@@ -597,6 +663,15 @@ app.post('/api/games/:id/image/', isAuthenticated, upload.single('file'), functi
 
             dbo.collection("images").insertOne({gameId:gameId, file:file}, function (err, image) {       
                 if (err) return res.status(500).end(" Server side error");
+                addToClarifai(file.path, gameId);
+
+                // Note: Below needs to use promises to avoid async problems, put this in func for endgame
+                //var score = compareImages(file.path, gameId);
+                //console.log("Final score is " + score);
+
+                // Note: Removing as below needs to be done after the game is over
+                // Removing a game from Clarifai
+                // removeFromClarifai(gameId);
                 return res.json(image.ops[0]);
             });
         });
