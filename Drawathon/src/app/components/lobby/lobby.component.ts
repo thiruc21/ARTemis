@@ -82,6 +82,7 @@ export class LobbyComponent implements OnInit {
         this.team2 = [];
         this.players = players;
         var i = 0;
+        console.log(this.players, this.user, this.host);
         for (i = 0; i < this.players.length; i++) {
           if (this.team1.length <= this.team2.length) this.team1.push(this.players[i].user);
           else this.team2.push(this.players[i].user); // Even distribution of teamMembers.
