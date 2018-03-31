@@ -311,7 +311,6 @@ app.post('/signin/', [checkUsername, checkPassword], function (req, res, next) {
 
 // Sign out of the current user
 app.get('/signout/', isAuthenticated, function (req, res, next) {
-
     req.logOut();
     req.session.destroy();    
     res.setHeader('Set-Cookie', cookie.serialize('username', '', {
@@ -362,10 +361,7 @@ app.post('/api/games/:id/joined/', [isAuthenticated, checkGameId], function (req
 
     var userJoined = req.session.username;
     var provider = req.session.authProv;
-    var canvasId = req.body.canvasId;
-
-    //var chatId = req.body.chatId;
-    //var gameId = req.params.id;
+    var gameId = req.params.id;
 
     findGames(res, gameId, function(err, game) {
         if (err) return res.status(500).end(" Server side error");
