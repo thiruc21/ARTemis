@@ -1,6 +1,6 @@
 <div class="chat">
     <div class="chatTitle">Gamer's Chat</div>
-    <div class="chatContent">
+    <div #content class="chatContent">
         <div class="chatMessage" *ngFor="let message of messages">{{message}}</div>
     </div>
     <textarea #textarea class="chatText" rows="1" ngModel="message" (keyup.enter)="enter()"></textarea>

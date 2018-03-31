@@ -26,6 +26,8 @@
 .gamesContainer {
     grid-area: 2 / 1 / span 1 / span 1;
     display: flex;
+    overflow-y: scroll;
+    max-height: 1000px;
     flex-direction: column;
     justify-content: flex-start;
     align-items: center;

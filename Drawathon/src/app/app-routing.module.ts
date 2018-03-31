@@ -8,15 +8,17 @@ import { SignupComponent } from './components/signup/signup.component'
 import { SigninComponent } from './components/signin/signin.component';
 import { CanvasComponent } from './components/canvas/canvas.component';
 import { HostComponent } from './components/host/host.component';
+import { CreditComponent } from './components/credit/credit.component';
 
 const routes: Routes = [
   { path: '', component:MainComponent, pathMatch: 'full' } ,
   { path: 'lobby', component:LobbyComponent } ,
   { path: 'game', component:GameComponent } ,
-  { path: 'test', component:CanvasComponent } ,
-  { path: 'signin', component:SigninComponent} ,
-  { path: 'host', component:HostComponent},
-  { path: 'signup', component:SignupComponent}
+  { path: 'test', component:ChatComponent } ,
+  { path: 'signin', component:SigninComponent } ,
+  { path: 'host', component:HostComponent } ,
+  { path: 'signup', component:SignupComponent } ,
+  { path: 'credits', component:CreditComponent }
 ];
 @NgModule({
   imports: [ RouterModule.forRoot(routes) ],
