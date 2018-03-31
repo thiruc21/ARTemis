@@ -46,7 +46,6 @@ app.use(express.static('dist'));
 
 var config = {key: privateKey, cert: certificate};
 
-/* Twitch Strategy */
 passport.use('twitchToken', new TwitchStrategy({
     clientID: configFile.twitch.clientid,
     clientSecret: configFile.twitch.clientSecret,
@@ -182,11 +181,18 @@ var isAuthenticated = function(req, res, next) {
 var checkUsername = function(req, res, next) {
     req.checkBody('username', 'Username is required').exists().notEmpty();
     req.checkBody('username', 'Please enter a valid alphanumeric username').isAlphanumeric();
+    req.checkBody('username', 'Username must be atleast atleast 5 characters and a max of 24 characters').isLength({min:5, max: 24})
     next();
 };
 
 var checkPassword = function(req, res, next) {
     req.checkBody('password', 'Password is required').exists().notEmpty();
+    req.checkBody('password', 'Password must be atleast atleast 5 characters and a max of 40 characters').isLength({min:5, max: 40})
+    next();
+};
+
+var checkGameId = function(req, res, next) {
+    req.checkParams('id', 'game id required!').exists().notEmpty();
     next();
 };
 
@@ -265,7 +271,7 @@ app.post('/signup/', [checkUsername, checkPassword],  function (req, res, next) 
         var salt = generateSalt();
         var hash = generateHash(password, salt);
         dbo.collection("users").update({username: username, authProvider: 'artemis'}, 
-            {username: username, authProvider: 'artemis', salt:salt, hash:hash}, 
+            {username: username, authProvider: 'artemis', salt:salt, haslength:hash}, 
             {upsert: true}, function(n, nMod) {
                 if (err) return res.status(500).end(err);
                 return res.json("User " + username + " signed up");
@@ -302,7 +308,8 @@ app.post('/signin/', [checkUsername, checkPassword], function (req, res, next) {
 });
 
 // Sign out of the current user
-app.get('/signout/', function (req, res, next) {
+app.get('/signout/', isAuthenticated, function (req, res, next) {
+
     req.logOut();
     req.session.destroy();    
     res.setHeader('Set-Cookie', cookie.serialize('username', '', {
@@ -311,8 +318,6 @@ app.get('/signout/', function (req, res, next) {
     }));
     res.json("User signed out");
 });
-
-
 
 // curl -k  -b cookie.txt -H "Content-Type: application/json" -X POST -d '{"title":"join THIS Lobby lol", "team1Id":123, "team2Id":123}' https://localhost:3000/api/games/
 app.post('/api/games/', isAuthenticated, function (req, res, next) {
@@ -348,16 +353,17 @@ app.get('/api/games/', isAuthenticated, function (req, res, next) {
 });
 
 // curl -k -b cookie.txt -H "Content-Type: application/json" -X POST -d  https://localhost:3000/api/games/5aad97f9f4e28b075083ef9c/joined/
-app.post('/api/games/:id/joined/', isAuthenticated, function (req, res, next) {
-    req.checkParams('id', 'game id required!').exists().notEmpty();
+app.post('/api/games/:id/joined/', [isAuthenticated, checkGameId], function (req, res, next) {
+    
     var errors = req.validationErrors();
     if (errors) return res.status(400).send(errors[0].msg);
 
     var userJoined = req.session.username;
     var provider = req.session.authProv;
     var canvasId = req.body.canvasId;
-    var chatId = req.body.chatId;
-    var gameId = req.params.id;
+
+    //var chatId = req.body.chatId;
+    //var gameId = req.params.id;
 
     findGames(res, gameId, function(err, game) {
         if (err) return res.status(500).end(" Server side error");
@@ -373,7 +379,7 @@ app.post('/api/games/:id/joined/', isAuthenticated, function (req, res, next) {
                 localField: '_id',
                 foreignField: 'gameId',
                 as: "game_join_info"
-             }}/*,{$unwind: {path: "$game_join_info",preserveNullAndEmptyArrays: true }}*/
+             }}
             ]).toArray(function(err, gamesJoined) {
             if (err) return res.status(500).end(err);
             var gameJoined = gamesJoined[0];
@@ -389,7 +395,7 @@ app.post('/api/games/:id/joined/', isAuthenticated, function (req, res, next) {
                         if (err) return res.status(500).end(err);
     
                     dbo.collection("game_joined").insertOne(
-                        {user:userJoined, authProvider:provider, gameId:ObjectId(gameId), points:0, wins:0, teamNum:teamNum, canvasId:canvasId, chatId:chatId}, 
+                        {user:userJoined, authProvider:provider, gameId:ObjectId(gameId), points:0, wins:0, teamNum:teamNum},
                         function (err, userEntry) {
                             if (err) return res.status(500).end(err);
                             return res.json(userEntry.ops[0]);
@@ -401,8 +407,7 @@ app.post('/api/games/:id/joined/', isAuthenticated, function (req, res, next) {
 });
 
 // curl -k -b cookie.txt -H "Content-Type: application/json" -X PATCH -d '{"action": "Start"}' https://localhost:3000/api/games/5aad97f9f4e28b075083ef9c/
-app.patch('/api/games/:id/', isAuthenticated, function (req, res, next) {
-    req.checkParams('id', 'game id required!').exists().notEmpty();
+app.patch('/api/games/:id/', [isAuthenticated, checkGameId], function (req, res, next) {
     req.checkBody('action', 'Valid Action required for patch!').exists().notEmpty().isIn(['Start'])
     
     var errors = req.validationErrors();
@@ -426,8 +431,7 @@ app.patch('/api/games/:id/', isAuthenticated, function (req, res, next) {
     });
 });
 
-app.get('/api/games/:id/', isAuthenticated, function (req, res, next) {
-    req.checkParams('id', 'game id required!').exists().notEmpty();
+app.get('/api/games/:id/', [isAuthenticated, checkGameId], function (req, res, next) {
     var errors = req.validationErrors();
     if (errors) return res.status(400).send(errors[0].msg);
     var gameId = req.params.id;
@@ -439,8 +443,7 @@ app.get('/api/games/:id/', isAuthenticated, function (req, res, next) {
 });
 
 // curl -k -b cookie.txt -H "Content-Type: application/json" -X PATCH -d '{"team1Id": 1233, "team2Id": 12123}' https://localhost:3000/api/games/5aad97f9f4e28b075083ef9c/host/
-app.patch('/api/games/:id/host/', isAuthenticated, function (req, res, next) {
-    req.checkParams('id', 'game id required!').exists().notEmpty();
+app.patch('/api/games/:id/host/', [isAuthenticated, checkGameId], function (req, res, next) {
     req.checkBody('action', 'Valid Action required for patch!').exists().notEmpty().isIn(['generateId'])
     req.checkBody('team1Id', "Host requires a canvas id for team 1").exists().notEmpty();
     req.checkBody('team2Id', "Host requires a canvas id for team 2").exists().notEmpty();
@@ -469,8 +472,8 @@ app.patch('/api/games/:id/host/', isAuthenticated, function (req, res, next) {
 });
 
 // curl -k -b cookie.txt -H "Content-Type: application/json" -X PATCH -d '{"canvasId": "123123", "chatId": "12412sdad"}' https://localhost:3000/api/games/5abd897b49790f305b870aab/joined/
-app.patch('/api/games/:id/joined/', isAuthenticated, function (req, res, next) {
-    req.checkParams('id', 'game id required!').exists().notEmpty();
+app.patch('/api/games/:id/joined/', [isAuthenticated, checkGameId], function (req, res, next) {
+
     req.checkBody('action', 'Valid Action required for patch!').exists().notEmpty().isIn(['generateId']);
     req.checkBody('chatId', "Each player requires a chat id").exists().notEmpty();
     req.checkBody('canvasId', "Each player requires a canvas id").exists().notEmpty();
@@ -497,14 +500,12 @@ app.patch('/api/games/:id/joined/', isAuthenticated, function (req, res, next) {
                     if (err) return res.status(500).end(err);
                     return res.json("Peer ids posted");
             });
-
         });
     });
 });
 
 // curl -k -b cookie.txt -H "Content-Type: application/json" -X DELETE https://localhost:3000/api/games/5aad97f9f4e28b075083ef9c/
-app.delete('/api/games/:id/', isAuthenticated, function (req, res, next) {
-    req.checkParams('id', 'game id required!').exists().notEmpty();
+app.delete('/api/games/:id/', [isAuthenticated, checkGameId], function (req, res, next) {
     var errors = req.validationErrors();
     if (errors) return res.status(400).send(errors[0].msg);
 
@@ -520,35 +521,39 @@ app.delete('/api/games/:id/', isAuthenticated, function (req, res, next) {
 
         dbo.collection("games").deleteOne({_id: ObjectId(gameId), host:host, authProvider:provider}, function(err, wrRes) {
             if (err) return res.status(500).end(err);
-            if (wrRes.deletedCount === 0) return res.status(409).end("User " + host + " was not deleted");
-            // Note: Below needs to use promises to avoid async problems
-            //var score = compareImages(file.path, gameId);
-            //console.log("Final score is " + score);
+            if (wrRes.deletedCount === 0) return res.status(409).end("game " + gameId + " was not deleted");
+            
+            dbo.collection("game_joined").deleteMany({gameId: ObjectId(gameId)}, function(err, delRes) {
+                if (err) return res.status(500).end(err);
+                if (delRes.deletedCount === 0) return res.status(409).end("game" + gameId + " lobby could not be deleted")
+            
+                // Note: Below needs to use promises to avoid async problems
+                //var score = compareImages(file.path, gameId);
+                //console.log("Final score is " + score);
 
-            // Note: Removing as below needs to be done after the game is over
-            // Removing a game from Clarifai
-            // removeFromClarifai(gameId);
-            return res.json("Game " + game.title + " has been removed");
+                // Note: Removing as below needs to be done after the game is over
+                // Removing a game from Clarifai
+                // removeFromClarifai(gameId);
+                return res.json("Game " + game.title + " has been removed");
+            });
         });
     });    
 });
 
 // curl -k -b cookie.txt -H -X delete  https://localhost:3000/api/games/5aae9368eccb1357c708bbd0/joined/
 // KICK player themself
-app.delete('/api/games/:id/joined/', isAuthenticated, function (req, res, next) {
-    req.checkParams('id', 'game id required!').exists().notEmpty();
+app.delete('/api/games/:id/joined/', [isAuthenticated, checkGameId], function (req, res, next) {
     var errors = req.validationErrors();
     if (errors) return res.status(400).send(errors[0].msg);
 
     var userLeave = req.session.username;
     var provider = req.session.authProv;
-    var gameId = req.params.id;   
+    var gameId = req.params.id;
     dbo.collection("game_joined").deleteOne({gameId: ObjectId(gameId), user: userLeave, authProvider:provider}, function(err, wrRes) {
         if (err) return res.status(500).end(err);
         if (wrRes.deletedCount == 0) return res.status(409).end("User " + userLeave + " is not in the game!");
 
-        dbo.collection("games").findAndModify({_id: ObjectId(gameId)},
-        [],
+        dbo.collection("games").findAndModify({_id: ObjectId(gameId)}, [],
         {"$inc":{ "numPlayers": -1 }},  function(err, upRes) {
             if (err) return res.status(500).end(err);
             if (!(upRes.value)) return res.status(409).end("User " + userLeave + " is not in the game!");
@@ -559,16 +564,13 @@ app.delete('/api/games/:id/joined/', isAuthenticated, function (req, res, next) 
 
 // curl -k -b cookie.txt -H -X delete https://localhost:3000/api/games/5aae9368eccb1357c708bbd0/joined/alice
 /* Allow host to kick a play from the game */
-app.delete('/api/games/:gameId/joined/:username', isAuthenticated, function (req, res, next) {
-    req.checkParams('gameId', 'game id required!').exists().notEmpty();
-    req.checkParams('username', 'username required!').exists().notEmpty();
-
+app.delete('/api/games/:id/joined/:username', [isAuthenticated, checkGameId], function (req, res, next) {
     var errors = req.validationErrors();
     if (errors) return res.status(400).send(errors[0].msg);
 
     var host = req.session.username;
     var provider = req.session.authProv;
-    var gameId = req.params.gameId; 
+    var gameId = req.params.id; 
     var playerKick = req.params.username;
 
     findGames(res, gameId, function(err, game) {
@@ -593,8 +595,7 @@ app.delete('/api/games/:gameId/joined/:username', isAuthenticated, function (req
 })
 // curl -k -b cookie.txt https://localhost:3000/api/games/5aaee8a6a459c0149b14c809/joined
 /* Returns every player entry for that game */ 
-app.get('/api/games/:id/joined/', isAuthenticated, function (req, res, next) {
-    req.checkParams('id', 'game id required!').exists().notEmpty();
+app.get('/api/games/:id/joined/', [isAuthenticated, checkGameId], function (req, res, next) {
     var errors = req.validationErrors();
     if (errors) return res.status(400).send(errors[0].msg);
     var gameId = req.params.id;
@@ -676,8 +677,7 @@ function compareImages(otherImage, gameID){
 
 // curl -k -b cookie.txt -X POST 'https://localhost:3000/api/games/5abd3cf22b3db66bcc0e2ef9/image/' -H 'content-type: multipart/form-data' -F 'file=@/home/shadman/ARTemis/Drawathon/uploads/user.png'
 // 'file=@/home/shadman/ARTemis/Drawathon/uploads/user.png'
-app.post('/api/games/:id/image/', isAuthenticated, upload.single('file'), function (req, res, next) {
-    req.checkParams('id', 'game id required!').exists().notEmpty();
+app.post('/api/games/:id/image/', [isAuthenticated, checkGameId], upload.single('file'), function (req, res, next) {
     var errors = req.validationErrors();
     if (errors) return res.status(400).send(errors[0].msg);
 
@@ -705,8 +705,7 @@ app.post('/api/games/:id/image/', isAuthenticated, upload.single('file'), functi
 });
 
 // curl -k -b cookie.txt 'https://localhost:3000/api/games/5abd3cf22b3db66bcc0e2ef9/image/'
-app.get('/api/games/:id/image/', isAuthenticated, function (req, res, next) {
-    req.checkParams('id', 'game id required!').exists().notEmpty();
+app.get('/api/games/:id/image/', [isAuthenticated, checkGameId], function (req, res, next) {
     var errors = req.validationErrors();
     if (errors) return res.status(400).send(errors[0].msg);
 
