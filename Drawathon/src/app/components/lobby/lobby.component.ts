@@ -68,6 +68,7 @@ export class LobbyComponent implements OnInit {
         if (err) console.log(err);
         else {
           if (res.inLobby == false) {
+            console.log("in game");
             check = false;
           }
         }
@@ -82,7 +83,7 @@ export class LobbyComponent implements OnInit {
         this.team2 = [];
         this.players = players;
         var i = 0;
-        if (this.user == this.host ) {
+        if (this.user == this.host) {
           kicked = false;
         }
         for (i = 0; i < this.players.length; i++) {

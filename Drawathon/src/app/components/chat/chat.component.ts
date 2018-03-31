@@ -60,10 +60,10 @@ export class ChatComponent implements OnInit {
   submitMessage() {
     console.log(this.myPeer);
     if (this.recieved && this.myPeer != "null") {
-      var text = this.textarea.nativeElement.value;
+      var text = this.textelem.value;
       var me = this.api.getCurrentUser();
       this.messages.push(me + ": " + text);
-      this.textarea.nativeElement.value = "";
+      this.textelem.value = "";
       // Connect to other peer and send message
       var otherPeer = this.peer.connect(this.myPeer);
       otherPeer.on('open', function(){
@@ -71,7 +71,10 @@ export class ChatComponent implements OnInit {
       });
     }
   }
-
+  enter() {
+    console.log("submitting message");
+    this.submitMessage();
+  }
   timeOut(){
     // Update messages every second
     setTimeout(() => {
