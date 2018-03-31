@@ -1,7 +1,7 @@
 import { BrowserModule } from '@angular/platform-browser';
 import { NgModule } from '@angular/core';
 import { HttpClientModule } from '@angular/common/http'
-
+import { ColorPickerModule } from 'ngx-color-picker';
 import { AppComponent } from './app.component';
 import { MainComponent } from './components/main/main.component';
 import { GameComponent } from './components/game/game.component';
@@ -34,7 +34,8 @@ import { CreditComponent } from './components/credit/credit.component';
   imports: [
     BrowserModule,
     HttpClientModule,
-    AppRoutingModule
+    AppRoutingModule, 
+    ColorPickerModule
   ],
   providers: [],
   bootstrap: [AppComponent]

@@ -11,7 +11,6 @@
     color:black;
     height: 50px;
     font-family: 'Lucida Calligraphy';
-
     display:flex;
     justify-content: center;
     align-items: center;
@@ -24,7 +23,9 @@
     background: grey;
     overflow: hidden;
     overflow-y: scroll;
-
+    scroll-snap-points-y: repeat(20);
+    scrollbar-track-color: blue;
+    scrollbar-base-color: silver;
     display: flex;
     font-size: 15px;
     text-align: center;

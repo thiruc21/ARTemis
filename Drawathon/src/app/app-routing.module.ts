@@ -14,7 +14,7 @@ const routes: Routes = [
   { path: '', component:MainComponent, pathMatch: 'full' } ,
   { path: 'lobby', component:LobbyComponent } ,
   { path: 'game', component:GameComponent } ,
-  { path: 'test', component:ChatComponent } ,
+  { path: 'test', component:CanvasComponent } ,
   { path: 'signin', component:SigninComponent } ,
   { path: 'host', component:HostComponent } ,
   { path: 'signup', component:SignupComponent } ,
