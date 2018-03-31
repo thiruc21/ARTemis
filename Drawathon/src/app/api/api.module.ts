@@ -81,7 +81,7 @@ export class ApiModule implements OnInit {
   }
 
   // change to use null
-  public addGame = function(title,  callback) {
+  public addGame = function(title, callback) {
     this.send("POST", "/api/games/", {title: title}, callback);
   }
 
@@ -101,8 +101,8 @@ export class ApiModule implements OnInit {
     this.send("PATCH", "/api/games/" + gameId + "/joined/", {action: "generateId","canvasId": canvasId, "chatId": chatId}, callback);
   }
 
-  public startGame = function(gameId, callback) {
-    this.send("PATCH", "/api/games/" + gameId + "/", {action:"Start"}, callback);
+  public startGame = function(gameId, time, callback) {
+    this.send("PATCH", "/api/games/" + gameId + "/", {action:"Start", time:time}, callback);
   }
 
   public leaveGame = function(gameId, callback) {
