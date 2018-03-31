@@ -31,7 +31,7 @@ export class SignupComponent implements OnInit {
     var me:any = this;
     var respond:(me:this, err:string) => void = this.ServerResponse;
     this.apiModule.signup(this.username, this.password, function(err, res){
-      if (err) respond(me, "Access denied");
+      if (err) respond(me, err);
       else {
         console.log(res);
         rtr.navigate(['/']);
