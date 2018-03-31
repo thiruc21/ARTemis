@@ -80,24 +80,25 @@ export class ApiModule implements OnInit {
     this.send("GET", "/api/games/" + gameId + "/", null, callback);
   }
 
-  public addGame = function(title, pId1, pId2, callback) {
-    this.send("POST", "/api/games/", {title: title, team1Id: pId1, team2Id: pId2}, callback);
+  // change to use null
+  public addGame = function(title,  callback) {
+    this.send("POST", "/api/games/", {title: title}, callback);
   }
 
   public removeGame = function(gameId, callback) {
     this.send("DELETE", "/api/games/" + gameId + "/", null, callback)
   }
-
-  public joinGame = function(gameId, canvasId, chatId, callback) {
-    this.send("POST", "/api/games/" + gameId + "/joined/", {canvasId:canvasId, chatId:chatId}, callback);
+  // change to send null
+  public joinGame = function(gameId, callback) {
+    this.send("POST", "/api/games/" + gameId + "/joined/", null, callback);
   }
 
   public updateHostInfo = function(gameId, pId1, pId2, callback) {
-    this.send("PATCH", "/api/games/" + gameId + "/host/", {"team1Id": pId1, "team2Id": pId2}, callback);
+    this.send("PATCH", "/api/games/" + gameId + "/host/", {action: "generateId","team1Id": pId1, team2Id: pId2}, callback);
   }
 
   public updateUserInfo  = function(gameId, canvasId, chatId, callback) {
-    this.send("PATCH", "/api/games/" + gameId + "/joined/", {"canvasId": canvasId, "chatId": chatId}, callback);
+    this.send("PATCH", "/api/games/" + gameId + "/joined/", {action: "generateId","canvasId": canvasId, "chatId": chatId}, callback);
   }
 
   public startGame = function(gameId, callback) {
