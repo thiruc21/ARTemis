@@ -38,6 +38,7 @@ export class ChatComponent implements OnInit {
     });
     setTimeout(() => {
       this.myPeerId = this.peer.id;
+      console.log(this.myPeerId);
     },2000);
     //var messages:string[] = this.messages;
     var me:any = this;
@@ -64,7 +65,7 @@ export class ChatComponent implements OnInit {
       this.messages.push(me + ": " + text);
       this.textarea.nativeElement.value = "";
       // Connect to other peer and send message
-      var otherPeer = this.peer.connect(this.peerId.nativeElement.value);
+      var otherPeer = this.peer.connect(this.myPeer);
       otherPeer.on('open', function(){
         otherPeer.send(me + ": " + text);
       });

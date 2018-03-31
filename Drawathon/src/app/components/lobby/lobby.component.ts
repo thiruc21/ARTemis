@@ -11,6 +11,7 @@ export class LobbyComponent implements OnInit {
   public start:boolean = false;
   @ViewChild('picture') private picture:ElementRef;
   // Variables to hold all related info of the game.
+  title:string;
   gameId:string;
   team1:string[];
   team2:string[];
@@ -41,6 +42,7 @@ export class LobbyComponent implements OnInit {
     this.hostD = "none";
     this.host = this.lob.host;
     this.gameId = this.lob._id;
+    this.title = this.lob.title;
     this.team1 = [];
     this.team2 = [];
   
@@ -146,5 +148,14 @@ export class LobbyComponent implements OnInit {
       }, 1000);
     }
     else console.log("Please select an image first!");
+  }
+
+  kick(teamNum, index) {
+    if (teamNum == 1) {
+      console.log("Kick from team 1 player " + this.team1[index]);
+    }
+    else {
+      console.log("Kick from team 2 player " + this.team2[index]);
+    }
   }
 }
