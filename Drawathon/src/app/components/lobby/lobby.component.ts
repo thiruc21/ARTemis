@@ -57,7 +57,7 @@ export class LobbyComponent implements OnInit {
   
   timeOut() {
     // Check if new players are in.
-    var players = this.players;
+    var players:any[] = this.players;
     this.api.getPlayers(this.lob._id, function(err, res){
       if (err) console.log(err);
       else players = res;
@@ -84,15 +84,13 @@ export class LobbyComponent implements OnInit {
         for (i = 0; i < this.players.length; i++) {
           if (this.team1.length <= this.team2.length) this.team1.push(this.players[i].user);
           else this.team2.push(this.players[i].user); // Even distribution of teamMembers.
-        }
-        this.players.forEach(function(player) {
-          if (this.user = player.user && (this.user != this.host)) {
+          if (this.user == this.players[i].user && (this.user != this.host)) {
             console.log("was kicked in the shin");
             this.left = true;
             this.check = false;
             this.router.navigate(['/']);
           }
-        });
+        }
       }
       if (this.check) this.timeOut(); // Only continue if check is true.
       else {
