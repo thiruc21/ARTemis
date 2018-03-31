@@ -85,14 +85,16 @@ export class LobbyComponent implements OnInit {
           else this.team2.push(this.players[i].user); // Even distribution of teamMembers.
         }
       }
+    
       this.check = check;
-      console.log(this.user in this.players);
-      if (!(this.user in this.players) && (this.user != this.host)) {
-        console.log("kicking self out");
-        this.left = true;
-        this.check = false;
-        this.router.navigate(['/']);
-      }
+      this.players.forEach(function(player) {
+        if (this.user = player.user && (this.user != this.host)) {
+          console.log("kicking self out");
+          this.left = true;
+          this.check = false;
+          this.router.navigate(['/']);
+        }
+      });
       if (this.check) this.timeOut(); // Only continue if check is true.
       else {
         if (this.left == false) this.router.navigate(['/game']);
