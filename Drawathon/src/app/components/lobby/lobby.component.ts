@@ -84,9 +84,15 @@ export class LobbyComponent implements OnInit {
         }
       }
       this.check = check;
+      console.log(this.user in this.players);
+      if (!(this.user in this.players)) {
+        this.left = true;
+        this.check = false;
+      }
       if (this.check) this.timeOut(); // Only continue if check is true.
       else {
         if (this.left == false) this.router.navigate(['/game']);
+        else this.router.navigate(['/']);
        }  // Else we are done waiting for new game, go forward.
     }, 2000);
   }
@@ -152,10 +158,18 @@ export class LobbyComponent implements OnInit {
 
   kick(teamNum, index) {
     if (teamNum == 1) {
-      console.log("Kick from team 1 player " + this.team1[index]);
+      console.log("Kicking player " + this.team1[index]);
+      this.api.kickPlayer(this.gameId, this.team1[index], function(err, res){
+        if (err) console.log(err);
+        else console.log(res);
+      });
     }
     else {
-      console.log("Kick from team 2 player " + this.team2[index]);
+      console.log("Kicking player " + this.team2[index]);
+      this.api.kickPlayer(this.gameId, this.team1[index], function(err, res){
+        if (err) console.log(err);
+        else console.log(res);
+      });
     }
   }
 }
