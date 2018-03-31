@@ -3,7 +3,7 @@
     <div class="chatContent">
         <div class="chatMessage" *ngFor="let message of messages">{{message}}</div>
     </div>
-    <textarea #textarea class="chatText" rows="1" ngModel="message"></textarea>
+    <textarea #textarea class="chatText" rows="1" ngModel="message" (keyup.enter)="enter()"></textarea>
     <div class="chatButton" [ngStyle]="{ 'display': btnDisplay }" (click)="submitMessage()"><img src="assets/send.png" alt=""></div>
 </div>
 <div>
