@@ -290,14 +290,13 @@ app.post('/signin/', [checkUsername, checkPassword], function (req, res, next) {
     var errors = req.validationErrors();
     if (errors) return res.status(400).send(errors[0].msg);
 
-    dbo.collection("users").findOneAndUpdate({username: username, authProvider: 'artemis'},
-    {$set: {lastAccess: new Date()}}, {returnNewDocument: true}, function(err, user) {
+    dbo.collection("users").findOne({username: username, authProvider: 'artemis'}, function(err, user) {
         if (err) return res.status(500).end(err);
         if (!user) return res.status(401).end("Access denied, incorrect credentials\n");
         if (user.hash !== generateHash(password, user.salt)) return res.status(401).end("Access denied, incorrect credentials\n"); 
-    
+        if (user.lastAccess) console.log(user.lastAccess);
         // current_date: new Date()
-        req.session.uid = ObjectID(user._id);
+        req.session.uid = ObjectId(user._id);
         req.session.username = username;
         req.session.authProv = 'artemis';
         // initialize cookie
@@ -308,7 +307,11 @@ app.post('/signin/', [checkUsername, checkPassword], function (req, res, next) {
             path : '/', 
             maxAge: 60 * 60 * 24 * 7
         }));
-        return res.json("User " + username + " signed in");
+
+        dbo.collection("users").update({username: username, authProvider: 'artemis'},
+        {$set: {lastAccess: new Date()}}, function(err, user) {
+            return res.json("User " + username + " signed in");
+        });        
     });
 });
 
@@ -528,14 +531,10 @@ app.delete('/api/games/:id/', [isAuthenticated, checkGameId], function (req, res
                 if (err) return res.status(500).end(err);
                 if (delRes.deletedCount === 0) return res.status(409).end("game" + gameId + " lobby could not be deleted")
             
-                // Note: Below needs to use promises to avoid async problems
-                //var score = compareImages(file.path, gameId);
-                //console.log("Final score is " + score);
-
-                // Note: Removing as below needs to be done after the game is over
-                // Removing a game from Clarifai
-                // removeFromClarifai(gameId);
-                return res.json("Game " + game.title + " has been removed");
+                removeFromClarifai(gameId, function(err, resp) {
+                    if (err) return res.status(500).end(err);
+                    return res.json("Game " + game.title + " has been removed");
+                });
             });
         });
     });    
@@ -638,11 +637,10 @@ function addToClarifai (imagePath, gameID) {
 function removeFromClarifai (gameID, callback){
     appC.inputs.delete(gameID).then(
         function(response) {
-            //console.log(response);
-            console.log("Deleted image for game ID:" + gameID + " from clarifai")
+            return callback(null, response);
         },
         function(err) {
-            console.log(err);
+            return callback(err, null);
         }
       );
 }
