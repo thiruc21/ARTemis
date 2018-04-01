@@ -178,6 +178,8 @@ export class HostComponent implements OnInit {
         if (this.timeVal <= 0){
           var imgData1 = this.canvasElem[0].toDataURL();
           var imgData2 = this.canvasElem[1].toDataURL();
+          imgData1 = imgData1.substring(imgData1.indexOf(',')+1);
+          imgData2 = imgData2.substring(imgData2.indexOf(',')+1);
           console.log("Canvas elem 1", imgData1);
           console.log("Canvas elem 2", imgData2);
           console.log("Game ID is:" + this.game._id);
@@ -185,7 +187,14 @@ export class HostComponent implements OnInit {
             if (err) {
               console.log(err);
             } else {
-              console.log(res);
+              console.log("Canvas 1 matched by:", res);
+            }
+          });
+          this.api.findSimilarity(this.game._id, imgData2, function(err, res) {
+            if (err) {
+              console.log(err);
+            } else {
+              console.log("Canvas 2 matched by:", res);
             }
           });
           //this.exit();
