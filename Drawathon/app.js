@@ -713,12 +713,9 @@ function removeFromClarifai (gameID, callback){
 }
 
 // Compare another image with the image for the game stored in Clarifai
-// Takes in the image path of users drawing and game ID of the iamge
+// Takes in the base64 encoded string of users drawing and game ID of the image
 function compareImages(otherImage, gameID){
-    console.log("Image's path");
-    console.log(otherImage);
-    var data = fs.readFileSync(otherImage);
-    appC.inputs.search({ input: {base64: data.toString('base64')} }).then(
+    appC.inputs.search({ input: {base64: otherImage} }).then(
         function(response) {
             var score = 0;
             //console.log(response);

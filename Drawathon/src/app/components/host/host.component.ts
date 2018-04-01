@@ -178,8 +178,8 @@ export class HostComponent implements OnInit {
         if (this.timeVal <= 0){
           console.log("Canvas elem 1", this.canvasElem[0].toDataURL());
           console.log("Canvas elem 2", this.canvasElem[1].toDataURL());
-          this.exit();
-          this.router.navigate(['/result']);
+          //this.exit();
+          
         } 
         else {
           this.timeVal = this.timeVal - 1;
