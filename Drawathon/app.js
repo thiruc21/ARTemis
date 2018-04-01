@@ -656,7 +656,7 @@ app.delete('/api/games/:id/joined/:userId', [isAuthenticated, checkGameId], func
         if (game.host !== host || game.authProvider !== provider) 
             return res.status(409).end("User " + host + " is not the host of this game");
 
-        dbo.collection("game_joined").deleteOne({gameId: ObjectId(gameId),  userId:playerKick}, function(err, wrRes) {
+        dbo.collection("game_joined").deleteOne({gameId: ObjectId(gameId), userId:playerKick}, function(err, wrRes) {
             if (err) return res.status(500).end(err);
             if (wrRes.deletedCount == 0) return res.status(409).end("User " + playerKick + " is not in the game!");
 
