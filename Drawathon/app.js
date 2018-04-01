@@ -451,7 +451,7 @@ app.patch('/api/games/:id/', [isAuthenticated, checkGameId], function (req, res,
         req.checkBody('time', 'Every game needs a time limit!').exists().notEmpty().isNumeric();
     
     if (action === "End") 
-        req.checkBody('teamNum', 'Every game needs a valid winning team!').exists().notEmpty().isNumeric().isIn[0,1]
+        req.checkBody('teamNum', 'Every game needs a valid winning team!').exists().notEmpty().isNumeric().isIn[0,1];
     
     var errors = req.validationErrors();
     if (errors) return res.status(400).send(errors[0].msg);
@@ -480,21 +480,54 @@ app.patch('/api/games/:id/', [isAuthenticated, checkGameId], function (req, res,
                 return res.json("Game started!");
             });
         } else {
-            dbo.collection("game_joined").find({_id: ObjectId(gameId)}).toArray(function(err, playerEntries) {
-                if (err) return res.status(500).end(" Server side error");
 
-                dbo.collection("game_joined").updateMany({_id: ObjectId(gameId), teamNum: winner}, 
-                {$set: {"winner": true}},               
-                function(err, wrRes) {
-                    if (err) return res.status(500).end(err);
-                    if (wrRes.modifiedCount = 0) return res.status(409).end("players for game " + gameId + " could not be modified"); 
+            dbo.collection("game_joined").updateMany({_id: ObjectId(gameId), teamNum: winner}, 
+            {$set: {"winner": true}},               
+            function(err, wrRes) {
+                if (err) return res.status(500).end(err);
+                if (wrRes.modifiedCount = 0) return res.status(409).end("players for game " + gameId + " could not be modified"); 
+                dbo.collection("game_joined").find({gameId: ObjectId(gameId)}).toArray(function(err, playerEntries) {
+                    if (err) return res.status(500).end(" Server side error");
+                    var winners = playerEntries.map( function(user) {
+                        if (user.winner) {
+                            return user._id;
+                    }});
+                    var losers = playerEntries.map( function(user) {
+                        if (!user.winner) {
+                            return user._id;
+                    }});
+                    updateWins(winners, function(err, res) {
+                        if (err) return res.status(500).end(err);
+                        updateLoss(losers, function(err, res) {
 
-                    return res.json("winning players!");
+                        });
+                        return res.json("winning players!");
+
+                    });
+
+                    
                 });
+                
             });
         }
     });
 });
+
+async function updateWins( winners, callback) {
+    await dbo.collection("users").updateMany({_id: {$in: winners}}, 
+        {"$inc":{ "wins": 1 }}, function(err,result) {
+            if (err) callback(err, null);
+    });
+    
+}
+
+async function updateLoss( losers, callback) {
+    await dbo.collection("users").updateMany({_id: {$in: losers}},  
+        {"$inc":{ "wins": -1 }}, function(err,result) {
+            if (err) callback(err, null);
+    });
+}
+
 
 // curl -k -b cookie.txt https://localhost:3000/api/games/5abd897b49790f305b870aab
 /* Gets game specific information */
@@ -835,11 +868,11 @@ async function mongoSetup() {
         else {
             db = mongodb;
             dbo = db.db(configFile.mongo.dbname);            
-            /*
-            dbo.collection("games").drop();
+            
+            /* dbo.collection("games").drop();
             dbo.collection("images").drop();            
             dbo.collection("users").drop();            
-            dbo.collection("game_joined").drop(); //  */
+            dbo.collection("game_joined").drop();  */
         }        
     });
 }
