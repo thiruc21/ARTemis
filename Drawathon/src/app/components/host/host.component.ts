@@ -176,6 +176,8 @@ export class HostComponent implements OnInit {
         this.timeVal = Math.floor((game.endTime - curr) / 1000);
         console.log(this.timeVal);
         if (this.timeVal <= 0){
+          console.log("Canvas elem 1", this.canvasElem[0].toDataURL());
+          console.log("Canvas elem 2", this.canvasElem[1].toDataURL());
           this.exit();
           this.router.navigate(['/result']);
         } 

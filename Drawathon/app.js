@@ -233,7 +233,6 @@ app.get('/users/oauth/twitch/', passport.authenticate('twitchToken'));
 app.get('/users/oauth/twitch/callback', 
   passport.authenticate('twitchToken', { failureRedirect: '/signin/'}),
   function(req, res) {
-    req.session.uid = ObjectId(req.user._id);
     req.session.username = req.user.username;
     req.session.authProv = 'twitch';
     res.setHeader('Set-Cookie', cookie.serialize('username', req.session.username, {
@@ -251,7 +250,6 @@ app.get('/users/oauth/facebook/callback',
   passport.authenticate('facebookToken', { failureRedirect: '/signin/'}),
   function(req, res) {
 
-    req.session.uid = ObjectId(req.user._id);
     req.session.username = req.user.username;
     req.session.authProv = 'facebook';
     res.setHeader('Set-Cookie', cookie.serialize('username', req.session.username, {
@@ -267,7 +265,6 @@ app.get('/users/oauth/facebook/callback',
 app.get('/users/oauth/google/callback', 
   passport.authenticate('googleToken', { failureRedirect: '/signin/'}),
   function(req, res) {
-    req.session.uid = ObjectId(req.user._id);
     req.session.username = req.user.username;
     req.session.authProv = 'google';
     res.setHeader('Set-Cookie', cookie.serialize('username', req.session.username, {
@@ -324,7 +321,6 @@ app.post('/signin/', [checkUsername, checkPassword], function (req, res, next) {
         if (!user) return res.status(401).end("Access denied, incorrect credentials\n");
         if (user.hash !== generateHash(password, user.salt)) return res.status(401).end("Access denied, incorrect credentials\n"); 
         
-        req.session.uid = ObjectId(user._id);
         req.session.username = username;
         req.session.authProv = 'artemis';
         // initialize cookie
@@ -355,6 +351,7 @@ app.get('/signout/', isAuthenticated, function (req, res, next) {
 });
 
 // curl -k  -b cookie.txt -H "Content-Type: application/json" -X POST -d '{"title":"join THIS Lobby lol"}' https://localhost:3000/api/games/
+/* Creates a game lobby */
 app.post('/api/games/', isAuthenticated, function (req, res, next) {
     req.checkBody('title', 'Every game needs a title!').exists().notEmpty();
 
@@ -362,7 +359,6 @@ app.post('/api/games/', isAuthenticated, function (req, res, next) {
     if (errors) return res.status(400).send(errors[0].msg);
 
     var title = req.body.title;
-    var hostId = req.session.uid;
     var host = req.session.username;
     var provider = req.session.authProv;    
 
@@ -372,7 +368,7 @@ app.post('/api/games/', isAuthenticated, function (req, res, next) {
         if (game) return res.status(409).end("User " + host + " already has a hosted game");
         
         dbo.collection('games').insertOne(
-            {title:title, host: host, authProvider:provider,
+            {title:title,  host: host, authProvider:provider,
             inLobby: true, numPlayers:0, maxPlayers:MAXPLAYERS},
             function (err, game) {
                 if (err) return res.status(500).end(err);
@@ -382,6 +378,7 @@ app.post('/api/games/', isAuthenticated, function (req, res, next) {
 });
 
 // curl -k -b cookie.txt https://localhost:3000/api/games/
+/* Gets all lobby games */
 app.get('/api/games/', isAuthenticated, function (req, res, next) {
     dbo.collection("games").find({inLobby:true}).toArray(function(err, games) {
         if (err) return res.status(500).end(" Server side error");
@@ -390,12 +387,12 @@ app.get('/api/games/', isAuthenticated, function (req, res, next) {
 });
 
 // curl -k -b cookie.txt -H "Content-Type: application/json" -X POST  https://localhost:3000/api/games/5aad97f9f4e28b075083ef9c/joined/
+/* Join a game  */
 app.post('/api/games/:id/joined/', [isAuthenticated, checkGameId], function (req, res, next) {
     
     var errors = req.validationErrors();
     if (errors) return res.status(400).send(errors[0].msg);
 
-    var userJoinedId = req.session.uid;
     var userJoined = req.session.username;
     var provider = req.session.authProv;
     var gameId = req.params.id;
@@ -443,9 +440,13 @@ app.post('/api/games/:id/joined/', [isAuthenticated, checkGameId], function (req
 
 // curl -k -b cookie.txt -H "Content-Type: application/json" -X PATCH -d '{"action": "Start", "time": 120}' https://localhost:3000/api/games/5abffc298dd2d4558f58e312/
 // curl -k -b cookie.txt -H "Content-Type: application/json" -X PATCH -d '{"action": "End", "teamNum": 0}' https://localhost:3000/api/games/5abffc298dd2d4558f58e312/
+/* Starts a game given a time limit, Ends a game given a winner  */
 app.patch('/api/games/:id/', [isAuthenticated, checkGameId], function (req, res, next) {
-    req.checkBody('action', 'Valid Action required for patch!').exists().notEmpty().isIn(['Start', 'End'])
-    
+    req.checkBody('action', 'Valid Action required!').exists().notEmpty().isIn(['Start', 'End'])
+    var errors = req.validationErrors();
+    if (errors) return res.status(400).send(errors[0].msg);
+    var action = req.body.action;
+
     if (action === "Start")
         req.checkBody('time', 'Every game needs a time limit!').exists().notEmpty().isNumeric();
     
@@ -454,15 +455,11 @@ app.patch('/api/games/:id/', [isAuthenticated, checkGameId], function (req, res,
     
     var errors = req.validationErrors();
     if (errors) return res.status(400).send(errors[0].msg);
-
     
-    var action = req.body.action;
     var time = req.body.time;
-
     var winner = req.body.teamNum;
     var endTime = new Date().getTime() + time;
     
-    var hostId = req.session.uid;
     var host = req.session.username;
     var provider = req.session.authProv;
     var gameId = req.params.id;
@@ -483,17 +480,24 @@ app.patch('/api/games/:id/', [isAuthenticated, checkGameId], function (req, res,
                 return res.json("Game started!");
             });
         } else {
-            dbo.collection("game_joined").updateMany({_id: ObjectId(gameId), teamNum: teamNum}, 
-                {$set: {"winner": true}}, 
-            function(err, wrRes) {
-                if (err) return res.status(500).end(err);
-                if (wrRes.modifiedCount = 0) return res.status(409).end("players for game " + gameId + " could not be modified"); 
-                return res.json("winning players!");
+            dbo.collection("game_joined").find({_id: ObjectId(gameId)}).toArray(function(err, playerEntries) {
+                if (err) return res.status(500).end(" Server side error");
+
+                dbo.collection("game_joined").updateMany({_id: ObjectId(gameId), teamNum: winner}, 
+                {$set: {"winner": true}},               
+                function(err, wrRes) {
+                    if (err) return res.status(500).end(err);
+                    if (wrRes.modifiedCount = 0) return res.status(409).end("players for game " + gameId + " could not be modified"); 
+
+                    return res.json("winning players!");
+                });
             });
         }
     });
 });
 
+// curl -k -b cookie.txt https://localhost:3000/api/games/5abd897b49790f305b870aab
+/* Gets game specific information */
 app.get('/api/games/:id/', [isAuthenticated, checkGameId], function (req, res, next) {
     var errors = req.validationErrors();
     if (errors) return res.status(400).send(errors[0].msg);
@@ -506,6 +510,7 @@ app.get('/api/games/:id/', [isAuthenticated, checkGameId], function (req, res, n
 });
 
 // curl -k -b cookie.txt -H "Content-Type: application/json" -X PATCH -d '{"action":'generateId', 'team1Id": 1233, "team2Id": 12123}' https://localhost:3000/api/games/5aad97f9f4e28b075083ef9c/host/
+/* Patch a host's rtc ids for each team */
 app.patch('/api/games/:id/host/', [isAuthenticated, checkGameId], function (req, res, next) {
     req.checkBody('action', 'Valid Action required for patch!').exists().notEmpty().isIn(['generateId'])
     req.checkBody('team1Id', "Host requires a canvas id for team 1").exists().notEmpty();
@@ -515,7 +520,6 @@ app.patch('/api/games/:id/host/', [isAuthenticated, checkGameId], function (req,
     if (errors) return res.status(400).send(errors[0].msg);
 
     var gameId = req.params.id;
-    var posterId = req.session.uid;
     var poster = req.session.username;
     var provider = req.session.authProv;
     var team1Id = req.body.team1Id;
@@ -536,6 +540,7 @@ app.patch('/api/games/:id/host/', [isAuthenticated, checkGameId], function (req,
 });
 
 // curl -k -b cookie.txt -H "Content-Type: application/json" -X PATCH -d '{"canvasId": "123123", "chatId": "12412sdad"}' https://localhost:3000/api/games/5abd897b49790f305b870aab/joined/
+/* Patch a players's rtc id n a game */
 app.patch('/api/games/:id/joined/', [isAuthenticated, checkGameId], function (req, res, next) {
     req.checkBody('action', 'Valid Action required for patch!').exists().notEmpty().isIn(['generateId']);
     req.checkBody('chatId', "Each player requires a chat id").exists().notEmpty();
@@ -544,7 +549,7 @@ app.patch('/api/games/:id/joined/', [isAuthenticated, checkGameId], function (re
     if (errors) return res.status(400).send(errors[0].msg);
 
     var gameId = req.params.id;
-    var joinedUserId = req.session.uid;
+
     var joinedUser = req.session.username;
     var provider = req.session.authProv;    
     var chatId = req.body.chatId;
@@ -559,7 +564,7 @@ app.patch('/api/games/:id/joined/', [isAuthenticated, checkGameId], function (re
             if (!gameJoined) return res.status(409).end("User " + joinedUser + " not found"); 
 
             dbo.collection("game_joined").updateOne(
-                {gameId: ObjectId(gameId), user:joinedUser, authProvider:provider},
+                {gameId: ObjectId(gameId),  user:joinedUser, authProvider:provider},
                 {$set: {"chatId": chatId,"canvasId": canvasId}}, {"new": true}, function(err, wrRes){
                     if (err) return res.status(500).end(err);
                     return res.json("Peer ids posted");
@@ -569,11 +574,11 @@ app.patch('/api/games/:id/joined/', [isAuthenticated, checkGameId], function (re
 });
 
 // curl -k -b cookie.txt -H "Content-Type: application/json" -X DELETE https://localhost:3000/api/games/5aad97f9f4e28b075083ef9c/
+/*  Allow a host to delete a game */
 app.delete('/api/games/:id/', [isAuthenticated, checkGameId], function (req, res, next) {
     var errors = req.validationErrors();
     if (errors) return res.status(400).send(errors[0].msg);
 
-    var hostId = req.session.uid;
     var host = req.session.username;
     var provider = req.session.authProv;
     var gameId = req.params.id;
@@ -602,12 +607,12 @@ app.delete('/api/games/:id/', [isAuthenticated, checkGameId], function (req, res
 });
 
 // curl -k -b cookie.txt -H -X delete  https://localhost:3000/api/games/5aae9368eccb1357c708bbd0/joined/
-// KICK player themself
+/* Leave the game as a player*/
 app.delete('/api/games/:id/joined/', [isAuthenticated, checkGameId], function (req, res, next) {
     var errors = req.validationErrors();
     if (errors) return res.status(400).send(errors[0].msg);
 
-    var userId = req.session.uid;
+
     var userLeave = req.session.username;
     var provider = req.session.authProv;
     var gameId = req.params.id;
@@ -625,16 +630,15 @@ app.delete('/api/games/:id/joined/', [isAuthenticated, checkGameId], function (r
 });
 
 // curl -k -b cookie.txt -H -X delete https://localhost:3000/api/games/5aae9368eccb1357c708bbd0/joined/alice
-/* Allow host to kick a play from the game */
-app.delete('/api/games/:id/joined/:username', [isAuthenticated, checkGameId], function (req, res, next) {
+/* Allow host to kick a player from the game */
+app.delete('/api/games/:id/joined/:userId/', [isAuthenticated, checkGameId], function (req, res, next) {
     var errors = req.validationErrors();
     if (errors) return res.status(400).send(errors[0].msg);
 
-    var hostId = req.session.uid;
     var host = req.session.username;
     var provider = req.session.authProv;
     var gameId = req.params.id; 
-    var playerKick = req.params.username;
+    var playerKick = req.params.userId;
 
     findGames(res, gameId, function(err, game) {
         if (err) return res.status(500).end(" Server side error");
@@ -642,7 +646,7 @@ app.delete('/api/games/:id/joined/:username', [isAuthenticated, checkGameId], fu
         if (game.host !== host || game.authProvider !== provider) 
             return res.status(409).end("User " + host + " is not the host of this game");
 
-        dbo.collection("game_joined").deleteOne({gameId: ObjectId(gameId), user: playerKick, authProvider:provider}, function(err, wrRes) {
+        dbo.collection("game_joined").deleteOne({gameId: ObjectId(gameId), user:playerKick}, function(err, wrRes) {
             if (err) return res.status(500).end(err);
             if (wrRes.deletedCount == 0) return res.status(409).end("User " + playerKick + " is not in the game!");
 
@@ -744,7 +748,6 @@ app.post('/api/games/:id/image/', [isAuthenticated, checkGameId], upload.single(
     if (errors) return res.status(400).send(errors[0].msg);
 
     var gameId = req.params.id;
-    var posterId = req.session.uid;
     var poster = req.session.username;
     var provider = req.session.authProv;
     var file = req.file;
@@ -832,7 +835,8 @@ async function mongoSetup() {
         else {
             db = mongodb;
             dbo = db.db(configFile.mongo.dbname);            
-            /*dbo.collection("games").drop();
+            /*
+            dbo.collection("games").drop();
             dbo.collection("images").drop();            
             dbo.collection("users").drop();            
             dbo.collection("game_joined").drop(); //  */
