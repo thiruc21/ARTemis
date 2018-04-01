@@ -8,158 +8,145 @@ import { Router } from '@angular/router';
   styleUrls: ['./lobby.component.css']
 })
 export class LobbyComponent implements OnInit {
-  public start:boolean = false;
-  @ViewChild('input') private input:ElementRef;
-  inputElem:HTMLInputElement;
+  public start: boolean = false;
+  @ViewChild('input') private input: ElementRef;
+  inputElem: HTMLInputElement;
   // Variables to hold all related info of the game.
-  title:string;
-  gameId:string;
-  team1:string[];
-  team2:string[];
-  host:string;
-  user:string;
-  running:boolean;
+  private title: string;
+  private gameId: string;
+  private teams: string[][];
+  private host: string;
+  private user: string;
 
-  private api:ApiModule;
+  private api: ApiModule;
 
-  file:File;
+  private file: File;
 
-  players:any;
-  lob:any;
+  private players: any;
+  private lob: any;
 
-  check:boolean;
-  uploaded:boolean;
-  left:boolean;
-  hostD:string;
-  startText:string;
+  private uploaded: boolean;
+  private left: boolean;
+  private running: boolean;
+
+  
+  private hostD: string;
+  private startText: string;
   constructor(public router: Router) { }
 
   ngOnInit() {
-    this.running = true;
-    // Set defaults.
+    // Load API
+    this.api = new ApiModule();
+
+    // Define Variables:
     this.inputElem = this.input.nativeElement;
     this.file = null;
-    this.left = false;
-    this.api = new ApiModule();
+    this.players = [];
+    this.teams = [[], []]
+
+    this.hostD = "none";
+    this.startText = "Upload"
+
     this.user = this.api.getCurrentUser();
     this.lob = this.api.getLobby();
-    this.players = [];
-    this.hostD = "none";
     this.host = this.lob.host;
     this.gameId = this.lob._id;
     this.title = this.lob.title;
-    this.team1 = [];
-    this.team2 = [];
-    this.uploaded = false;
-    this.startText = "Upload"
-    if (this.host == this.user) this.hostD = "flex";
-    else this.team1.push(this.user);
 
-    this.check = true;
-    this.timeOut();
+    // Set Flags
+    this.running = true; // Timeout Short Poll is running.
+    this.left = false; // Player left on own accord. Used to differentiate start and leave.
+    this.uploaded = false; // Host only flag, for if host has uploaded an image. Cannot start without image.
+
+    // Display logic;
+    if (this.host == this.user) this.hostD = "flex"; // If host, show host specific data.
+    else this.teams[0].push(this.user); // else push this player to an arbitrary team while we wait for update.
+    this.timeOut(); // Start Short-Polling
   }
   
-  timeOut() {
-    // Check if new players are in.
-    var error: boolean = false;
-    var players:any[] = this.players;
-    var rtr = this.router
+  timeOut() { // Short-Poll Function: it check if new players are in and if game has declared as started from host. Redirects to main on disconnect.
+    if (!this.running) return; // Exit on not running. 
+    
+    var error: boolean = false; // Local Error flag. On connection error, disconnect and redirect to main.
+    var check:boolean = false; // Flag to check if game started.
+    var players:any[] = null; // Temp variables to handle scope issues.
+    // Get lateset amount of players.
     this.api.getPlayers(this.lob._id, function(err, res){
-      if (err) {
+      if (err) { // Error, cannot connect.
         console.log("Connection with game lost.\n" + err)
         error = true;
       }
-      else players = res;
+      else players = res; // Set players = to result.
     });
-    var check = this.check;
-    if (this.user != this.host) {// If not host, check if game has started.
+
+    if (this.user != this.host) { // If not host, check if game has started.
       this.api.getGame(this.gameId, function(err, res) {
-        if (err) {
+        if (err) { // Connection lost.
           console.log("Connection with game lost.\n" + err)
           error = true;
         }
-        else {
-          if (res.inLobby == false) {
-            check = false;
-          }
+        else if (res.inLobby == false) { // Game is in session.
+          check = true; // No need to run anymore.
         }
       });
     }
-    // Check for new lobbys every two seconds.
-    setTimeout(() => {
-      if (error) {
-        this.exit();
-        this.router.navigate(['/']);
+
+    setTimeout(() => { // Checks for new lobbys every 3 seconds. Since we are using a timeout loop anyway, no need to use await on the functions.
+      if (error) { this.exit('/'); return; } // Exit handler. Stops everything.
+      if (check) { this.running = false; }
+
+      if (players) { // If we have results.
+        var kicked:boolean = true; // Start with the assumtion that this player is kicked out.
+        this.players = players; // Update players.
+        this.teams = [[], []]; // Empty teams holder. Will refill next.
+        var i = 0; // for For loop.
+        if (this.user == this.host) kicked = false; // Host cannot be kicked.
+        for (i = 0; i < this.players.length; i++) { // Go through all players.
+          this.teams[this.players[i].teamNum].push(this.players[i].user); // Distribution of team members.
+          if (this.user == this.players[i].user) kicked = false; // Check if player needs to be kicked.
+        }
+        if (kicked) { this.exit('/'); return; } // If player was kicked exit this.
       }
-      this.check = check;
-      var kicked:boolean = true;
-      if (players) {
-        this.team1 = [];
-        this.team2 = [];
-        this.players = players;
-        var i = 0;
-        if (this.user == this.host) {
-          kicked = false;
-        }
-        for (i = 0; i < this.players.length; i++) {
-          if (this.team1.length <= this.team2.length) this.team1.push(this.players[i].user);
-          else this.team2.push(this.players[i].user); // Even distribution of teamMembers.
-          if (this.user == this.players[i].user) {
-            kicked = false;
-          }
-        }
-        if (kicked) {
-          console.log("was kicked in the shin");
-          this.left = true;
-          this.check = false;
-          this.router.navigate(['/main']);
-        }
-      }
-      if (this.check && this.running) this.timeOut(); // Only continue if check is true.
-      else {
-        if (this.left == false) this.router.navigate(['/game']);
-        
-       }  // Else we are done waiting for new game, go forward.
+
+      if (this.running) this.timeOut(); // Only continue if check is true.
+      else if (this.left == false) this.exit('/game') // Game started and the player didn't leave.
     }, 3000);
   }
-  exit() {
+
+  exit(route: string) {
     this.running = false;
-    this.check = false;
     this.left = true;
+    this.router.navigate([route]);
   }
+
   debug() {
     console.log("clicked debug");
     this.left = false;
-    this.check = false;
     this.router.navigate(['/game']);
   }
 
-  leave(){
-    var check:boolean = this.check;
+  leave(){ // Leave button that serves as a delete game for host.
+    if (!this.running) return; // Prevents edge cases, like button mashing.
+
+    var check:boolean = false; // Scope for check.
     if (this.host == this.user) {
       this.api.removeGame(this.lob._id, function(err){
-        if (err) console.log(err);
-        else {
-          console.log("deleted game");
-          check = false;
+        if (err) { // Error, cannot connect.
+          console.log("Could not remove game\n" + err)
         }
+        else check = true;
       })
     }
     else {
       this.api.leaveGame(this.lob._id, function(err, res){
-        if (err) console.log(err);
-        else {
-          console.log('successfully left.');
-          check = false; // No need to check for updates.
+        if (err) { // Error, cannot connect.
+          console.log("Could not leave game.\n" + err)
         }
+        else check = true;
       });
     }
     setTimeout(() => {
-      this.check = check;
-      if (this.check == false) {
-        this.left = true;
-        this.router.navigate(['/']); // Navigate.
-      }
+      if (check) { this.exit('/'); return; } // Leave.
     },1000);
   }
 
@@ -167,21 +154,19 @@ export class LobbyComponent implements OnInit {
   uploadImg() {
     var uploaded:boolean = false;
     this.file = this.inputElem.files[0];
-    console.log(this.file);
     if (this.file) {
-      var check:boolean = this.check;
-      if (this.uploaded == false) {
         this.api.uploadImage(this.gameId, this.file, function(err) {
-          if (err) console.log(err)
-          else {
-            console.log("Image uploaded");
-            uploaded = true;
-          }
-        });
-      }
+        if (err) { // Error, cannot upload.
+          console.log("Could not upload image.\n" + err)
+        }
+        else {
+          console.log("Image uploaded");
+          uploaded = true;
+        }
+      });
       setTimeout(() => {
-       this.uploaded = uploaded;
-       if (this.uploaded) {
+       this.uploaded = uploaded; // Update uploaded flag.
+       if (this.uploaded) { // Switch button and input to start game and time val.
          this.startText = "Start";
          this.inputElem.type="number";
          this.inputElem.placeholder="Seconds";
@@ -192,43 +177,31 @@ export class LobbyComponent implements OnInit {
 }
 
   startGame() {
-    if (this.startText == "Upload"){
+    if (this.startText == "Upload"){ // Upload button.
       this.uploadImg();
-    } else {
-    var check:boolean = this.check;
-    var time = 60;
-    if (this.inputElem.value) time = parseInt(this.inputElem.value);
+    } else if (this.uploaded) { // Actually Starting game
+    var check:boolean = false;
+    var time:number = 60; // Default time in seconds is 60 seconds or a minute.
+    if (this.inputElem.value) time = parseInt(this.inputElem.value); // Get time if it exists.
     this.api.startGame(this.gameId, time * 1000,function(err, res){ // Give time in ms.
-        if (err) console.log(err)
-        else {
-          check = false;
+        if (err) { // Error, cannot connect.
+          console.log("Could not start game\n" + err)
         }
-      })
+        else check = true;
+      });
       setTimeout(() => {
-        this.check = check;
-        if (this.check == false && this.uploaded) {
-          this.left = true;
-          this.router.navigate(['/host']);
-        }
-      }, 2000);
+        if (check) { this.exit('/host'); }
+      }, 1000);
     }
   }
-   
 
-  kick(teamNum, index) {
-    if (teamNum == 1) {
-      console.log("Kicking player " + this.team1[index]);
-      this.api.kickPlayer(this.gameId, this.team1[index], function(err, res){
-        if (err) console.log(err);
-        else console.log(res);
-      });
-    }
-    else {
-      console.log("Kicking player " + this.team2[index]);
-      this.api.kickPlayer(this.gameId, this.team1[index], function(err, res){
-        if (err) console.log(err);
-        else console.log(res);
-      });
-    }
+  kick(teamNum, index) { // Host only kic.
+    var player:string = this.teams[teamNum][index];
+    this.api.kickPlayer(this.gameId, player, function(err, res){
+      if (err) { // Error, cannot connect.
+        console.log("Could not kick " + player + ".\n" + err)
+      }
+      else console.log(res);
+    });
   }
 }
