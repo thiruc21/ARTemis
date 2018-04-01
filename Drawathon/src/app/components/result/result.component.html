@@ -1,5 +1,8 @@
 <app-pannel></app-pannel>
 <div class="layout">
-  <h1 class="result">Waiting on result</h1>
-  <button class="leave">Leave</button>
+  <h1 class="result">{{result}}</h1>
+  <div class="container">
+    <p [ngStyle]="{ 'display': leaveD }">{{leaveText}}</p>
+    <button class="leave" (click)="leave()" [ngStyle]="{ 'display': leaveD }">Leave</button>
+  </div>
 </div>
