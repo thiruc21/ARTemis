@@ -42,6 +42,28 @@ var upload = multer({ dest: path.join(__dirname, 'uploads') });
 
 app.use(expValidator())
 app.use(bodyParser.json());
+
+// The following forceSSL middleware code snippet is taken from 
+/** https://medium.com/@ryanchenkie_40935/angular-cli-deployment-host-your-angular-2-app-on-heroku-3f266f13f352 */
+
+/** If an incoming request uses a protocol other than HTTPS, redirect that request to the
+    same url but with HTTPS **/
+const forceSSL = function() {
+    return function (req, res, next) {
+      if (req.headers['x-forwarded-proto'] !== 'https') {
+        return res.redirect(
+         ['https://', req.get('Host'), req.url].join('')
+        );
+      }
+      next();
+    }
+  }
+  
+// Instruct the app to use the forceSSL middleware
+if (app.get('env') !== 'development'){
+    app.use(forceSSL());
+}
+
 app.use(express.static('dist'));
 
 var config = {key: privateKey, cert: certificate};
@@ -571,6 +593,7 @@ app.delete('/api/games/:id/', [isAuthenticated, checkGameId], function (req, res
                 if (delRes.deletedCount !== game.numPlayers) return res.status(409).end("game" + gameId + " lobby could not kick all players")
                 //removeFromClarifai(gameId, function(err, resp) {
                 //    if (err) return res.status(500).end(err)
+                //    else console.log("Image removed from Clarifai")
                 //});
                 return res.json("Game " + game.title + " has been removed");
             });
@@ -817,33 +840,6 @@ async function mongoSetup() {
     });
 }
 mongoSetup();
-
-
-// The following forceSSL middleware code snippet is taken from 
-/** https://medium.com/@ryanchenkie_40935/angular-cli-deployment-host-your-angular-2-app-on-heroku-3f266f13f352 */
-
-// If an incoming request uses
-// a protocol other than HTTPS,
-// redirect that request to the
-// same url but with HTTPS
-const forceSSL = function() {
-    return function (req, res, next) {
-      if (req.headers['x-forwarded-proto'] !== 'https') {
-        return res.redirect(
-         ['https://', req.get('Host'), req.url].join('')
-        );
-      }
-      next();
-    }
-  }
-  
-// Instruct the app
-// to use the forceSSL
-// middleware
-// Allow localhost to work in HTTP, otherwise HTTPS is required
-if (app.get('env') !== 'development'){
-    app.use(forceSSL());
-}
 
 if (app.get('env') === 'development'){      
     https.createServer(config, app).listen(process.env.PORT || PORT, function (err) {

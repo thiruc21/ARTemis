@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, ElementRef, AfterViewInit  } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef, AfterViewInit} from '@angular/core';
 import { CanvasComponent } from '../canvas/canvas.component';
 import { ChatComponent } from '../chat/chat.component';
 import { ApiModule } from '../../api/api.module';

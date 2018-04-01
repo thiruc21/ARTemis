@@ -64,13 +64,15 @@ export class LobbyComponent implements OnInit {
     var error: boolean = false;
     var players:any[] = this.players;
     var rtr = this.router
-    this.api.getPlayers(this.lob._id, function(err, res){
-      if (err) {
-        console.log("Connection with game lost.\n" + err)
-        error = true;
-      }
-      else players = res;
-    });
+    if (this.running) {
+      this.api.getPlayers(this.lob._id, function(err, res){
+        if (err) {
+          console.log("Connection with game lost.\n" + err)
+          error = true;
+        }
+        else players = res;
+      });
+    }
     var check = this.check;
     if (this.user != this.host) {// If not host, check if game has started.
       this.api.getGame(this.gameId, function(err, res) {
@@ -108,8 +110,9 @@ export class LobbyComponent implements OnInit {
             kicked = false;
           }
         }
-        if (kicked) {
+        if (kicked && this.running) {
           console.log("was kicked in the shin");
+          this.exit()
           this.left = true;
           this.check = false;
           this.router.navigate(['/main']);
@@ -117,8 +120,10 @@ export class LobbyComponent implements OnInit {
       }
       if (this.check && this.running) this.timeOut(); // Only continue if check is true.
       else {
-        if (this.left == false) this.router.navigate(['/game']);
-        
+        if ((this.left == false) && (this.running)) {
+            this.exit();
+            this.router.navigate(['/game']);
+          }
        }  // Else we are done waiting for new game, go forward.
     }, 3000);
   }
@@ -156,8 +161,9 @@ export class LobbyComponent implements OnInit {
     }
     setTimeout(() => {
       this.check = check;
-      if (this.check == false) {
+      if (this.check == false && this.running) {
         this.left = true;
+        this.exit();
         this.router.navigate(['/']); // Navigate.
       }
     },1000);
@@ -187,7 +193,7 @@ export class LobbyComponent implements OnInit {
          this.inputElem.placeholder="Seconds";
          this.inputElem.value="50";
        }
-      }, 1500);
+      }, 2000);
   } else console.log("Please select an image first!");
 }
 
@@ -206,8 +212,9 @@ export class LobbyComponent implements OnInit {
       })
       setTimeout(() => {
         this.check = check;
-        if (this.check == false && this.uploaded) {
+        if (this.check == false && this.uploaded && this.running) {
           this.left = true;
+          this.exit();
           this.router.navigate(['/host']);
         }
       }, 2000);
