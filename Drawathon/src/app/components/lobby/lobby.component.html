@@ -1,5 +1,5 @@
-<app-pannel></app-pannel>
-<h1>{{title}}'s Lobby</h1>
+<app-pannel #panel></app-pannel>
+<h1>Lobby: {{title}}</h1>
 <div class="layout">
   <div class="teamLeft">
     <div *ngFor="let player1 of teams[0];  let i1 = index" class="teamPlayer">
