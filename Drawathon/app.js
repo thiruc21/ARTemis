@@ -451,7 +451,7 @@ app.patch('/api/games/:id/', [isAuthenticated, checkGameId], function (req, res,
         req.checkBody('time', 'Every game needs a time limit!').exists().notEmpty().isNumeric();
     
     if (action === "End") 
-        req.checkBody('teamNum', 'Every game needs a valid winning team!').exists().notEmpty().isNumeric().isIn[0,1]
+        req.checkBody('teamNum', 'Every game needs a valid winning team!').exists().notEmpty().isNumeric().isIn[0,1];
     
     var errors = req.validationErrors();
     if (errors) return res.status(400).send(errors[0].msg);
@@ -480,21 +480,57 @@ app.patch('/api/games/:id/', [isAuthenticated, checkGameId], function (req, res,
                 return res.json("Game started!");
             });
         } else {
-            dbo.collection("game_joined").find({_id: ObjectId(gameId)}).toArray(function(err, playerEntries) {
-                if (err) return res.status(500).end(" Server side error");
 
-                dbo.collection("game_joined").updateMany({_id: ObjectId(gameId), teamNum: winner}, 
-                {$set: {"winner": true}},               
-                function(err, wrRes) {
-                    if (err) return res.status(500).end(err);
-                    if (wrRes.modifiedCount = 0) return res.status(409).end("players for game " + gameId + " could not be modified"); 
+            dbo.collection("game_joined").updateMany({_id: ObjectId(gameId), teamNum: winner}, 
+            {$set: {"winner": true}},               
+            function(err, wrRes) {
+                if (err) return res.status(500).end(err);
+                if (wrRes.modifiedCount = 0) return res.status(409).end("players for game " + gameId + " could not be modified"); 
+                dbo.collection("game_joined").find({gameId: ObjectId(gameId)}).toArray(function(err, playerEntries) {
+                    if (err) return res.status(500).end(" Server side error");
+                    v
+                    ar winners = playerEntries.map( function(user) {
+                        if (user.winner) {
+                            return user._id;
+                    }});
 
-                    return res.json("winning players!");
+                    var losers = playerEntries.map( function(user) {
+                        if (!user.winner) {
+                            return user._id;
+                    }});
+
+                    updateWins(winners, function(err, res) {
+                        if (err) return res.status(500).end(err);
+                        updateLoss(losers, function(err, res) {
+
+                        });
+                        return res.json("winning players!");
+
+                    });
+
+                    
                 });
+                
             });
         }
     });
 });
+
+async function updateWins( winners, callback) {
+    await dbo.collection("users").updateMany({_id: {$in: winners}}, 
+        {"$inc":{ "wins": 1 }}, function(err,result) {
+            if (err) callback(err, null);
+    });
+    
+}
+
+async function updateLoss( losers, callback) {
+    await dbo.collection("users").updateMany({_id: {$in: losers}},  
+        {"$inc":{ "wins": -1 }}, function(err,result) {
+            if (err) callback(err, null);
+    });
+}
+
 
 // curl -k -b cookie.txt https://localhost:3000/api/games/5abd897b49790f305b870aab
 /* Gets game specific information */
@@ -700,6 +736,7 @@ function addToClarifai (imagePath, gameID) {
      
 }
 
+
 // Remove image from clarifai's image collection
 function removeFromClarifai (gameID, callback){
     appC.inputs.delete(gameID).then(
@@ -714,29 +751,47 @@ function removeFromClarifai (gameID, callback){
 
 // Compare another image with the image for the game stored in Clarifai
 // Takes in the base64 encoded string of users drawing and game ID of the image
-function compareImages(otherImage, gameID){
-    appC.inputs.search({ input: {base64: otherImage} }).then(
-        function(response) {
-            var score = 0;
-            //console.log(response);
-            console.log("Calculated image similarity score");
-            // Find the similarity for the image ID of this game, then return the score
-            for (var index = 0; index < response.hits.length; index++) {
-                // Get the image with the current game's ID
-                if (response.hits[index].input.id == gameID) {
-                    score = response.hits[index].score;
-                    //console.log(response.hits[index]);
-                    console.log("Similarity score is " + score)
-                    return score;
-                } 
+app.post('/api/games/:id/canvas/', [isAuthenticated, checkGameId], function (req, res, next) {
+    // Get curr username
+    var host = req.session.username;
+    var provider = req.session.authProvider;
+    var gameId = req.params.id;
+    req.checkBody('img', 'Valid canvas base64 encoded string required!').exists().notEmpty()
+    var canvasImg = req.body.img;
+    // Check if host
+    findGames(res, gameId, function(err, game) {
+        if (err) return res.status(500).end(" Server side error");
+        if (!game) return res.status(409).end("game with id " + gameId + " not found"); 
+        console.log("Host is " + host);
+        console.log("Host should be " + game.host);
+        console.log("Provider is " + provider);
+        console.log("Authprovider should be " + game.authProvider);
+        if (game.host !== host || game.authProvider !== provider) 
+            return res.status(409).end("User " + host + " is not the host of this game");
+        // Get canvas similarity score
+        appC.inputs.search({ input: {base64: canvasImg} }).then(
+            function(response) {
+                var score = 0;
+                console.log(response);
+                console.log("Calculated image similarity score");
+                // Find the similarity for the image ID of this game, then return the score
+                for (var index = 0; index < response.hits.length; index++) {
+                    // Get the image with the current game's ID
+                    if (response.hits[index].input.id == gameId) {
+                        score = response.hits[index].score;
+                        //console.log(response.hits[index]);
+                        console.log("Similarity score is " + score)
+                        return res.json(score);
+                    } 
+                }
+                return res.json(score);
+            },
+            function(err) {
+                console.log(err);
             }
-            return score;
-        },
-        function(err) {
-            console.log(err);
-        }
-    );
-}
+        );
+    })
+});
 
 // curl -k -b cookie.txt -X POST 'https://localhost:3000/api/games/5abd3cf22b3db66bcc0e2ef9/image/' -H 'content-type: multipart/form-data' -F 'file=@/home/shadman/ARTemis/Drawathon/uploads/user.png'
 // 'file=@/home/shadman/ARTemis/Drawathon/uploads/user.png'
@@ -832,11 +887,11 @@ async function mongoSetup() {
         else {
             db = mongodb;
             dbo = db.db(configFile.mongo.dbname);            
-            /*
-            dbo.collection("games").drop();
+            
+            /* dbo.collection("games").drop();
             dbo.collection("images").drop();            
             dbo.collection("users").drop();            
-            dbo.collection("game_joined").drop(); //  */
+            dbo.collection("game_joined").drop();  */
         }        
     });
 }

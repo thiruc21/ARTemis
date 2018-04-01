@@ -125,7 +125,10 @@ export class ApiModule implements OnInit {
   public uploadImage = function(gameId, image, callback) { // Host uploading image
     this.sendFiles("POST", "/api/games/" + gameId + "/image/", {file: image}, callback);
   }
-
+  
+  public findSimilarity = function(gameId, imgData, callback) {
+    this.send("POST", "/api/games/" + gameId + "/canvas/", {img: imgData}, callback);
+  }
 
   public getImage = function(gameId, callback) { // All players downloading image to draw.
     this.send("GET", "/api/games/" + gameId + "/image/", null, callback);
