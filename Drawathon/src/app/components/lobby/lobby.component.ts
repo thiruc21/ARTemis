@@ -67,7 +67,8 @@ export class LobbyComponent implements OnInit {
   }
   
   timeOut() { // Short-Poll Function: it check if new players are in and if game has declared as started from host. Redirects to main on disconnect.
-    if (!this.panel.running) this.running = false; // Flag from panel to tell if user signed out in lobby.
+    console.log(this.panel.running);
+    if (this.panel.running != null && (!this.panel.running)) this.running = false; // Flag from panel to tell if user signed out in lobby.
     if (!this.running) return; // Exit on not running. 
     
     var error: boolean = false; // Local Error flag. On connection error, disconnect and redirect to main.
@@ -82,7 +83,7 @@ export class LobbyComponent implements OnInit {
       else players = res; // Set players = to result.
     });
 
-    if (this.user != this.host) { // If not host, check if game has started.
+    if (this.user != this.host && this.running) { // If not host, check if game has started.
       this.api.getGame(this.gameId, function(err, res) {
         if (err) { // Connection lost.
           console.log("Connection with game lost.\n" + err)
@@ -108,7 +109,7 @@ export class LobbyComponent implements OnInit {
           this.teams[this.players[i].teamNum].push(this.players[i].user); // Distribution of team members.
           if (this.user == this.players[i].user) kicked = false; // Check if player needs to be kicked.
         }
-        if (kicked) { this.api.killLobby(); this.exit('/'); return; } // If player was kicked exit this.
+        if (kicked && this.running) { this.api.killLobby(); this.exit('/'); return; } // If player was kicked exit this.
       }
 
       if (this.running) this.timeOut(); // Only continue if check is true.
