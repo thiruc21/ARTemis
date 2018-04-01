@@ -178,9 +178,8 @@ export class GameComponent implements OnInit {
         this.router.navigate(['/']); 
       } else {
         this.timeText ="Time Left:";
-        var curr = new Date();
-        this.timeVal = Math.floor((game.endTime - curr.getTime()) / 1000);
-        console.log(curr.getTime(), game.endTime, this.timeVal);
+        var curr = new Date().getTime();
+        this.timeVal = Math.floor((game.endTime - curr) / 1000);
         if (this.timeVal <= 0){
           this.timeText ="Game Over!";
           this.timeVal = null;
