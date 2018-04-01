@@ -433,7 +433,7 @@ app.post('/api/games/:id/joined/', [isAuthenticated, checkGameId], function (req
                         if (err) return res.status(500).end(err);
     
                     dbo.collection("game_joined").insertOne(
-                        {user:userJoined, authProvider:provider, gameId:ObjectId(gameId), winner:false, teamNum:teamNum},
+                        {userId: userJoinedId, user:userJoined, authProvider:provider, gameId:ObjectId(gameId), winner:false, teamNum:teamNum},
                         function (err, userEntry) {
                             if (err) return res.status(500).end(err);
                             return res.json(userEntry.ops[0]);
@@ -495,8 +495,6 @@ app.patch('/api/games/:id/', [isAuthenticated, checkGameId], function (req, res,
                 function(err, wrRes) {
                     if (err) return res.status(500).end(err);
                     if (wrRes.modifiedCount = 0) return res.status(409).end("players for game " + gameId + " could not be modified"); 
-
-
 
                     return res.json("winning players!");
                 });
@@ -569,12 +567,12 @@ app.patch('/api/games/:id/joined/', [isAuthenticated, checkGameId], function (re
         if (err) return res.status(500).end(" Server side error");
         if (!game) return res.status(409).end("game with id " + gameId + " not found"); 
 
-        dbo.collection("game_joined").findOne({gameId:ObjectId(gameId), user:joinedUser, authProvider:provider},  function(err, gameJoined) {
+        dbo.collection("game_joined").findOne({gameId:ObjectId(gameId), userId:joinedUserId, user:joinedUser, authProvider:provider},  function(err, gameJoined) {
             if (err) return res.status(500).end(" Server side error");
             if (!gameJoined) return res.status(409).end("User " + joinedUser + " not found"); 
 
             dbo.collection("game_joined").updateOne(
-                {gameId: ObjectId(gameId), user:joinedUser, authProvider:provider},
+                {gameId: ObjectId(gameId), userId: joinedUserId, user:joinedUser, authProvider:provider},
                 {$set: {"chatId": chatId,"canvasId": canvasId}}, {"new": true}, function(err, wrRes){
                     if (err) return res.status(500).end(err);
                     return res.json("Peer ids posted");
@@ -600,7 +598,7 @@ app.delete('/api/games/:id/', [isAuthenticated, checkGameId], function (req, res
         if (game.host !== host || game.authProvider !== provider) 
             return res.status(409).end("User " + host + " is not the host of this game");
         
-        dbo.collection("games").deleteOne({_id: ObjectId(gameId), host:host, authProvider:provider}, function(err, wrRes) {
+        dbo.collection("games").deleteOne({_id: ObjectId(gameId), userId:hostId, host:host, authProvider:provider}, function(err, wrRes) {
             if (err) return res.status(500).end(err);
             if (wrRes.deletedCount === 0) return res.status(409).end("game " + gameId + " was not deleted");
 
@@ -627,7 +625,7 @@ app.delete('/api/games/:id/joined/', [isAuthenticated, checkGameId], function (r
     var userLeave = req.session.username;
     var provider = req.session.authProv;
     var gameId = req.params.id;
-    dbo.collection("game_joined").deleteOne({gameId: ObjectId(gameId), user: userLeave, authProvider:provider}, function(err, wrRes) {
+    dbo.collection("game_joined").deleteOne({gameId: ObjectId(gameId), userId:userId, user: userLeave, authProvider:provider}, function(err, wrRes) {
         if (err) return res.status(500).end(err);
         if (wrRes.deletedCount == 0) return res.status(409).end("User " + userLeave + " is not in the game!");
 
@@ -658,7 +656,7 @@ app.delete('/api/games/:id/joined/:username', [isAuthenticated, checkGameId], fu
         if (game.host !== host || game.authProvider !== provider) 
             return res.status(409).end("User " + host + " is not the host of this game");
 
-        dbo.collection("game_joined").deleteOne({gameId: ObjectId(gameId), user: playerKick, authProvider:provider}, function(err, wrRes) {
+        dbo.collection("game_joined").deleteOne({gameId: ObjectId(gameId),  userId:hostId,  userId: playerKick, authProvider:provider}, function(err, wrRes) {
             if (err) return res.status(500).end(err);
             if (wrRes.deletedCount == 0) return res.status(409).end("User " + playerKick + " is not in the game!");
 
