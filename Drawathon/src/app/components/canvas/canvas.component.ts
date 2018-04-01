@@ -167,8 +167,7 @@ export class CanvasComponent implements OnInit {
 
   keepAlive(){
     // Keep the peer alive as long as on page
-    setTimeout(() => {
-       // Connect to other peer and send message
+    setTimeout(() => { // Keep the peer alive as long as on page
        var conn = this.peer.socket.send({
         type: 'ping'});
        if (this.running) this.keepAlive();
