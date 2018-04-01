@@ -18,8 +18,12 @@ export class SigninComponent implements OnInit {
 
   ngOnInit() {
     this.apiModule = new ApiModule();
+    if (this.apiModule.getCurrentUser() != "") {
+        this.router.navigate(['/main']);
+    }
   }
   SignIn(e) {
+    
     this.username = this.user.nativeElement.value;
     this.password = this.pass.nativeElement.value;
     var apiModule = this.apiModule;
@@ -34,7 +38,7 @@ export class SigninComponent implements OnInit {
       if (err) respond(me, err);
       else {
         console.log(res);
-        rtr.navigate(['/']);
+        rtr.navigate(['/main']);
       }
     });
   }

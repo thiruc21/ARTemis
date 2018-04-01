@@ -42,8 +42,8 @@ export class PannelComponent implements OnInit {
       if (err) console.log(err);
       else {
         user = module.getCurrentUser();
-        
         rtr.navigate(['/']);
+        window.location.reload()
       }
     });
   }

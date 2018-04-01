@@ -97,7 +97,7 @@ export class LobbyComponent implements OnInit {
           console.log("was kicked in the shin");
           this.left = true;
           this.check = false;
-          this.router.navigate(['/']);
+          this.router.navigate(['/main']);
         }
       }
       if (this.check) this.timeOut(); // Only continue if check is true.
@@ -176,7 +176,7 @@ export class LobbyComponent implements OnInit {
       this.uploadImg();
     } else {
     var check:boolean = this.check;
-    this.api.startGame(this.gameId, function(err, res){
+    this.api.startGame(this.gameId, 50, function(err, res){
         if (err) console.log(err)
         else {
           check = false;

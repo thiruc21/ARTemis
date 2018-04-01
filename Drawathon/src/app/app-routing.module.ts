@@ -11,11 +11,11 @@ import { HostComponent } from './components/host/host.component';
 import { CreditComponent } from './components/credit/credit.component';
 
 const routes: Routes = [
-  { path: '', component:MainComponent, pathMatch: 'full' } ,
+  { path: '', component:SigninComponent, pathMatch: 'full' } ,
+  { path: 'main', component:MainComponent } ,
   { path: 'lobby', component:LobbyComponent } ,
   { path: 'game', component:GameComponent } ,
   { path: 'test', component:ChatComponent } ,
-  { path: 'signin', component:SigninComponent } ,
   { path: 'host', component:HostComponent } ,
   { path: 'signup', component:SignupComponent } ,
   { path: 'credits', component:CreditComponent }

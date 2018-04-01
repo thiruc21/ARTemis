@@ -32,7 +32,6 @@ export class MainComponent implements OnInit {
     this.user = this.api.getCurrentUser();
 
     if (this.user == "" || this.user == null) { // No users.
-      this.router.navigate(['/signin'])
       this.createD = "none";
       this.check = false; // No need to check.
     }
@@ -42,6 +41,7 @@ export class MainComponent implements OnInit {
       this.update();
     }
   }
+  
   // Make a new game.
   createGame() { // Temp references.
     var label = this.label.nativeElement.value;
@@ -53,7 +53,7 @@ export class MainComponent implements OnInit {
       else {
         api.pushLobby(res); // Store lobby that user enters into local Storage.
         console.log("successfully created");
-        check = false;
+        check = false; 
       }
     });
     setTimeout(() => {
