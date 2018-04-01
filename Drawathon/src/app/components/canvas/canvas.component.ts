@@ -12,21 +12,21 @@ export class CanvasComponent implements OnInit {
   // Canvas draw elements.
   color:string;
   cColor:string;
-  pts:any;
-  bound:any;
+  private pts:any;
+  private bound:any;
   pressed:boolean;
   size:number;
   customSS:string;
   // Canvas Drawing.
-  myEdit:any[];
-  peerEdit:any[];
+  private myEdit:any[];
+  private peerEdit:any[];
 
 
   // Variables to be accessed by parent. game.component.
   public bg:string = "white";
   public myPeerId:string;
   public myPeers:string[];
-  peer:any;
+  private peer:any;
   public recieved:boolean;
   public singlePlayer:boolean;
   public running:boolean;
@@ -38,23 +38,34 @@ export class CanvasComponent implements OnInit {
 
   private canvasElem: HTMLCanvasElement;
   private ctx: CanvasRenderingContext2D; // Rendering context.
+  private customSizeElem: HTMLInputElement;
 
   ngOnInit() {
-    this.myEdit = []
-    this.peerEdit = [] // set edit to none.
-    this.color  = "black";
-    this.cColor = "black";
-    this.customSize.nativeElement.value = 20
-    this.customSS = this.customSize.nativeElement.value.toString() + 'px'
-    this.pts = {x: 0, y:0, px:0, py:0}
-    this.pressed = false;
-    this.myPeerId = "null";
+    // Declare Variables:
+    this.customSizeElem = this.customSize.nativeElement;
+  
+    this.myPeerId = null; // Peering Variables
     this.myPeers = [null, null];
-    this.recieved = false;
-    this.singlePlayer = true;
+    this.myEdit = []; 
+    this.peerEdit = [];        
+    
+    this.color  = "black"; // Colors
+    this.cColor = "black";
+
+    this.customSizeElem.value = '20'; // Size
+    this.customSS = '20px';
+
+    this.pts = {x: 0, y:0, px:0, py:0} // Mouse coordinates.
+
+    // Set Flags.
+    this.running = true; // Running flag.
+    this.pressed = false; // Mouse down flag.
+    this.recieved = false; // Recieved flag. To recieve from parent.
+    this.singlePlayer = true; // Single player flag, to recieve from parent. Default true.
+
     this.canvasElem = this.canvas.nativeElement;
     this.ctx = this.canvasElem.getContext('2d');
-    this.running = true;
+    
 
     // Connect to peer.
     this.peer = new Peer({host : "lightpeerjs.herokuapp.com",
@@ -110,7 +121,6 @@ export class CanvasComponent implements OnInit {
     this.pts.y = event.clientY - this.bound.top;
 
     if (this.bg == "white" && this.pressed && event.clientX < this.bound.right && event.clientX > this.bound.left && event.clientY < this.bound.bottom && event.clientY > this.bound.top) {
-        //draw(api.pushStroke(pts.x, pts.y, pts.px, pts.py, color));
         this.draw();
     }
   }

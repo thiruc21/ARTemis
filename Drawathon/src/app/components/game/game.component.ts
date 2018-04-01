@@ -100,10 +100,10 @@ export class GameComponent implements OnInit {
 
     if (!this.sent) { // Has not sent yet, try sending.
       console.log("Waiting on send")
-      if (this.canvas.myPeerId != "null" && this.chat.myPeerId != null) { // Child components have not generated values.
+      if (this.canvas.myPeerId != null && this.chat.myPeerId != null) { // Child components have not generated values.
         this.api.updateUserInfo(this.gameId, this.canvas.myPeerId, this.chat.myPeerId, function (err, res) { // Try Sending data.
           if (err) { // Error, cannot send.
-            console.log("Connection with game lost.\n" + err)
+            console.log("Could not sent peerIds.\n" + err)
             error = true;
           }
           else sent = true;
