@@ -1,6 +1,7 @@
 import { Component, OnInit, AfterViewInit, ViewChild, ElementRef } from '@angular/core';
 import { ApiModule } from '../../api/api.module';
 import { Router } from '@angular/router';
+import { PannelComponent } from '../pannel/pannel.component';
 
 @Component({
   selector: 'app-lobby',
@@ -10,6 +11,7 @@ import { Router } from '@angular/router';
 export class LobbyComponent implements OnInit {
   public start: boolean = false;
   @ViewChild('input') private input: ElementRef;
+  @ViewChild('panel') private panel: PannelComponent;
   inputElem: HTMLInputElement;
   // Variables to hold all related info of the game.
   title: string;
@@ -65,6 +67,7 @@ export class LobbyComponent implements OnInit {
   }
   
   timeOut() { // Short-Poll Function: it check if new players are in and if game has declared as started from host. Redirects to main on disconnect.
+    if (!this.panel.running) this.running = false; // Flag from panel to tell if user signed out in lobby.
     if (!this.running) return; // Exit on not running. 
     
     var error: boolean = false; // Local Error flag. On connection error, disconnect and redirect to main.

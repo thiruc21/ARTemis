@@ -392,6 +392,7 @@ app.get('/api/games/', isAuthenticated, function (req, res, next) {
 });
 
 // curl -k -b cookie.txt -H "Content-Type: application/json" -X POST  https://localhost:3000/api/games/5aad97f9f4e28b075083ef9c/joined/
+/* Join a game  */
 app.post('/api/games/:id/joined/', [isAuthenticated, checkGameId], function (req, res, next) {
     
     var errors = req.validationErrors();
@@ -445,22 +446,23 @@ app.post('/api/games/:id/joined/', [isAuthenticated, checkGameId], function (req
 
 // curl -k -b cookie.txt -H "Content-Type: application/json" -X PATCH -d '{"action": "Start", "time": 120}' https://localhost:3000/api/games/5abffc298dd2d4558f58e312/
 // curl -k -b cookie.txt -H "Content-Type: application/json" -X PATCH -d '{"action": "End", "teamNum": 0}' https://localhost:3000/api/games/5abffc298dd2d4558f58e312/
-/* Starts a game given a time limit, Ends a game given a winner*/
+/* Starts a game given a time limit, Ends a game given a winner  */
 app.patch('/api/games/:id/', [isAuthenticated, checkGameId], function (req, res, next) {
-    req.checkBody('action', 'Valid Action required for patch!').exists().notEmpty().isIn(['Start', 'End'])
-    
-    if (req.body.action === "Start")
+    req.checkBody('action', 'Valid Action required!').exists().notEmpty().isIn(['Start', 'End'])
+    var errors = req.validationErrors();
+    if (errors) return res.status(400).send(errors[0].msg);
+    var action = req.body.action;
+
+    if (action === "Start")
         req.checkBody('time', 'Every game needs a time limit!').exists().notEmpty().isNumeric();
     
-    if (req.body.action === "End") 
+    if (action === "End") 
         req.checkBody('teamNum', 'Every game needs a valid winning team!').exists().notEmpty().isNumeric().isIn[0,1]
     
     var errors = req.validationErrors();
     if (errors) return res.status(400).send(errors[0].msg);
-
-    var action = req.body.action;
+    
     var time = req.body.time;
-
     var winner = req.body.teamNum;
     var endTime = new Date().getTime() + time;
     
@@ -485,14 +487,17 @@ app.patch('/api/games/:id/', [isAuthenticated, checkGameId], function (req, res,
                 return res.json("Game started!");
             });
         } else {
-            dbo.collection("game_joined").find({_id: ObjectId(gameId)}).toArray(function(err, playerEntry) {
+            dbo.collection("game_joined").find({_id: ObjectId(gameId)}).toArray(function(err, playerEntries) {
                 if (err) return res.status(500).end(" Server side error");
-                dbo.collection("game_joined").updateMany({_id: ObjectId(gameId), teamNum: teamNum}, 
-                {$set: {"winner": true}},   { arrayFilters: [{ 'teamNum':  winner }] },  
-               
+
+                dbo.collection("game_joined").updateMany({_id: ObjectId(gameId), teamNum: winner}, 
+                {$set: {"winner": true}},               
                 function(err, wrRes) {
                     if (err) return res.status(500).end(err);
                     if (wrRes.modifiedCount = 0) return res.status(409).end("players for game " + gameId + " could not be modified"); 
+
+
+
                     return res.json("winning players!");
                 });
             });
@@ -500,6 +505,7 @@ app.patch('/api/games/:id/', [isAuthenticated, checkGameId], function (req, res,
     });
 });
 
+// curl -k -b cookie.txt https://localhost:3000/api/games/5abd897b49790f305b870aab
 /* Gets game specific information */
 app.get('/api/games/:id/', [isAuthenticated, checkGameId], function (req, res, next) {
     var errors = req.validationErrors();

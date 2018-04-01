@@ -11,6 +11,7 @@ import { Router } from '@angular/router';
 
 export class PannelComponent implements OnInit {
   user:string;
+  public running:boolean;
   private apiModule:ApiModule;
   @ViewChild('signin') private linkin:ElementRef;
   @ViewChild('signout') private linkout:ElementRef;
@@ -19,6 +20,7 @@ export class PannelComponent implements OnInit {
   ngOnInit() {
     var ain:HTMLLinkElement = this.linkin.nativeElement;
     var aout:HTMLLinkElement = this.linkout.nativeElement;
+    this.running = true;
     this.apiModule = new ApiModule();
     this.user = this.apiModule.getCurrentUser();
     if (this.user == "" || this.user == null) {
@@ -53,19 +55,18 @@ export class PannelComponent implements OnInit {
           api.killLobby();
         }); 
       }
+      this.running = false;
     }
     setTimeout(() => {
-      if (check){
-        var rtr = this.router;
-        this.apiModule.signout(function(err, res){
-          if (err) console.log(err);
-          else {
-            user = api.getCurrentUser();
-            rtr.navigate(['/']);
-            window.location.reload()
-          }
+      var rtr = this.router;
+      this.apiModule.signout(function(err, res){
+        if (err) console.log(err);
+        else {
+          user = api.getCurrentUser();
+          rtr.navigate(['/']);
+          window.location.reload()
+        }
         });
-      } else console.log("Could not sign out.")
     }, 1000);
     
   }
