@@ -488,14 +488,17 @@ app.patch('/api/games/:id/', [isAuthenticated, checkGameId], function (req, res,
                 if (wrRes.modifiedCount = 0) return res.status(409).end("players for game " + gameId + " could not be modified"); 
                 dbo.collection("game_joined").find({gameId: ObjectId(gameId)}).toArray(function(err, playerEntries) {
                     if (err) return res.status(500).end(" Server side error");
-                    var winners = playerEntries.map( function(user) {
+                    v
+                    ar winners = playerEntries.map( function(user) {
                         if (user.winner) {
                             return user._id;
                     }});
+
                     var losers = playerEntries.map( function(user) {
                         if (!user.winner) {
                             return user._id;
                     }});
+
                     updateWins(winners, function(err, res) {
                         if (err) return res.status(500).end(err);
                         updateLoss(losers, function(err, res) {
