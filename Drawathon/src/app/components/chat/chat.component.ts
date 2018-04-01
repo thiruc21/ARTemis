@@ -94,6 +94,7 @@ export class ChatComponent implements OnInit {
     // Keep the peer alive as long as on page
     setTimeout(() => {
        // Connect to other peer and send message
+       console.log("KEEP alive 4 lyfe")
        var conn = this.peer.connect(this.peerId.nativeElement.value);
        this.keepAlive();
     }, 25000);

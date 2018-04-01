@@ -183,6 +183,7 @@ export class GameComponent implements OnInit {
         if (this.timeVal <= 0){
           this.timeText ="Game Over!";
           this.timeVal = null;
+          this.canvas.running = false;
           this.router.navigate(['/result']);
         } 
         else {

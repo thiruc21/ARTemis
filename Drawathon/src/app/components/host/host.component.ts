@@ -85,7 +85,8 @@ export class HostComponent implements OnInit {
     this.canvasElem[1] = this.canvas2.nativeElement;
     this.ctx[0] = this.canvasElem[0].getContext('2d');
     this.ctx[1] = this.canvasElem[1].getContext('2d');
-
+    this.ctx[0].lineJoin = "round";
+    this.ctx[1].lineJoin = "round";
     var peerDraw:any[] = this.strokes;
     // Listeners
     this.peer[0].on('connection', function(connection) {

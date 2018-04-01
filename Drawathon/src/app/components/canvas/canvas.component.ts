@@ -29,6 +29,7 @@ export class CanvasComponent implements OnInit {
   peer:any;
   public recieved:boolean;
   public singlePlayer:boolean;
+  public running:boolean;
 
   @ViewChild('canvas') public canvas: ElementRef;
   @ViewChild('peer') public peerId:ElementRef;
@@ -156,7 +157,7 @@ export class CanvasComponent implements OnInit {
   timeOut(){
     setTimeout(() => {
       console.log("canvas recieved?: " + this.recieved);
-     if (this.recieved) this.update();
+     if (this.recieved && this.running) this.update();
      else {
 
      }
