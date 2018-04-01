@@ -25,9 +25,11 @@
     align-self: flex-end;
 }
 .username {
+    max-width: 180px;
     margin: 10px 10px 10px 10px;
 }
 .password {
+    max-width: 180px;
     margin: 10px 10px 10px 10px;
 }
 .alert {
