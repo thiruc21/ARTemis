@@ -1,4 +1,6 @@
 import { Component, OnInit, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
+import { ColorPickerModule } from 'ngx-color-picker';
+
 @Component({
   selector: 'app-canvas',
   templateUrl: './canvas.component.html',
@@ -40,7 +42,7 @@ export class CanvasComponent implements OnInit {
     this.myEdit = []
     this.peerEdit = [] // set edit to none.
     this.color  = "black";
-    this.cColor = "sadas";
+    this.cColor = "black";
     this.customSize.nativeElement.value = 20
     this.customSS = this.customSize.nativeElement.value.toString() + 'px'
     this.pts = {x: 0, y:0, px:0, py:0}
@@ -124,6 +126,8 @@ export class CanvasComponent implements OnInit {
 
   draw() {
     var size = this.size;
+    var color = this.color;
+    if (this.color == 'custom') color = this.cColor;
     if (this.customSize.nativeElement.value < 5) this.customSize.nativeElement.value = 5
     if (this.customSize.nativeElement.value > 60) this.customSize.nativeElement.value = 60
     if (this.size < 0) size = this.customSize.nativeElement.value;
@@ -131,7 +135,7 @@ export class CanvasComponent implements OnInit {
     this.ctx.moveTo(this.pts.px, this.pts.py);
     this.ctx.lineTo(this.pts.x, this.pts.y);
     this.ctx.lineWidth = size;
-    this.ctx.strokeStyle = this.color;
+    this.ctx.strokeStyle = color;
     this.ctx.closePath();
     this.ctx.stroke();
 
@@ -140,7 +144,7 @@ export class CanvasComponent implements OnInit {
   
   }
 
-  clickColor(color){
+  clickColor(color) {
     this.color = color;
     console.log(color);
   }

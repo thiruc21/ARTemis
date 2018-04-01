@@ -9,7 +9,8 @@ import { Router } from '@angular/router';
 })
 export class LobbyComponent implements OnInit {
   public start:boolean = false;
-  @ViewChild('picture') private picture:ElementRef;
+  @ViewChild('input') private input:ElementRef;
+  inputElem:HTMLInputElement;
   // Variables to hold all related info of the game.
   title:string;
   gameId:string;
@@ -34,6 +35,7 @@ export class LobbyComponent implements OnInit {
 
   ngOnInit() {
     // Set defaults.
+    this.inputElem = this.input.nativeElement;
     this.file = null;
     this.left = false;
     this.api = new ApiModule();
@@ -145,9 +147,8 @@ export class LobbyComponent implements OnInit {
 
 
   uploadImg() {
-    var input:HTMLInputElement = this.picture.nativeElement;
     var uploaded:boolean = false;
-    this.file = input.files[0];
+    this.file = this.inputElem.files[0];
     console.log(this.file);
     if (this.file) {
       var check:boolean = this.check;
@@ -164,8 +165,9 @@ export class LobbyComponent implements OnInit {
        this.uploaded = uploaded;
        if (this.uploaded) {
          this.startText = "Start";
-         var image:HTMLInputElement = this.picture.nativeElement;
-         image.style.display = "none";
+         this.inputElem.type="number";
+         this.inputElem.placeholder="Seconds";
+         this.inputElem.value="50";
        }
       }, 1500);
   } else console.log("Please select an image first!");
@@ -176,7 +178,9 @@ export class LobbyComponent implements OnInit {
       this.uploadImg();
     } else {
     var check:boolean = this.check;
-    this.api.startGame(this.gameId, 50, function(err, res){
+    var time = 60;
+    if (this.inputElem.value) time = parseInt(this.inputElem.value);
+    this.api.startGame(this.gameId, time,function(err, res){
         if (err) console.log(err)
         else {
           check = false;
