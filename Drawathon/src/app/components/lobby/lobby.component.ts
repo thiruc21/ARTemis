@@ -12,10 +12,10 @@ export class LobbyComponent implements OnInit {
   @ViewChild('input') private input: ElementRef;
   inputElem: HTMLInputElement;
   // Variables to hold all related info of the game.
-  private title: string;
+  title: string;
   private gameId: string;
-  private teams: string[][];
-  private host: string;
+  teams: string[][];
+  host: string;
   private user: string;
 
   private api: ApiModule;
@@ -30,8 +30,8 @@ export class LobbyComponent implements OnInit {
   private running: boolean;
 
   
-  private hostD: string;
-  private startText: string;
+  hostD: string;
+  startText: string;
   constructor(public router: Router) { }
 
   ngOnInit() {
