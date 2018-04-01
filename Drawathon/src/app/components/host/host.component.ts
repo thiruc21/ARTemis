@@ -1,6 +1,6 @@
 import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
 import { ApiModule } from '../../api/api.module';
-
+import { Router } from '@angular/router';
 @Component({
   selector: 'app-host',
   templateUrl: './host.component.html',
@@ -11,17 +11,24 @@ export class HostComponent implements OnInit {
   @ViewChild('canvas2') public canvas2: ElementRef;
   running:boolean;
   game:any;
-
   players: any[];
   team1: string[];
   team2: string[];
 
   private api:ApiModule;
+  constructor(public router: Router) { }
+  
+  // Values for game start timer.
+  timeText:string;
+  timeVal:number;
 
   // Canvas Draw Variables
   private canvasElem: HTMLCanvasElement[];
   private ctx: CanvasRenderingContext2D[];
   strokes: any[];
+
+   // Controls display of lobby and game.
+   gameStatus:string;
 
   // Peering
   public myPeerId: string[];
@@ -29,18 +36,23 @@ export class HostComponent implements OnInit {
 
   // Update loop
   private check:boolean;
-  constructor() { }
+
 
   ngOnInit() {
     this.running = true; // Flag for timeout loops. If we ever leave, we make sure this is set to false.
     this.api = new ApiModule();
     this.game = this.api.getLobby();
+    this.gameStatus = "not started";
     this.peer = [null, null];
     this.myPeerId = [null, null];
     this.canvasElem = [null, null];
     this.ctx = [null, null];
     this.strokes = [[], []];
     var players = this.players;
+    if (this.gameStatus == "not started"){
+      this.timeText = "Game Starts in:"
+      this.timeVal = 5;
+    }
     this.api.getPlayers(this.game._id, function(err, res){
       if (err) console.log(err);
       else players = res;
@@ -137,7 +149,43 @@ export class HostComponent implements OnInit {
     this.ctx[i].strokeStyle = color;
     this.ctx[i].closePath();
     this.ctx[i].stroke();
+  
   }
+
+
+  countDown(){
+    var error:boolean = false;
+    var game = null;
+    this.api.getGame(this.game._id, function(err, res){
+      if (err) { // Unexpected end of game, game Id doesnt exist. Means the game has been stoped serverside, reset.
+        console.log(err);
+        error = true;
+      }
+      else {
+        game = res;
+      }
+    });
+    setTimeout(() => {
+      if (error) { // Redirect back on error.
+        this.exit();
+        this.router.navigate(['/']); 
+      } else {
+        this.timeText ="Time Left:";
+        var curr = new Date().getTime();
+        this.timeVal = Math.floor((game.endTime - curr) / 1000);
+        if (this.timeVal <= 0){
+          this.exit();
+          this.router.navigate(['/result']);
+        } 
+        else {
+          this.timeVal = this.timeVal - 1;
+          console.log(this.timeVal)
+          this.countDown();
+        }
+      }
+    }, 1000);
+  }
+
   keepAlive(i){
     // Keep the peer alive as long as on page
     setTimeout(() => {
@@ -146,5 +194,10 @@ export class HostComponent implements OnInit {
 				    type: 'ping'});
        if (this.running) this.keepAlive(i);
     }, 25000);
+  }
+  exit() { // Standard exit code; Stops all timer flags.
+    this.timeText ="Game Over!";
+    this.timeVal = null;
+    this.running = false;
   }
 }
