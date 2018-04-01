@@ -27,7 +27,7 @@ export class HostComponent implements OnInit {
   private canvasElem: HTMLCanvasElement[];
   private ctx: CanvasRenderingContext2D[];
   private strokes: any[];
-  private results: string[][];
+  results: string[][];
   // Peering
   public myPeerId: string[];
   public peer: any[];

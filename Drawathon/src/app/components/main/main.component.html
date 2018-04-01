@@ -3,17 +3,15 @@
   <h1 class="title">Public Games Available</h1>
   <div class="gamesContainer">
     <div *ngFor="let game of games; let i = index">
-      <a (click)="clickGame(i)">
-        <div class="gameElement">
-          <img class="gameThumbnail" src="assets/sample.png" alt="Could not find image.">
-          <p class="gameTitle">{{game}}</p>
-        </div>
-      </a>
+      <div class="gameElement clickable" (click)="clickGame(i)">
+        <img class="gameThumbnail" src="assets/icon.png" alt="Could not find image.">
+        <p class="gameTitle">{{game}}</p>
+      </div>
     </div>
   </div>
   <div [ngStyle]="{ 'display': createD }" class="createGame">
     <p>Create Game</p>
     <input class="inTitle" #title placeholder="Title" required>
-    <button class="createButton" (click)="createGame()">Create</button>
+    <button class="createButton clickable" (click)="createGame()">Create</button>
   </div>
 </div>
