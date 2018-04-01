@@ -156,7 +156,7 @@ export class CanvasComponent implements OnInit {
 
   timeOut(){
     setTimeout(() => {
-      console.log("canvas recieved?: " + this.recieved);
+      //console.log("canvas recieved?: " + this.recieved);
      if (this.recieved && this.running) this.update();
      else {
 

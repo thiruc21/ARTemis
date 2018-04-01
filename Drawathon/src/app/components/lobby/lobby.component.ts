@@ -172,7 +172,7 @@ export class LobbyComponent implements OnInit {
          this.inputElem.placeholder="Seconds";
          this.inputElem.value="50";
        }
-      }, 1500);
+      }, 2000);
   } else console.log("Please select an image first!");
 }
 
