@@ -15,6 +15,7 @@ import { SignupComponent } from './components/signup/signup.component';
 import { PannelComponent } from './components/pannel/pannel.component';
 import { HostComponent } from './components/host/host.component';
 import { CreditComponent } from './components/credit/credit.component';
+import { ResultComponent } from './components/result/result.component';
 
 
 @NgModule({
@@ -29,7 +30,8 @@ import { CreditComponent } from './components/credit/credit.component';
     SignupComponent,
     PannelComponent,
     HostComponent,
-    CreditComponent
+    CreditComponent,
+    ResultComponent
   ],
   imports: [
     BrowserModule,

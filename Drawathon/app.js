@@ -760,10 +760,22 @@ app.get('/api/games/:id/image/', [isAuthenticated, checkGameId], function (req, 
         res.sendFile(profile.path);        
     });
 });
+// Redirects for our SPA program.
 app.get('/signup', function (req, res, next){
     res.redirect('/');
 });
-
+app.get('/lobby', function (req, res, next){
+    res.redirect('/');
+});
+app.get('/game', function (req, res, next){
+    res.redirect('/');
+});
+app.get('/host', function (req, res, next){
+    res.redirect('/');
+});
+app.get('/credit', function (req, res, next){
+    res.redirect('/');
+});
 function team(userEnt, userJoined, provider, callback) {
     var team0 = 0;
     var team1 = 0;

@@ -9,6 +9,7 @@ import { SigninComponent } from './components/signin/signin.component';
 import { CanvasComponent } from './components/canvas/canvas.component';
 import { HostComponent } from './components/host/host.component';
 import { CreditComponent } from './components/credit/credit.component';
+import { ResultComponent } from './components/result/result.component';
 
 const routes: Routes = [
   { path: '', component:SigninComponent, pathMatch: 'full' } ,
@@ -17,6 +18,7 @@ const routes: Routes = [
   { path: 'game', component:GameComponent } ,
   { path: 'test', component:ChatComponent } ,
   { path: 'host', component:HostComponent } ,
+  { path: 'result', component:ResultComponent } ,
   { path: 'signup', component:SignupComponent } ,
   { path: 'credits', component:CreditComponent }
 ];
