@@ -179,9 +179,8 @@ export class GameComponent implements OnInit {
       } else {
         this.timeText ="Time Left:";
         var curr = new Date();
-        var end = new Date(game.endTime);
-        this.timeVal = (end.getTime() - curr.getTime()) / 1000;
-        console.log(curr, end, this.timeVal);
+        this.timeVal = (game.endTime - curr.getTime()) / 1000;
+        console.log(curr,this.timeVal);
         if (this.timeVal == 0){
           this.timeText ="Game Over!";
           this.timeVal = null;
