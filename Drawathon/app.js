@@ -233,7 +233,6 @@ app.get('/users/oauth/twitch/', passport.authenticate('twitchToken'));
 app.get('/users/oauth/twitch/callback', 
   passport.authenticate('twitchToken', { failureRedirect: '/signin/'}),
   function(req, res) {
-    req.session.uid = ObjectId(req.user._id);
     req.session.username = req.user.username;
     req.session.authProv = 'twitch';
     res.setHeader('Set-Cookie', cookie.serialize('username', req.session.username, {
@@ -251,7 +250,6 @@ app.get('/users/oauth/facebook/callback',
   passport.authenticate('facebookToken', { failureRedirect: '/signin/'}),
   function(req, res) {
 
-    req.session.uid = ObjectId(req.user._id);
     req.session.username = req.user.username;
     req.session.authProv = 'facebook';
     res.setHeader('Set-Cookie', cookie.serialize('username', req.session.username, {
@@ -267,7 +265,6 @@ app.get('/users/oauth/facebook/callback',
 app.get('/users/oauth/google/callback', 
   passport.authenticate('googleToken', { failureRedirect: '/signin/'}),
   function(req, res) {
-    req.session.uid = ObjectId(req.user._id);
     req.session.username = req.user.username;
     req.session.authProv = 'google';
     res.setHeader('Set-Cookie', cookie.serialize('username', req.session.username, {
@@ -324,7 +321,6 @@ app.post('/signin/', [checkUsername, checkPassword], function (req, res, next) {
         if (!user) return res.status(401).end("Access denied, incorrect credentials\n");
         if (user.hash !== generateHash(password, user.salt)) return res.status(401).end("Access denied, incorrect credentials\n"); 
         
-        req.session.uid = ObjectId(user._id);
         req.session.username = username;
         req.session.authProv = 'artemis';
         // initialize cookie
@@ -363,7 +359,6 @@ app.post('/api/games/', isAuthenticated, function (req, res, next) {
     if (errors) return res.status(400).send(errors[0].msg);
 
     var title = req.body.title;
-    var hostId = req.session.uid;
     var host = req.session.username;
     var provider = req.session.authProv;    
 
@@ -373,7 +368,7 @@ app.post('/api/games/', isAuthenticated, function (req, res, next) {
         if (game) return res.status(409).end("User " + host + " already has a hosted game");
         
         dbo.collection('games').insertOne(
-            {title:title, userId:hostId, host: host, authProvider:provider,
+            {title:title,  host: host, authProvider:provider,
             inLobby: true, numPlayers:0, maxPlayers:MAXPLAYERS},
             function (err, game) {
                 if (err) return res.status(500).end(err);
@@ -398,7 +393,6 @@ app.post('/api/games/:id/joined/', [isAuthenticated, checkGameId], function (req
     var errors = req.validationErrors();
     if (errors) return res.status(400).send(errors[0].msg);
 
-    var userJoinedId = req.session.uid;
     var userJoined = req.session.username;
     var provider = req.session.authProv;
     var gameId = req.params.id;
@@ -433,7 +427,7 @@ app.post('/api/games/:id/joined/', [isAuthenticated, checkGameId], function (req
                         if (err) return res.status(500).end(err);
     
                     dbo.collection("game_joined").insertOne(
-                        {userId: userJoinedId, user:userJoined, authProvider:provider, gameId:ObjectId(gameId), winner:false, teamNum:teamNum},
+                        {user:userJoined, authProvider:provider, gameId:ObjectId(gameId), winner:false, teamNum:teamNum},
                         function (err, userEntry) {
                             if (err) return res.status(500).end(err);
                             return res.json(userEntry.ops[0]);
@@ -466,7 +460,6 @@ app.patch('/api/games/:id/', [isAuthenticated, checkGameId], function (req, res,
     var winner = req.body.teamNum;
     var endTime = new Date().getTime() + time;
     
-    var hostId = req.session.uid;
     var host = req.session.username;
     var provider = req.session.authProv;
     var gameId = req.params.id;
@@ -527,7 +520,6 @@ app.patch('/api/games/:id/host/', [isAuthenticated, checkGameId], function (req,
     if (errors) return res.status(400).send(errors[0].msg);
 
     var gameId = req.params.id;
-    var posterId = req.session.uid;
     var poster = req.session.username;
     var provider = req.session.authProv;
     var team1Id = req.body.team1Id;
@@ -557,7 +549,7 @@ app.patch('/api/games/:id/joined/', [isAuthenticated, checkGameId], function (re
     if (errors) return res.status(400).send(errors[0].msg);
 
     var gameId = req.params.id;
-    var joinedUserId = req.session.uid;
+
     var joinedUser = req.session.username;
     var provider = req.session.authProv;    
     var chatId = req.body.chatId;
@@ -567,12 +559,12 @@ app.patch('/api/games/:id/joined/', [isAuthenticated, checkGameId], function (re
         if (err) return res.status(500).end(" Server side error");
         if (!game) return res.status(409).end("game with id " + gameId + " not found"); 
 
-        dbo.collection("game_joined").findOne({gameId:ObjectId(gameId), userId:joinedUserId, user:joinedUser, authProvider:provider},  function(err, gameJoined) {
+        dbo.collection("game_joined").findOne({gameId:ObjectId(gameId), user:joinedUser, authProvider:provider},  function(err, gameJoined) {
             if (err) return res.status(500).end(" Server side error");
             if (!gameJoined) return res.status(409).end("User " + joinedUser + " not found"); 
 
             dbo.collection("game_joined").updateOne(
-                {gameId: ObjectId(gameId), userId: joinedUserId, user:joinedUser, authProvider:provider},
+                {gameId: ObjectId(gameId),  user:joinedUser, authProvider:provider},
                 {$set: {"chatId": chatId,"canvasId": canvasId}}, {"new": true}, function(err, wrRes){
                     if (err) return res.status(500).end(err);
                     return res.json("Peer ids posted");
@@ -587,7 +579,6 @@ app.delete('/api/games/:id/', [isAuthenticated, checkGameId], function (req, res
     var errors = req.validationErrors();
     if (errors) return res.status(400).send(errors[0].msg);
 
-    var hostId = req.session.uid;
     var host = req.session.username;
     var provider = req.session.authProv;
     var gameId = req.params.id;
@@ -598,7 +589,7 @@ app.delete('/api/games/:id/', [isAuthenticated, checkGameId], function (req, res
         if (game.host !== host || game.authProvider !== provider) 
             return res.status(409).end("User " + host + " is not the host of this game");
         
-        dbo.collection("games").deleteOne({_id: ObjectId(gameId), userId:hostId, host:host, authProvider:provider}, function(err, wrRes) {
+        dbo.collection("games").deleteOne({_id: ObjectId(gameId), host:host, authProvider:provider}, function(err, wrRes) {
             if (err) return res.status(500).end(err);
             if (wrRes.deletedCount === 0) return res.status(409).end("game " + gameId + " was not deleted");
 
@@ -621,11 +612,11 @@ app.delete('/api/games/:id/joined/', [isAuthenticated, checkGameId], function (r
     var errors = req.validationErrors();
     if (errors) return res.status(400).send(errors[0].msg);
 
-    var userId = req.session.uid;
+
     var userLeave = req.session.username;
     var provider = req.session.authProv;
     var gameId = req.params.id;
-    dbo.collection("game_joined").deleteOne({gameId: ObjectId(gameId), userId:userId, user: userLeave, authProvider:provider}, function(err, wrRes) {
+    dbo.collection("game_joined").deleteOne({gameId: ObjectId(gameId), user: userLeave, authProvider:provider}, function(err, wrRes) {
         if (err) return res.status(500).end(err);
         if (wrRes.deletedCount == 0) return res.status(409).end("User " + userLeave + " is not in the game!");
 
@@ -640,11 +631,10 @@ app.delete('/api/games/:id/joined/', [isAuthenticated, checkGameId], function (r
 
 // curl -k -b cookie.txt -H -X delete https://localhost:3000/api/games/5aae9368eccb1357c708bbd0/joined/alice
 /* Allow host to kick a player from the game */
-app.delete('/api/games/:id/joined/:userId', [isAuthenticated, checkGameId], function (req, res, next) {
+app.delete('/api/games/:id/joined/:userId/', [isAuthenticated, checkGameId], function (req, res, next) {
     var errors = req.validationErrors();
     if (errors) return res.status(400).send(errors[0].msg);
 
-    var hostId = req.session.uid;
     var host = req.session.username;
     var provider = req.session.authProv;
     var gameId = req.params.id; 
@@ -656,7 +646,7 @@ app.delete('/api/games/:id/joined/:userId', [isAuthenticated, checkGameId], func
         if (game.host !== host || game.authProvider !== provider) 
             return res.status(409).end("User " + host + " is not the host of this game");
 
-        dbo.collection("game_joined").deleteOne({gameId: ObjectId(gameId), userId:playerKick}, function(err, wrRes) {
+        dbo.collection("game_joined").deleteOne({gameId: ObjectId(gameId), user:playerKick}, function(err, wrRes) {
             if (err) return res.status(500).end(err);
             if (wrRes.deletedCount == 0) return res.status(409).end("User " + playerKick + " is not in the game!");
 
@@ -758,7 +748,6 @@ app.post('/api/games/:id/image/', [isAuthenticated, checkGameId], upload.single(
     if (errors) return res.status(400).send(errors[0].msg);
 
     var gameId = req.params.id;
-    var posterId = req.session.uid;
     var poster = req.session.username;
     var provider = req.session.authProv;
     var file = req.file;
@@ -846,7 +835,8 @@ async function mongoSetup() {
         else {
             db = mongodb;
             dbo = db.db(configFile.mongo.dbname);            
-            /*dbo.collection("games").drop();
+            /*
+            dbo.collection("games").drop();
             dbo.collection("images").drop();            
             dbo.collection("users").drop();            
             dbo.collection("game_joined").drop(); //  */
