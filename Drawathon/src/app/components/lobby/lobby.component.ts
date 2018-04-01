@@ -75,7 +75,7 @@ export class LobbyComponent implements OnInit {
     var check:boolean = false; // Flag to check if game started.
     var players:any[] = null; // Temp variables to handle scope issues.
     // Get lateset amount of players.
-    this.api.getPlayers(this.lob._id, function(err, res){
+    this.api.getPlayers(this.gameId, function(err, res){
       if (err) { // Error, cannot connect.
         console.log("Connection with game lost.\n" + err)
         error = true;

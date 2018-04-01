@@ -41,6 +41,7 @@ export class MainComponent implements OnInit {
           api.killLobby();
         });
       }
+      else { this.api.killLobby(); console.log("You've been removed from your game");}
     }
 
 
