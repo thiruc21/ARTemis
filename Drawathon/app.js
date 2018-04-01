@@ -700,6 +700,7 @@ function addToClarifai (imagePath, gameID) {
      
 }
 
+
 // Remove image from clarifai's image collection
 function removeFromClarifai (gameID, callback){
     appC.inputs.delete(gameID).then(
@@ -714,29 +715,47 @@ function removeFromClarifai (gameID, callback){
 
 // Compare another image with the image for the game stored in Clarifai
 // Takes in the base64 encoded string of users drawing and game ID of the image
-function compareImages(otherImage, gameID){
-    appC.inputs.search({ input: {base64: otherImage} }).then(
-        function(response) {
-            var score = 0;
-            //console.log(response);
-            console.log("Calculated image similarity score");
-            // Find the similarity for the image ID of this game, then return the score
-            for (var index = 0; index < response.hits.length; index++) {
-                // Get the image with the current game's ID
-                if (response.hits[index].input.id == gameID) {
-                    score = response.hits[index].score;
-                    //console.log(response.hits[index]);
-                    console.log("Similarity score is " + score)
-                    return score;
-                } 
+app.post('/api/games/:id/canvas/', [isAuthenticated, checkGameId], function (req, res, next) {
+    // Get curr username
+    var host = req.session.username;
+    var provider = req.session.authProvider;
+    var gameId = req.params.id;
+    req.checkBody('img', 'Valid canvas base64 encoded string required!').exists().notEmpty()
+    var canvasImg = req.body.img;
+    // Check if host
+    findGames(res, gameId, function(err, game) {
+        if (err) return res.status(500).end(" Server side error");
+        if (!game) return res.status(409).end("game with id " + gameId + " not found"); 
+        console.log("Host is " + host);
+        console.log("Host should be " + game.host);
+        console.log("Provider is " + provider);
+        console.log("Authprovider should be " + game.authProvider);
+        if (game.host !== host || game.authProvider !== provider) 
+            return res.status(409).end("User " + host + " is not the host of this game");
+        // Get canvas similarity score
+        appC.inputs.search({ input: {base64: canvasImg} }).then(
+            function(response) {
+                var score = 0;
+                console.log(response);
+                console.log("Calculated image similarity score");
+                // Find the similarity for the image ID of this game, then return the score
+                for (var index = 0; index < response.hits.length; index++) {
+                    // Get the image with the current game's ID
+                    if (response.hits[index].input.id == gameId) {
+                        score = response.hits[index].score;
+                        //console.log(response.hits[index]);
+                        console.log("Similarity score is " + score)
+                        return res.json(score);
+                    } 
+                }
+                return res.json(score);
+            },
+            function(err) {
+                console.log(err);
             }
-            return score;
-        },
-        function(err) {
-            console.log(err);
-        }
-    );
-}
+        );
+    })
+});
 
 // curl -k -b cookie.txt -X POST 'https://localhost:3000/api/games/5abd3cf22b3db66bcc0e2ef9/image/' -H 'content-type: multipart/form-data' -F 'file=@/home/shadman/ARTemis/Drawathon/uploads/user.png'
 // 'file=@/home/shadman/ARTemis/Drawathon/uploads/user.png'
