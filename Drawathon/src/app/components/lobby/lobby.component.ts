@@ -115,7 +115,7 @@ export class LobbyComponent implements OnInit {
           this.router.navigate(['/main']);
         }
       }
-      if (this.check) this.timeOut(); // Only continue if check is true.
+      if (this.check && this.running) this.timeOut(); // Only continue if check is true.
       else {
         if (this.left == false) this.router.navigate(['/game']);
         
