@@ -773,6 +773,9 @@ app.get('/game', function (req, res, next){
 app.get('/host', function (req, res, next){
     res.redirect('/');
 });
+app.get('/main', function (req, res, next){
+    res.redirect('/');
+});
 app.get('/credit', function (req, res, next){
     res.redirect('/');
 });

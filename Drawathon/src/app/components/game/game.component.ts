@@ -15,7 +15,6 @@ export class GameComponent implements OnInit {
   @ViewChild('canvas') public canvas:CanvasComponent;
   @ViewChild('chat') public chat:ChatComponent;
 
-
   // Values for game start timer.
   timeText:string;
   timeVal:number;
@@ -50,7 +49,7 @@ export class GameComponent implements OnInit {
     this.lob = this.api.getLobby();
     this.gameId = this.lob._id;
     this.user = this.api.getCurrentUser();
-    this.timeLeft = null;
+
     this.myCanvasId = null;
     this.myChatId = null;
 
@@ -60,6 +59,7 @@ export class GameComponent implements OnInit {
     this.sent = false;
     this.recieved = false;
     this.teamNum = null;
+    this.timeLeft = null;
     this.timeOut(); // Update loop.
 
     if (this.gameD == "grid"){
@@ -158,7 +158,7 @@ export class GameComponent implements OnInit {
     }, 1500);
   }
 
-  timer() {
+  countDown(){
     var error:boolean = false;
     var game = null;
     this.api.getGame(this.gameId, function(err, res){
@@ -174,29 +174,42 @@ export class GameComponent implements OnInit {
       if (error) { // Redirect back on error.
         this.sent = true;
         this.recieved = true;
-        this.timeLeft = 0;
+        this.timeVal = 0;
         this.router.navigate(['/']); 
-      }
-      var curr = new Date();
-      var end = new Date(game.endTime);
-      this.timeLeft = (end.getTime() - curr.getTime()) / 1000;
-      if (this.gameD == "grid"){
-        if (this.timeLeft) { // Main Countdown
-          this.timeVal = this.timeLeft;
-        }
-        else { // Pregame CountDown
-          if (this.timeVal == 0) {
-            this.timeText ="Game Begins!";
-            this.canvas.bg = "white";
-            this.chat.disabled = false;
-            this.timeVal = null;
-          } 
-          else {
-            this.timeVal = this.timeVal - 1;
-            console.log(this.timeVal)
-            this.timer();
-          }
+      } else {
+        this.timeText ="Time Left:";
+        var curr = new Date();
+        var end = new Date(game.endTime);
+        this.timeVal = (end.getTime() - curr.getTime()) / 1000;
+        console.log(curr, end, this.timeVal);
+        if (this.timeVal == 0){
+          this.timeText ="Game Over!";
+          this.timeVal = null;
+          this.router.navigate(['/result']);
         } 
+        else {
+          this.timeVal = this.timeVal - 1;
+          console.log(this.timeVal)
+          this.countDown();
+        }
+      }
+    }, 1000);
+  }
+  timer() {
+    setTimeout(() => {
+      if (this.gameD == "grid"){
+        if (this.timeVal == 0){
+          this.timeText ="Game Begins!";
+          this.canvas.bg = "white";
+          this.chat.disabled = false;
+          this.timeVal = null;
+          this.countDown();
+        } 
+        else {
+          this.timeVal = this.timeVal - 1;
+          console.log(this.timeVal)
+          this.timer();
+        }
       }
       else this.timer();
     }, 1000);
