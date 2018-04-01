@@ -373,7 +373,7 @@ app.post('/api/games/', isAuthenticated, function (req, res, next) {
         if (game) return res.status(409).end("User " + host + " already has a hosted game");
         
         dbo.collection('games').insertOne(
-            {title:title, host: host, authProvider:provider,
+            {title:title, userId:hostId, host: host, authProvider:provider,
             inLobby: true, numPlayers:0, maxPlayers:MAXPLAYERS},
             function (err, game) {
                 if (err) return res.status(500).end(err);
