@@ -28,10 +28,21 @@ export class MainComponent implements OnInit {
     this.games = [];
     this.gamesData = [];
     this.api = new ApiModule();
-    var lob = this.api.getLobby();
-    if (lob && lob.inLobby == true) this.router.navigate(['/lobby']);
     // Get current user.
     this.user = this.api.getCurrentUser();
+
+    var lob = this.api.getLobby(); // Handling for improper disconnects.
+    if (lob) {
+      if (lob.inLobby) this.router.navigate(['/lobby']);
+      else if (this.user == lob.host) { //If host of a lobby that user left without properly deleting, kill the lobby.
+        var api = this.api;
+        this.api.removeGame(lob._id, function(err){
+          if (err) console.log("Failed to remove game\n" + err);
+          api.killLobby();
+        });
+      }
+    }
+
 
     if (this.user == "" || this.user == null) { // No users.
       this.createD = "none";

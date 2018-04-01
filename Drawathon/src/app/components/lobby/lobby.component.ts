@@ -92,7 +92,7 @@ export class LobbyComponent implements OnInit {
     }
 
     setTimeout(() => { // Checks for new lobbys every 3 seconds. Since we are using a timeout loop anyway, no need to use await on the functions.
-      if (error) { this.exit('/'); return; } // Exit handler. Stops everything.
+      if (error) { this.api.killLobby(); this.exit('/'); return; } // Exit handler. Stops everything.
       if (check) { this.running = false; }
 
       if (players) { // If we have results.
