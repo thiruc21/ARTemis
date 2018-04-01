@@ -13,6 +13,7 @@ export class ChatComponent implements OnInit {
   public recieved:boolean; 
   peer;
   public disabled:boolean = false;
+  public running:boolean;
   btnDisplay:string;
   textelem:HTMLTextAreaElement;
   divelem:HTMLDivElement;
@@ -23,6 +24,7 @@ export class ChatComponent implements OnInit {
   @ViewChild('content') public container:ElementRef;
 
   ngOnInit() {
+    this.running = true;
     this.api = new ApiModule();
     this.textelem = this.textarea.nativeElement;
     this.divelem = this.container.nativeElement;
@@ -96,7 +98,7 @@ export class ChatComponent implements OnInit {
        // Connect to other peer and send message
        console.log("KEEP alive 4 lyfe")
        var conn = this.peer.connect(this.peerId.nativeElement.value);
-       this.keepAlive();
+       if (this.running) this.keepAlive();
     }, 25000);
   }
   // Update 

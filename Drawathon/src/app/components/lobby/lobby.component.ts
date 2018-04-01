@@ -18,6 +18,7 @@ export class LobbyComponent implements OnInit {
   team2:string[];
   host:string;
   user:string;
+  running:boolean;
 
   private api:ApiModule;
 
@@ -34,6 +35,7 @@ export class LobbyComponent implements OnInit {
   constructor(public router: Router) { }
 
   ngOnInit() {
+    this.running = true;
     // Set defaults.
     this.inputElem = this.input.nativeElement;
     this.file = null;
@@ -59,16 +61,23 @@ export class LobbyComponent implements OnInit {
   
   timeOut() {
     // Check if new players are in.
+    var error: boolean = false;
     var players:any[] = this.players;
     var rtr = this.router
     this.api.getPlayers(this.lob._id, function(err, res){
-      if (err) console.log(err);
+      if (err) {
+        console.log("Connection with game lost.\n" + err)
+        error = true;
+      }
       else players = res;
     });
     var check = this.check;
     if (this.user != this.host) {// If not host, check if game has started.
       this.api.getGame(this.gameId, function(err, res) {
-        if (err) console.log(err);
+        if (err) {
+          console.log("Connection with game lost.\n" + err)
+          error = true;
+        }
         else {
           if (res.inLobby == false) {
             check = false;
@@ -78,6 +87,10 @@ export class LobbyComponent implements OnInit {
     }
     // Check for new lobbys every two seconds.
     setTimeout(() => {
+      if (error) {
+        this.exit();
+        this.router.navigate(['/']);
+      }
       this.check = check;
       var kicked:boolean = true;
       if (players) {
@@ -108,6 +121,11 @@ export class LobbyComponent implements OnInit {
         
        }  // Else we are done waiting for new game, go forward.
     }, 3000);
+  }
+  exit() {
+    this.running = false;
+    this.check = false;
+    this.left = true;
   }
   debug() {
     console.log("clicked debug");

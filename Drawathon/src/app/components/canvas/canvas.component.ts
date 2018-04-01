@@ -54,7 +54,7 @@ export class CanvasComponent implements OnInit {
     this.singlePlayer = true;
     this.canvasElem = this.canvas.nativeElement;
     this.ctx = this.canvasElem.getContext('2d');
-    
+    this.running = true;
 
     // Connect to peer.
     this.peer = new Peer({host : "lightpeerjs.herokuapp.com",
@@ -171,7 +171,7 @@ export class CanvasComponent implements OnInit {
        // Connect to other peer and send message
        var conn = this.peer.socket.send({
         type: 'ping'});
-       this.keepAlive();
+       if (this.running) this.keepAlive();
     }, 25000);
   }
   pDraw(x,y,px,py, size, color) {

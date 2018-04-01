@@ -9,7 +9,7 @@ import { ApiModule } from '../../api/api.module';
 export class HostComponent implements OnInit {
   @ViewChild('canvas1') public canvas1: ElementRef;
   @ViewChild('canvas2') public canvas2: ElementRef;
-
+  running:boolean;
   game:any;
 
   players: any[];
@@ -32,6 +32,7 @@ export class HostComponent implements OnInit {
   constructor() { }
 
   ngOnInit() {
+    this.running = true; // Flag for timeout loops. If we ever leave, we make sure this is set to false.
     this.api = new ApiModule();
     this.game = this.api.getLobby();
     this.peer = [null, null];
@@ -111,11 +112,13 @@ export class HostComponent implements OnInit {
     this.timeOut();
   }
   timeOut() {
-    setTimeout(() => {
-      this.update(0);
-      this.update(1);
-      if (this.check) this.timeOut();
-     }, 300);
+    if (this.running) {
+      setTimeout(() => {
+        this.update(0);
+        this.update(1);
+        if (this.check) this.timeOut();
+      }, 300);
+    }
   }
   update(i) {
     setTimeout(() => { // This is here to make the canvas's both update async rather than having it update one first.
@@ -141,7 +144,7 @@ export class HostComponent implements OnInit {
        // Connect to other peer and send message
        var conn = this.peer[i].socket.send({
 				    type: 'ping'});
-       this.keepAlive(i);
+       if (this.running) this.keepAlive(i);
     }, 25000);
   }
 }

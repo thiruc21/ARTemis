@@ -172,18 +172,14 @@ export class GameComponent implements OnInit {
     });
     setTimeout(() => {
       if (error) { // Redirect back on error.
-        this.sent = true;
-        this.recieved = true;
-        this.timeVal = 0;
+        this.exit();
         this.router.navigate(['/']); 
       } else {
         this.timeText ="Time Left:";
         var curr = new Date().getTime();
         this.timeVal = Math.floor((game.endTime - curr) / 1000);
         if (this.timeVal <= 0){
-          this.timeText ="Game Over!";
-          this.timeVal = null;
-          this.canvas.running = false;
+          this.exit();
           this.router.navigate(['/result']);
         } 
         else {
@@ -212,5 +208,13 @@ export class GameComponent implements OnInit {
       }
       else this.timer();
     }, 1000);
+  }
+  exit() { // Standard exit code; Stops all timer flags.
+    this.sent = true;
+    this.recieved = true;
+    this.timeText ="Game Over!";
+    this.timeVal = null;
+    this.canvas.running = false;
+    this.chat.running = false;
   }
 }
