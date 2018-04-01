@@ -733,6 +733,9 @@ app.get('/api/games/:id/image/', [isAuthenticated, checkGameId], function (req, 
         res.sendFile(profile.path);        
     });
 });
+app.get('/signup', function (req, res, next){
+    res.redirect('/');
+});
 
 function team(userEnt, userJoined, provider, callback) {
     var team0 = 0;
