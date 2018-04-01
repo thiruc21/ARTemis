@@ -10,7 +10,7 @@
   <div class="hostCenter">
     <h2>Hosted by: {{host}}</h2>
 
-    <input type="file" [ngStyle]="{ 'display': hostD }" #picture required>
+    <input type="file" [ngStyle]="{ 'display': hostD }" #input required>
     <a (click)="startGame()" [ngStyle]="{ 'display': hostD }" class="startButton">{{startText}}</a>
     
     <button class="leaveButton" (click)="leave()">Leave Lobby</button>
