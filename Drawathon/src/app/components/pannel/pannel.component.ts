@@ -67,10 +67,7 @@ export class PannelComponent implements OnInit {
           window.location.reload()
         }
         });
-<<<<<<< HEAD
-=======
         this.running = true;
->>>>>>> d0fd762c5e18815fdd9ebc6a136e315b7a1751e3
     }, 1000);
     
   }
