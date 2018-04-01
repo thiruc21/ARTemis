@@ -355,6 +355,7 @@ app.get('/signout/', isAuthenticated, function (req, res, next) {
 });
 
 // curl -k  -b cookie.txt -H "Content-Type: application/json" -X POST -d '{"title":"join THIS Lobby lol"}' https://localhost:3000/api/games/
+/* Creates a game lobby */
 app.post('/api/games/', isAuthenticated, function (req, res, next) {
     req.checkBody('title', 'Every game needs a title!').exists().notEmpty();
 
@@ -382,6 +383,7 @@ app.post('/api/games/', isAuthenticated, function (req, res, next) {
 });
 
 // curl -k -b cookie.txt https://localhost:3000/api/games/
+/* Gets all lobby games */
 app.get('/api/games/', isAuthenticated, function (req, res, next) {
     dbo.collection("games").find({inLobby:true}).toArray(function(err, games) {
         if (err) return res.status(500).end(" Server side error");
@@ -443,19 +445,19 @@ app.post('/api/games/:id/joined/', [isAuthenticated, checkGameId], function (req
 
 // curl -k -b cookie.txt -H "Content-Type: application/json" -X PATCH -d '{"action": "Start", "time": 120}' https://localhost:3000/api/games/5abffc298dd2d4558f58e312/
 // curl -k -b cookie.txt -H "Content-Type: application/json" -X PATCH -d '{"action": "End", "teamNum": 0}' https://localhost:3000/api/games/5abffc298dd2d4558f58e312/
+/* Starts a game given a time limit, Ends a game given a winner*/
 app.patch('/api/games/:id/', [isAuthenticated, checkGameId], function (req, res, next) {
     req.checkBody('action', 'Valid Action required for patch!').exists().notEmpty().isIn(['Start', 'End'])
     
-    if (action === "Start")
+    if (req.body.action === "Start")
         req.checkBody('time', 'Every game needs a time limit!').exists().notEmpty().isNumeric();
     
-    if (action === "End") 
+    if (req.body.action === "End") 
         req.checkBody('teamNum', 'Every game needs a valid winning team!').exists().notEmpty().isNumeric().isIn[0,1]
     
     var errors = req.validationErrors();
     if (errors) return res.status(400).send(errors[0].msg);
 
-    
     var action = req.body.action;
     var time = req.body.time;
 
@@ -483,17 +485,22 @@ app.patch('/api/games/:id/', [isAuthenticated, checkGameId], function (req, res,
                 return res.json("Game started!");
             });
         } else {
-            dbo.collection("game_joined").updateMany({_id: ObjectId(gameId), teamNum: teamNum}, 
-                {$set: {"winner": true}}, 
-            function(err, wrRes) {
-                if (err) return res.status(500).end(err);
-                if (wrRes.modifiedCount = 0) return res.status(409).end("players for game " + gameId + " could not be modified"); 
-                return res.json("winning players!");
+            dbo.collection("game_joined").find({_id: ObjectId(gameId)}).toArray(function(err, playerEntry) {
+                if (err) return res.status(500).end(" Server side error");
+                dbo.collection("game_joined").updateMany({_id: ObjectId(gameId), teamNum: teamNum}, 
+                {$set: {"winner": true}},   { arrayFilters: [{ 'teamNum':  winner }] },  
+               
+                function(err, wrRes) {
+                    if (err) return res.status(500).end(err);
+                    if (wrRes.modifiedCount = 0) return res.status(409).end("players for game " + gameId + " could not be modified"); 
+                    return res.json("winning players!");
+                });
             });
         }
     });
 });
 
+/* Gets game specific information */
 app.get('/api/games/:id/', [isAuthenticated, checkGameId], function (req, res, next) {
     var errors = req.validationErrors();
     if (errors) return res.status(400).send(errors[0].msg);
@@ -506,6 +513,7 @@ app.get('/api/games/:id/', [isAuthenticated, checkGameId], function (req, res, n
 });
 
 // curl -k -b cookie.txt -H "Content-Type: application/json" -X PATCH -d '{"action":'generateId', 'team1Id": 1233, "team2Id": 12123}' https://localhost:3000/api/games/5aad97f9f4e28b075083ef9c/host/
+/* Patch a host's rtc ids for each team */
 app.patch('/api/games/:id/host/', [isAuthenticated, checkGameId], function (req, res, next) {
     req.checkBody('action', 'Valid Action required for patch!').exists().notEmpty().isIn(['generateId'])
     req.checkBody('team1Id', "Host requires a canvas id for team 1").exists().notEmpty();
@@ -536,6 +544,7 @@ app.patch('/api/games/:id/host/', [isAuthenticated, checkGameId], function (req,
 });
 
 // curl -k -b cookie.txt -H "Content-Type: application/json" -X PATCH -d '{"canvasId": "123123", "chatId": "12412sdad"}' https://localhost:3000/api/games/5abd897b49790f305b870aab/joined/
+/* Patch a players's rtc id n a game */
 app.patch('/api/games/:id/joined/', [isAuthenticated, checkGameId], function (req, res, next) {
     req.checkBody('action', 'Valid Action required for patch!').exists().notEmpty().isIn(['generateId']);
     req.checkBody('chatId', "Each player requires a chat id").exists().notEmpty();
@@ -569,6 +578,7 @@ app.patch('/api/games/:id/joined/', [isAuthenticated, checkGameId], function (re
 });
 
 // curl -k -b cookie.txt -H "Content-Type: application/json" -X DELETE https://localhost:3000/api/games/5aad97f9f4e28b075083ef9c/
+/*  Allow a host to delete a game */
 app.delete('/api/games/:id/', [isAuthenticated, checkGameId], function (req, res, next) {
     var errors = req.validationErrors();
     if (errors) return res.status(400).send(errors[0].msg);
@@ -602,7 +612,7 @@ app.delete('/api/games/:id/', [isAuthenticated, checkGameId], function (req, res
 });
 
 // curl -k -b cookie.txt -H -X delete  https://localhost:3000/api/games/5aae9368eccb1357c708bbd0/joined/
-// KICK player themself
+/* Leave the game as a player*/
 app.delete('/api/games/:id/joined/', [isAuthenticated, checkGameId], function (req, res, next) {
     var errors = req.validationErrors();
     if (errors) return res.status(400).send(errors[0].msg);
@@ -625,7 +635,7 @@ app.delete('/api/games/:id/joined/', [isAuthenticated, checkGameId], function (r
 });
 
 // curl -k -b cookie.txt -H -X delete https://localhost:3000/api/games/5aae9368eccb1357c708bbd0/joined/alice
-/* Allow host to kick a play from the game */
+/* Allow host to kick a player from the game */
 app.delete('/api/games/:id/joined/:username', [isAuthenticated, checkGameId], function (req, res, next) {
     var errors = req.validationErrors();
     if (errors) return res.status(400).send(errors[0].msg);
