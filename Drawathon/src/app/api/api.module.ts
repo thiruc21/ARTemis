@@ -114,8 +114,8 @@ export class ApiModule implements OnInit {
     this.send("DELETE", "/api/games/" + gameId + "/joined/", null, callback);
   }
 
-  public kickPlayer = function(gameId, username, callback) {
-    this.send("DELETE", "/api/games/" + gameId + "/joined/" + username + "/", null, callback);
+  public kickPlayer = function(gameId, usernameId, callback) {
+    this.send("DELETE", "/api/games/" + gameId + "/joined/" + usernameId + "/", null, callback);
   } 
 
   public getPlayers = function(gameId, callback) {

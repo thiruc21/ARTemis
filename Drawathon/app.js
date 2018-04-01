@@ -640,7 +640,7 @@ app.delete('/api/games/:id/joined/', [isAuthenticated, checkGameId], function (r
 
 // curl -k -b cookie.txt -H -X delete https://localhost:3000/api/games/5aae9368eccb1357c708bbd0/joined/alice
 /* Allow host to kick a player from the game */
-app.delete('/api/games/:id/joined/:username', [isAuthenticated, checkGameId], function (req, res, next) {
+app.delete('/api/games/:id/joined/:userId', [isAuthenticated, checkGameId], function (req, res, next) {
     var errors = req.validationErrors();
     if (errors) return res.status(400).send(errors[0].msg);
 
@@ -648,7 +648,7 @@ app.delete('/api/games/:id/joined/:username', [isAuthenticated, checkGameId], fu
     var host = req.session.username;
     var provider = req.session.authProv;
     var gameId = req.params.id; 
-    var playerKick = req.params.username;
+    var playerKick = req.params.userId;
 
     findGames(res, gameId, function(err, game) {
         if (err) return res.status(500).end(" Server side error");
@@ -656,7 +656,7 @@ app.delete('/api/games/:id/joined/:username', [isAuthenticated, checkGameId], fu
         if (game.host !== host || game.authProvider !== provider) 
             return res.status(409).end("User " + host + " is not the host of this game");
 
-        dbo.collection("game_joined").deleteOne({gameId: ObjectId(gameId),  userId:hostId,  userId: playerKick, authProvider:provider}, function(err, wrRes) {
+        dbo.collection("game_joined").deleteOne({gameId: ObjectId(gameId),  userId:playerKick}, function(err, wrRes) {
             if (err) return res.status(500).end(err);
             if (wrRes.deletedCount == 0) return res.status(409).end("User " + playerKick + " is not in the game!");
 
