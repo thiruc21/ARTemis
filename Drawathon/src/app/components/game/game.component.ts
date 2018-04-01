@@ -2,6 +2,7 @@ import { Component, OnInit, ViewChild, ElementRef, AfterViewInit  } from '@angul
 import { CanvasComponent } from '../canvas/canvas.component';
 import { ChatComponent } from '../chat/chat.component';
 import { ApiModule } from '../../api/api.module';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-game',
@@ -14,6 +15,7 @@ export class GameComponent implements OnInit {
   @ViewChild('canvas') public canvas:CanvasComponent;
   @ViewChild('chat') public chat:ChatComponent;
 
+
   // Values for game start timer.
   timeText:string;
   timeVal:number;
@@ -23,7 +25,7 @@ export class GameComponent implements OnInit {
   user:string;
   lob:any;
   gameId:string;
-
+  timeLeft:number;
 
   // Chat and canvas peering variables.
   myChatId:string;
@@ -39,7 +41,7 @@ export class GameComponent implements OnInit {
   // Api module.
   api:ApiModule;
 
-  constructor() { }
+  constructor(public router: Router) { }
 
   ngOnInit() {
     // Set defaults.
@@ -48,7 +50,7 @@ export class GameComponent implements OnInit {
     this.lob = this.api.getLobby();
     this.gameId = this.lob._id;
     this.user = this.api.getCurrentUser();
-
+    this.timeLeft = null;
     this.myCanvasId = null;
     this.myChatId = null;
 
@@ -157,19 +159,44 @@ export class GameComponent implements OnInit {
   }
 
   timer() {
+    var error:boolean = false;
+    var game = null;
+    this.api.getGame(this.gameId, function(err, res){
+      if (err) { // Unexpected end of game, game Id doesnt exist. Means the game has been stoped serverside, reset.
+        console.log(err);
+        error = true;
+      }
+      else {
+        game = res;
+      }
+    });
     setTimeout(() => {
+      if (error) { // Redirect back on error.
+        this.sent = true;
+        this.recieved = true;
+        this.timeLeft = 0;
+        this.router.navigate(['/']); 
+      }
+      var curr = new Date();
+      var end = new Date(game.endTime);
+      this.timeLeft = (end.getTime() - curr.getTime()) / 1000;
       if (this.gameD == "grid"){
-        if (this.timeVal == 0){
-          this.timeText ="Game Begins!";
-          this.canvas.bg = "white";
-          this.chat.disabled = false;
-          this.timeVal = null;
-        } 
-        else {
-          this.timeVal = this.timeVal - 1;
-          console.log(this.timeVal)
-          this.timer();
+        if (this.timeLeft) { // Main Countdown
+          this.timeVal = this.timeLeft;
         }
+        else { // Pregame CountDown
+          if (this.timeVal == 0) {
+            this.timeText ="Game Begins!";
+            this.canvas.bg = "white";
+            this.chat.disabled = false;
+            this.timeVal = null;
+          } 
+          else {
+            this.timeVal = this.timeVal - 1;
+            console.log(this.timeVal)
+            this.timer();
+          }
+        } 
       }
       else this.timer();
     }, 1000);
