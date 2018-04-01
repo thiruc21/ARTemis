@@ -180,7 +180,7 @@ export class LobbyComponent implements OnInit {
     var check:boolean = this.check;
     var time = 60;
     if (this.inputElem.value) time = parseInt(this.inputElem.value);
-    this.api.startGame(this.gameId, time,function(err, res){
+    this.api.startGame(this.gameId, time * 1000,function(err, res){ // Give time in ms.
         if (err) console.log(err)
         else {
           check = false;
