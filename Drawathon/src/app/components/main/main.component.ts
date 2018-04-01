@@ -28,6 +28,8 @@ export class MainComponent implements OnInit {
     this.games = [];
     this.gamesData = [];
     this.api = new ApiModule();
+    var lob = this.api.getLobby();
+    if (lob && lob.inLobby == true) this.router.navigate(['/lobby']);
     // Get current user.
     this.user = this.api.getCurrentUser();
 

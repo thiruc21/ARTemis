@@ -2,6 +2,7 @@ import { NgModule, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClientModule, HttpHeaders, HttpClient } from '@angular/common/http';
 import { AppComponent } from '../app.component';
+import { stringify } from '@angular/compiler/src/util';
 
 
 const httpOptions = {
@@ -168,6 +169,10 @@ export class ApiModule implements OnInit {
 
   public getLobby = function() {
     return JSON.parse(localStorage.getItem('lob'));
+  }
+
+  public killLobby = function() {
+    localStorage.setItem("lob", JSON.stringify(null));
   }
 
   public pushStroke = function(x, y, px, py, color) {

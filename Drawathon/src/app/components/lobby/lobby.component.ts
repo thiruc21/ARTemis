@@ -105,7 +105,7 @@ export class LobbyComponent implements OnInit {
           this.teams[this.players[i].teamNum].push(this.players[i].user); // Distribution of team members.
           if (this.user == this.players[i].user) kicked = false; // Check if player needs to be kicked.
         }
-        if (kicked) { this.exit('/'); return; } // If player was kicked exit this.
+        if (kicked) { this.api.killLobby(); this.exit('/'); return; } // If player was kicked exit this.
       }
 
       if (this.running) this.timeOut(); // Only continue if check is true.
@@ -146,7 +146,7 @@ export class LobbyComponent implements OnInit {
       });
     }
     setTimeout(() => {
-      if (check) { this.exit('/'); return; } // Leave.
+      if (check) { this.api.killLobby(); this.exit('/'); return; } // Leave.
     },1000);
   }
 
