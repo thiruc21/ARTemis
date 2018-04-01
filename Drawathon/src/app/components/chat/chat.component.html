@@ -6,7 +6,4 @@
     <textarea #textarea class="chatText" rows="1" ngModel="message" (keyup.enter)="submitMessage()"></textarea>
     <div class="chatButton" [ngStyle]="{ 'display': btnDisplay }" (click)="submitMessage()"><img src="assets/send.png" alt=""></div>
 </div>
-<div>
-    <h1>My id: {{myPeerId}}</h1>
-    <input #peer type="text" ngModel="peerId">
-</div>
+

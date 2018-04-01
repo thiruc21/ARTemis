@@ -20,7 +20,6 @@ export class ChatComponent implements OnInit {
   private api:ApiModule;
   constructor() { }
   @ViewChild('textarea') public textarea:ElementRef;
-  @ViewChild('peer') public peerId:ElementRef;
   @ViewChild('content') public container:ElementRef;
 
   ngOnInit() {

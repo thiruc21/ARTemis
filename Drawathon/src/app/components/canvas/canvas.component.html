@@ -12,11 +12,7 @@
     <div class="color" id="white" style="background-color:white;" (click)="clickColor('white')"></div>
     <div class="color" id="black" style="background-color:black;" (click)="clickColor('black')"></div>
     <div class="color" #csColor [(colorPicker)]="color" (click)="clickColor('custom')" [ngStyle]="{ 'background-color': color }"></div>
-    <button (click)="test()">click</button>
   </div>
 </div>
-<div>
-  <h1>My id: {{myPeerId}}</h1>
-  <input #peer type="text" ngModel="peerId">
-</div>
+
 

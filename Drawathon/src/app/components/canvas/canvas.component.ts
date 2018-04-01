@@ -32,7 +32,6 @@ export class CanvasComponent implements OnInit {
   public running:boolean;
 
   @ViewChild('canvas') public canvas: ElementRef;
-  @ViewChild('peer') public peerId:ElementRef;
   @ViewChild('cSize') private customSize:ElementRef;
   constructor() { }
 
