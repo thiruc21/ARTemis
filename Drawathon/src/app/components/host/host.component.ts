@@ -122,6 +122,7 @@ export class HostComponent implements OnInit {
     this.keepAlive(0);
     this.keepAlive(1);
     this.timeOut();
+    this.timer();
   }
   timeOut() {
     if (this.running) {
@@ -173,6 +174,7 @@ export class HostComponent implements OnInit {
         this.timeText ="Time Left:";
         var curr = new Date().getTime();
         this.timeVal = Math.floor((game.endTime - curr) / 1000);
+        console.log(this.timeVal);
         if (this.timeVal <= 0){
           this.exit();
           this.router.navigate(['/result']);
@@ -183,6 +185,25 @@ export class HostComponent implements OnInit {
           this.countDown();
         }
       }
+    }, 1000);
+  }
+
+  timer() {
+    setTimeout(() => {
+      if (this.gameStatus == "not started"){
+        if (this.timeVal == 0){
+          this.timeText ="Game Begins!";
+          this.gameStatus = "started";
+          this.timeVal = null;
+          this.countDown();
+        } 
+        else {
+          this.timeVal = this.timeVal - 1;
+          console.log(this.timeVal)
+          this.timer();
+        }
+      }
+      else this.timer();
     }, 1000);
   }
 
