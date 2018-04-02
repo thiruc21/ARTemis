@@ -3,7 +3,7 @@
 <div class="layout">
   <div class="teamLeft">
     <div *ngFor="let player1 of teams[0];  let i1 = index" class="teamPlayer">
-      <p>{{player1}}</p>
+      <p class="playerName">{{player1}}</p>
       <img src="./assets/delete.png" alt="X" class="kickImg clickable" [ngStyle]="{ 'display': hostD }" (click)="kick(0, i1)">
     </div>
   </div>

@@ -1,7 +1,7 @@
 .layout {
     display: grid;
-    grid-template-columns: 800px 200px 400px;
-    grid-template-rows: 100px 200px, 1fr;
+    grid-template-columns: 800px 200px 300px;
+    grid-template-rows: 100px 200px, 600px;
 }
 
 .createGame {
@@ -9,21 +9,26 @@
     background: grey;
     grid-area: 2 / 3 / span 1 / span 1;
     display: grid;
-    height: 150px;
+    height: 200px;
     width: 300px;
     grid-template-rows: 50px 75px 75px;
-    grid-template-columns: 250px 150px;
+    grid-template-columns: 200px 100px;
+    border-radius: 5px;
+}
+.createTitle {
+    grid-area: 1 / 1 / span 1 / span 1;
 }
 .inTitle {
     grid-area: 2 / 1 / span 1 / span 1;
     margin: 10px 10px 10px 10px;
-    width: 230px;
+    width: 180px;
     height: 50px;
 }
 .createButton {
     grid-area: 3 / 2 / span 1 / span 1;
+    margin: 10px 10px 10px 10px;
     height: 50px;
-    width: 75px;
+    width: 80px;
 }
 .gamesContainer {
     grid-area: 2 / 1 / span 2 / span 1;
