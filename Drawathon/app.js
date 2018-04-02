@@ -89,8 +89,8 @@ passport.use('twitchToken', new TwitchStrategy({
 )); 
 
 /*
- Google OUATH Strategy, once 'authenticated', user will be directed to google's authentication page, then a user's
-    profile is returned which we process and send back to a callback function
+ Google OUATH Strategy, once 'authenticated', users will be directed to google's authentication page, 
+    then a user's profile is returned which we process and send back to appropriate passport.
     All frontend needs to do is call '/users/oauth/google/', and check
     appropriate profile set in session.
 */
@@ -306,7 +306,6 @@ app.post('/signup/', [checkUsername, checkPassword],  function (req, res, next) 
 });
 
 // curl -k -H "Content-Type: application/json" -X POST -d '{"username":"alice","password":"alice"}' -c cookie.txt https://localhost:3000/signin/
-// curl -k -H "Content-Type: application/json" -X POST -d '{"username":"bob","password":"alice"}' -c cookie.txt https://localhost:3000/signin/
 app.post('/signin/', [checkUsername, checkPassword], function (req, res, next) {
     var username = req.body.username;
     var password = req.body.password;
@@ -329,11 +328,6 @@ app.post('/signin/', [checkUsername, checkPassword], function (req, res, next) {
             path : '/', 
             maxAge: 60 * 60 * 24 * 7
         }));
-
-        dbo.collection("users").update({username: username, authProvider: 'artemis'},
-        {$set: {lastAccess: new Date()}}, function(err, user) {
-            return res.json("User " + username + " signed in");
-        });        
     });
 });
 
@@ -390,7 +384,6 @@ app.post('/api/games/:id/joined/', [isAuthenticated, checkGameId], function (req
     
     var errors = req.validationErrors();
     if (errors) return res.status(400).send(errors[0].msg);
-
     var userJoined = req.session.username;
     var provider = req.session.authProv;
     var gameId = req.params.id;
@@ -497,9 +490,9 @@ app.patch('/api/games/:id/', [isAuthenticated, checkGameId], function (req, res,
     });
 });
 
-
-
-
+/* Use a list of users who have won or lost a game, and
+    update their total wins and losses.
+*/
 function updateWinnersLosers(playerEntries, callback) {
     var winners = playerEntries.reduce(function(filtered, user) {
         if (user.winner) filtered.push(
@@ -558,7 +551,6 @@ app.get('/api/games/:id/', [isAuthenticated, checkGameId], function (req, res, n
     });
 });
 
-
 app.get('/api/games/:auth/:user/playerstats/', isAuthenticated, function (req, res, next) {
     req.checkParams('auth', 'username required!').exists().notEmpty();
     req.checkParams('auth', 'authentication provider required!').exists().notEmpty();
@@ -612,7 +604,6 @@ app.patch('/api/games/:id/joined/', [isAuthenticated, checkGameId], function (re
     if (errors) return res.status(400).send(errors[0].msg);
 
     var gameId = req.params.id;
-
     var joinedUser = req.session.username;
     var provider = req.session.authProv;    
     var chatId = req.body.chatId;
@@ -761,9 +752,7 @@ function addToClarifai (imagePath, gameID) {
             console.log(err);
         }
       );
-     
 }
-
 
 // Remove image from clarifai's image collection
 function removeFromClarifai (gameID, callback){
@@ -923,13 +912,6 @@ async function mongoSetup() {
             dbo.collection("images").drop();            
             dbo.collection("users").drop();            
             dbo.collection("game_joined").drop();  */
-            
-            /*
-            dbo.collection("users").find({username: "alice6"}).toArray(function(err, res) {
-                console.log(res);
-                res.map(x => console.log(x._id))
-            });
-            */            
         }
     });
 }
