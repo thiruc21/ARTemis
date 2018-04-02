@@ -11,3 +11,12 @@ body {
     color: rgba(255, 255, 255, 1);
     box-shadow: 0 5px 15px rgba(145, 92, 182, .4);
 }
+.clickable2:hover {
+    cursor: pointer;
+    color: #4C69BA;
+    box-shadow: 0 5px 15px rgba(145, 92, 182, .4);
+}
+.clickable3:hover {
+    cursor: pointer;
+    color: #4C69BA;
+}

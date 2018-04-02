@@ -20,6 +20,7 @@
 
 .gtimer {
     grid-area: 2 / 2 / span 1 / span 1;
+    min-width: 250px;
     width: 250px;
     height: 250px;
     border-width: 0px;
