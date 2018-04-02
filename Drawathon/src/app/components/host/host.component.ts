@@ -214,6 +214,7 @@ export class HostComponent implements OnInit {
     setTimeout(() => { // Game starts, enable all child components, start countdown timer.
       console.log("RESULTS" + this.results);
       console.log("dog");
+      console.log("check is " + check);
       if (check) {
         console.log("RESULTS" + this.results);
         console.log("cat");
