@@ -23,7 +23,7 @@ const sanitize = require('express-validator/filter');
 var GoogleStrategy = require('passport-google-oauth20').Strategy;
 var FacebookStrategy = require('passport-facebook').Strategy;
 var TwitchStrategy = require("passport-twitch").Strategy;
-var sync = require('synchronize')
+
 var db = null;
 var dbo = null;
 
