@@ -661,10 +661,10 @@ app.delete('/api/games/:id/', [isAuthenticated, checkGameId], function (req, res
             dbo.collection("game_joined").deleteMany({gameId: ObjectId(gameId)}, function(err, delRes) {
                 if (err) return res.status(500).end(err);
                 if (delRes.deletedCount !== game.numPlayers) return res.status(409).end("game" + gameId + " lobby could not kick all players")
-                //removeFromClarifai(gameId, function(err, resp) {
-                //    if (err) return res.status(500).end(err)
-                //    else console.log("Image removed from Clarifai")
-                //});
+                removeFromClarifai(gameId, function(err, resp) {
+                    if (err) return res.status(500).end(err)
+                    else console.log("Image removed from Clarifai")
+                });
                 return res.json("Game " + game.title + " has been removed");
             });
         });
@@ -755,7 +755,8 @@ function addToClarifai (imagePath, gameID) {
         id: gameID
         }).then(
         function(response) {
-            //console.log(response);
+            console.log(response);
+            console.log("ADDED IMAGES CLARIFAI gameID " + gameID);
             console.log("Image uploaded to clarifai");
         },
         function(err) {
@@ -802,10 +803,9 @@ app.post('/api/games/:id/canvas/', [isAuthenticated, checkGameId], function (req
             function(response) {
                 var score = 0;
                 //console.log(response);
-                //console.log(response);
-                console.log("Calculated image similarity score");
+                //console.log("Calculated image similarity score");
                 // Find the similarity for the image ID of this game, then return the score
-                console.log(response.hits.length);
+                //console.log(response.hits.length);
                 for (var index = 0; index < response.hits.length; index++) {
                     //console.log("hit id is: " + response.hits[index].input.id);
                     //console.log("gameid is: " + gameId)

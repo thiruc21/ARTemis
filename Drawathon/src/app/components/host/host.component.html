@@ -7,7 +7,7 @@
     <div *ngFor="let player1 of teams[0]">
         <p class="player">{{player1}}</p>
     </div>
-    <p [ngStyle]="{ 'display': resultD }">Image Comparison Results: </p>
+    <p [ngStyle]="{ 'display': resultD }">Image Comparison Results: {{result1}}</p>
   </div>
   <div class="gtimer">
     <p>{{timeText}}</p>
@@ -21,6 +21,6 @@
     <div *ngFor="let player2 of teams[1]">
       <p class="player">{{player2}}</p>
     </div>
-    <p [ngStyle]="{ 'display': resultD }">Image Comparison Results: </p>
+    <p [ngStyle]="{ 'display': resultD }">Image Comparison Results: {{result2}}</p>
   </div>
 </div>
