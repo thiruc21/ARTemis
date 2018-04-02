@@ -38,11 +38,29 @@ export class PannelComponent implements OnInit {
   }
   signOut() {
     var user = this.user;
+    this.exit();
+    setTimeout(() => {
+      var api = this.apiModule;
+      var rtr = this.router;
+      this.apiModule.signout(function(err, res){
+        if (err) console.log(err);
+        else {
+          user = api.getCurrentUser();
+          rtr.navigate(['/']);
+          window.location.reload()
+        }
+        });
+    }, 1000);
+    
+  }
+  home() {
+    this.exit();
+    this.router.navigate(['/']);
+  }
+  exit() {
     var api = this.apiModule;
-    var check = true;
     var lob = this.apiModule.getLobby();
     if (lob) { // Make sure player leaves all associated games before signing out.
-      check = false;
       if (lob.host == this.user) {
         this.apiModule.removeGame(lob._id, function(err){
           if (err) console.log("Failed to remove game\n" + err);
@@ -57,17 +75,5 @@ export class PannelComponent implements OnInit {
       }
       this.running = false;
     }
-    setTimeout(() => {
-      var rtr = this.router;
-      this.apiModule.signout(function(err, res){
-        if (err) console.log(err);
-        else {
-          user = api.getCurrentUser();
-          rtr.navigate(['/']);
-          window.location.reload()
-        }
-        });
-    }, 1000);
-    
   }
 }

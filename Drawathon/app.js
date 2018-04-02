@@ -489,7 +489,6 @@ app.patch('/api/games/:id/', [isAuthenticated, checkGameId], function (req, res,
                 
                 dbo.collection("game_joined").find({gameId: ObjectId(gameId) }).toArray(function(err, playerEntries) {
                     if (err) return res.status(500).end(" Server side error");
-                    
                     updateWinnersLosers(playerEntries, function(err, result) {
                         if (err) return res.status(500).end(err);
                         return res.json("winning players!");
@@ -779,7 +778,7 @@ function removeFromClarifai (gameID, callback){
 app.post('/api/games/:id/canvas/', [isAuthenticated, checkGameId], function (req, res, next) {
     // Get curr username
     var host = req.session.username;
-    var provider = req.session.authProvider;
+    var provider = req.session.authProv;
     var gameId = req.params.id;
     req.checkBody('img', 'Valid canvas base64 encoded string required!').exists().notEmpty()
     var canvasImg = req.body.img;
@@ -797,14 +796,13 @@ app.post('/api/games/:id/canvas/', [isAuthenticated, checkGameId], function (req
         appC.inputs.search({ input: {base64: canvasImg} }).then(
             function(response) {
                 var score = 0;
-                console.log(response);
+                //console.log(response);
                 console.log("Calculated image similarity score");
                 // Find the similarity for the image ID of this game, then return the score
                 for (var index = 0; index < response.hits.length; index++) {
                     // Get the image with the current game's ID
                     if (response.hits[index].input.id == gameId) {
                         score = response.hits[index].score;
-                        //console.log(response.hits[index]);
                         console.log("Similarity score is " + score)
                         return res.json(score);
                     } 
@@ -813,6 +811,7 @@ app.post('/api/games/:id/canvas/', [isAuthenticated, checkGameId], function (req
             },
             function(err) {
                 console.log(err);
+                return res.status(500).end(err);
             }
         );
     })

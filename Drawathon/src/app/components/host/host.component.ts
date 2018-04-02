@@ -12,8 +12,9 @@ export class HostComponent implements OnInit {
   running:boolean;
   game:any;
   players: any[];
-  team1: string[];
-  team2: string[];
+  teams: string[][];
+
+  resultD: string;
 
   private api:ApiModule;
   constructor(public router: Router) { }
@@ -25,50 +26,54 @@ export class HostComponent implements OnInit {
   // Canvas Draw Variables
   private canvasElem: HTMLCanvasElement[];
   private ctx: CanvasRenderingContext2D[];
-  strokes: any[];
-
-   // Controls display of lobby and game.
-   gameStatus:string;
-
+  private strokes: any[];
+  results: string[][];
   // Peering
   public myPeerId: string[];
   public peer: any[];
 
-  // Update loop
-  private check:boolean;
-
-
   ngOnInit() {
-    this.running = true; // Flag for timeout loops. If we ever leave, we make sure this is set to false.
+    // Load API
     this.api = new ApiModule();
+
+    // Declare Variables
     this.game = this.api.getLobby();
-    this.gameStatus = "not started";
+    this.resultD = "none";
+
     this.peer = [null, null];
     this.myPeerId = [null, null];
     this.canvasElem = [null, null];
     this.ctx = [null, null];
     this.strokes = [[], []];
+    this.teams = [[], []];
+    this.results = [];
+
+    // Timer values.
+    this.timeText = "Game Starts in:"
+    this.timeVal = 5;
+
+    // Set Flags
+    this.running = true; // Flag for timeout loops. If we ever leave, we make sure this is set to false.
+
+
+    // Player's display logic.
     var players = this.players;
-    if (this.gameStatus == "not started"){
-      this.timeText = "Game Starts in:"
-      this.timeVal = 5;
-    }
     this.api.getPlayers(this.game._id, function(err, res){
       if (err) console.log(err);
       else players = res;
     });
     setTimeout(() => {
       if (players) {
-        this.team1 = [];
-        this.team2 = [];
+        this.teams = [[], []];
         this.players = players;
         var i = 0;
         for (i = 0; i < this.players.length; i++) {
-          if (this.team1.length <= this.team2.length) this.team1.push(this.players[i].user);
-          else this.team2.push(this.players[i].user); // Even distribution of teamMembers.
+          this.teams[this.players[i].teamNum].push(this.players[i].user); // Distribution of team members.
         }
       }
     }, 500);
+
+    // Generate both peerIds
     this.peer[0] = new Peer({host : "lightpeerjs.herokuapp.com",
                           secure : true,
                           path : "/peerjs",
@@ -96,43 +101,41 @@ export class HostComponent implements OnInit {
     // End off with initing the canvasi;
     this.canvasElem[0] = this.canvas1.nativeElement;
     this.canvasElem[1] = this.canvas2.nativeElement;
-    this.ctx[0] = this.canvasElem[0].getContext('2d');
-    this.ctx[1] = this.canvasElem[1].getContext('2d');
-    this.ctx[0].lineJoin = "round";
-    this.ctx[1].lineJoin = "round";
-    var peerDraw:any[] = this.strokes;
-    // Listeners
-    this.peer[0].on('connection', function(connection) {
-      connection.on('data', function(data){
-        while (data.length > 0) {
-          var smtn = data.shift();
-          peerDraw[0].push(smtn);
-        }
-      });
-    });
-    this.peer[1].on('connection', function(connection) {
-      connection.on('data', function(data){
-        while (data.length > 0) {
-          var smtn = data.shift();
-          peerDraw[1].push(smtn);
-        }
-      });
-    });
-    this.check = true;
-    this.keepAlive(0);
-    this.keepAlive(1);
+
+    this.initCanvas(0);
+    this.initCanvas(1);
+    
+    // Start update loop and game start timer.
     this.timeOut();
     this.timer();
   }
-  timeOut() {
-    if (this.running) {
-      setTimeout(() => {
-        this.update(0);
-        this.update(1);
-        if (this.check) this.timeOut();
-      }, 300);
-    }
+
+  initCanvas(i) {
+    this.ctx[i] = this.canvasElem[i].getContext('2d');
+    this.ctx[i].lineJoin = "round";
+    this.ctx[i].lineWidth = 20;
+
+    // Open Listener for canvas
+    var peerDraw:any[] = this.strokes;
+    this.peer[i].on('connection', function(connection) {
+      connection.on('data', function(data){
+        while (data.length > 0) {
+          var smtn = data.shift();
+          peerDraw[i].push(smtn);
+        }
+      });
+    });
+    this.keepAlive(i);
   }
+
+  timeOut() { // Update loop.
+    setTimeout(() => {
+      this.update(0);
+      this.update(1);
+      if (this.running) this.timeOut();
+    }, 300);
+  }
+
   update(i) {
     setTimeout(() => { // This is here to make the canvas's both update async rather than having it update one first.
       while (this.strokes[i].length > 0) {
@@ -150,72 +153,83 @@ export class HostComponent implements OnInit {
     this.ctx[i].strokeStyle = color;
     this.ctx[i].closePath();
     this.ctx[i].stroke();
-  
   }
 
 
   countDown(){
-    var error:boolean = false;
-    var game = null;
+    var end:number = null;
     this.api.getGame(this.game._id, function(err, res){
-      if (err) { // Unexpected end of game, game Id doesnt exist. Means the game has been stoped serverside, reset.
-        console.log(err);
-        error = true;
-      }
-      else {
-        game = res;
-      }
+      if (err) console.log(err);
+      else end = res.endTime;
     });
     setTimeout(() => {
-      if (error) { // Redirect back on error.
-        this.exit();
-        this.router.navigate(['/']); 
-      } else {
-        this.timeText ="Time Left:";
-        var curr = new Date().getTime();
-        this.timeVal = Math.floor((game.endTime - curr) / 1000);
-        console.log(this.timeVal);
-        if (this.timeVal <= 0){
-          var imgData1 = this.canvasElem[0].toDataURL();
-          var imgData2 = this.canvasElem[1].toDataURL();
-          console.log("Canvas elem 1", imgData1);
-          console.log("Canvas elem 2", imgData2);
-          console.log("Game ID is:" + this.game._id);
-          this.api.findSimilarity(this.game._id, imgData1, function(err, res) {
-            if (err) {
-              console.log(err);
-            } else {
-              console.log(res);
-            }
-          });
-          //this.exit();
-          
-        } 
-        else {
-          this.timeVal = this.timeVal - 1;
-          console.log(this.timeVal)
-          this.countDown();
-        }
+      this.timeText ="Time Left:";
+      var curr = new Date().getTime();
+      this.timeVal = Math.floor((end - curr) / 1000);
+      if (this.timeVal <= 0) this.compareImages();
+      else {
+        this.timeVal = this.timeVal - 1;
+        this.countDown();
       }
     }, 1000);
   }
 
-  timer() {
-    setTimeout(() => {
-      if (this.gameStatus == "not started"){
-        if (this.timeVal == 0){
-          this.timeText ="Game Begins!";
-          this.gameStatus = "started";
-          this.timeVal = null;
-          this.countDown();
-        } 
-        else {
-          this.timeVal = this.timeVal - 1;
-          console.log(this.timeVal)
-          this.timer();
-        }
+  compareImages(){
+    var result:string [][] = this.results;
+    var imgData1 = this.canvasElem[0].toDataURL();
+    var imgData2 = this.canvasElem[1].toDataURL();
+    imgData1 = imgData1.substring(imgData1.indexOf(',')+1);
+    imgData2 = imgData2.substring(imgData2.indexOf(',')+1);
+    this.api.findSimilarity(this.game._id, imgData1, function(err, res) {
+      if (err) console.log(err);
+      else result.push(["0", res]);
+    });
+    this.api.findSimilarity(this.game._id, imgData2, function(err, res) {
+      if (err) console.log(err);
+      else result.push(["1", res]);
+    });
+    this.wait()
+  }
+
+  wait() {
+    if (!this.running) return; // Exit on not running. 
+    var check = false;
+    if (this.results.length >= 2) { // Got back results.
+      var winner:number = null;
+      if (parseInt(this.results[0][1]) >= parseInt(this.results[1][1])) winner = parseInt(this.results[0][0])
+      else winner = parseInt(this.results[0][0])
+      this.api.endGame(this.game._id, winner, function(err) {
+        if (err) console.log("Could not end game\n" + err);
+        else check = true;
+      });
+    }
+    setTimeout(() => { // Game starts, enable all child components, start countdown timer.
+      if (check) {
+        this.running = false;
+        this.resultD = "flex"; // Show results.
+        // Remove game.
+        this.api.removeGame(this.game._id, function(err) {
+          if (err) console.log("Could not remove game\n" + err);
+        });
       }
-      else this.timer();
+      else this.wait();
+    }, 1000);
+  }
+
+  leave() {
+    this.exit('/');
+  }
+
+  timer() {
+    if (!this.running) return; // Exit on not running. 
+    setTimeout(() => { // Game starts, enable all child components, start countdown timer.
+      if (this.timeVal == 0){
+        this.timeText ="Game Begins!";
+        this.countDown();
+      } else { // Keep counting down.
+        this.timeVal = this.timeVal - 1;
+        this.timer();
+      }
     }, 1000);
   }
 
@@ -228,9 +242,11 @@ export class HostComponent implements OnInit {
        if (this.running) this.keepAlive(i);
     }, 25000);
   }
-  exit() { // Standard exit code; Stops all timer flags.
+
+  exit(route: string) {
+    this.running = false;
     this.timeText ="Game Over!";
     this.timeVal = null;
-    this.running = false;
+    this.router.navigate([route]);
   }
 }

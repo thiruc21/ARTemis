@@ -47,9 +47,11 @@ export class ResultComponent implements OnInit {
       else {
         var i = 0;
         for (i = 0; i < res.length; i++) { // Go through all players.
-          if (user == res[i].user && res[i].winner) win = true; // Check if player needs to be kicked.
+          if (res[i].winner) {
+            check = true;
+            if (user == res[i].user) win = true; // Check if player needs to be kicked.
+          }
         }
-        check = true;
       }
     }); 
     setTimeout(() => {

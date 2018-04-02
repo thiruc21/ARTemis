@@ -134,9 +134,6 @@ export class ApiModule implements OnInit {
     this.send("GET", "/api/games/" + gameId + "/image/", null, callback);
   }
 
-//public getPeerIds = function(gameId, callback) { 
-  //  this.send("GET", "/api/games/" + gameId + "/joined/ids", null, callback);
-  //}
 
   /* Returns information about the game  (including the host's peerids) */
   public getGameInfo = function(gameId, callback) {

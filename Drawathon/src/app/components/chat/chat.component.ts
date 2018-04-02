@@ -11,8 +11,8 @@ export class ChatComponent implements OnInit {
   public myPeerId:string;
   public myPeer:string;
   public recieved:boolean; 
-  peer;
-  public disabled:boolean = false;
+  private peer;
+  public disabled:boolean;
   public running:boolean;
   btnDisplay:string;
   textelem:HTMLTextAreaElement;
@@ -20,19 +20,30 @@ export class ChatComponent implements OnInit {
   private api:ApiModule;
   constructor() { }
   @ViewChild('textarea') public textarea:ElementRef;
-  @ViewChild('peer') public peerId:ElementRef;
   @ViewChild('content') public container:ElementRef;
 
   ngOnInit() {
-    this.running = true;
+    // Load API
     this.api = new ApiModule();
+
+    // Declare Variables:
     this.textelem = this.textarea.nativeElement;
     this.divelem = this.container.nativeElement;
-    //this.textelem.disabled = this.disabled;
+
+    this.messages = [];
+    this.myPeerId = null;
+    this.myPeer = null;
+
+    // Set Flags
+    this.running = true; // Flag for running. Default true.
+    this.disabled = true; //Flag for disabled. Default true.
+
+    // Display Logic
+    this.textelem.disabled = this.disabled;
     if (this.textelem.disabled) this.btnDisplay = "none";
     else this.btnDisplay = "flex";
-    this.messages = [];
-    this.myPeerId = "null";
+
+    // Generate peerId
     this.peer = new Peer({host : "lightpeerjs.herokuapp.com",
                           secure : true,
                           path : "/peerjs",
@@ -42,21 +53,21 @@ export class ChatComponent implements OnInit {
       console.log(id);
     });
     setTimeout(() => {
-      this.myPeerId = this.peer.id;
-      console.log(this.myPeerId);
-    },2000);
-    //var messages:string[] = this.messages;
-    var me:any = this;
-    var func:(me:this, data:string) => void = this.addMessage;
-    // Receive the data
+      this.myPeerId = this.peer.id; // Update myPeer.
+    }, 2000);
+
+    var me:any = this; // Class declaration.
+    var func:(me:this, data:string) => void = this.addMessage; // Function for callback.
+    // Open listener.
     this.peer.on('connection', function(connection) {
       connection.on('data', function(data){
           //messages.push(data);
           func(me, data);
       });
     });
-    //this.timeOut();
-    this.keepAlive();
+
+    this.timeOut(); // Disabled update loop.
+    this.keepAlive(); // Keep alive for peerserver.
   }
   // Push the message, connect to the peer, and send message to the peer
   addMessage(me, data) {
@@ -65,49 +76,35 @@ export class ChatComponent implements OnInit {
     this.divelem.scrollBy(0, 50);
   }
   submitMessage() {
-    if (this.recieved && this.myPeer != "null" && this.textelem.value != "") {
-      var text = this.textelem.value;
+    var text = this.textelem.value;
+    if (this.recieved && this.myPeer && text != "") { // If we recieved, its connected, and there is something typed.
       var me = this.api.getCurrentUser();
-      this.messages.push(me + ": " + text);
-      this.textelem.value = "";
+      this.messages.push(me + ": " + text); // Push messages onto local chat.
+      this.textelem.value = ""; // Empty text box.
       // Connect to other peer and send message
-      var otherPeer = this.peer.connect(this.myPeer);
+      var otherPeer = this.peer.connect(this.myPeer); // Connect to other peer.
       otherPeer.on('open', function(){
-        otherPeer.send(me + ": " + text);
+        otherPeer.send(me + ": " + text); // Send text.
       });
-      this.divelem.scrollTo(0, this.divelem.scrollHeight);
+      this.divelem.scrollTo(0, this.divelem.scrollHeight); // Scroll to bottom.
       this.divelem.scrollBy(0, 50);
     }
   }
-  enter() {
-    console.log("submitting message");
-    this.submitMessage();
-  }
+
   timeOut(){
-    // Update messages every second
-    setTimeout(() => {
-      this.update();
-      this.timeOut();
+    setTimeout(() => { // Checks if it needs to update chat disabled status.
+      this.textelem.disabled = this.disabled;
+      if (this.textelem.disabled) this.btnDisplay = "none";
+      else this.btnDisplay = "flex";
+      if (this.running && this.textelem.disabled) this.timeOut();
     }, 1000);
   }
 
-  
   keepAlive(){
-    // Keep the peer alive as long as on page
-    setTimeout(() => {
-       // Connect to other peer and send message
-       console.log("KEEP alive 4 lyfe")
-       var conn = this.peer.connect(this.peerId.nativeElement.value);
+    setTimeout(() => { // Keep the peer alive as long as on page
+      var conn = this.peer.socket.send({
+        type: 'ping'});
        if (this.running) this.keepAlive();
     }, 25000);
   }
-  // Update 
-  update(){
-    this.textelem.disabled = this.disabled;
-    if (this.textelem.disabled) this.btnDisplay = "none";
-    else this.btnDisplay = "flex";
-    //var message = this.messages.pop();
-    //this.messages.push(message);
-  }
-  
 }

@@ -123,12 +123,6 @@ export class LobbyComponent implements OnInit {
     this.router.navigate([route]);
   }
 
-  debug() {
-    console.log("clicked debug");
-    this.left = false;
-    this.router.navigate(['/game']);
-  }
-
   leave(){ // Leave button that serves as a delete game for host.
     if (!this.running) return; // Prevents edge cases, like button mashing.
 

@@ -5,18 +5,20 @@
       <input #pass class="password" type="password" placeholder="Password">
       <button class="button">Submit</button>
     </form> 
-  
-  <form action="/users/oauth/google/" method="GET">
-    <input type="submit" value="Login from Google">
-  </form>
 
-  <form action="/users/oauth/facebook/" method="GET">
-    <input type="submit" value="Login from facebook">
-  </form>
+    <a class="uplink" routerLink='/signup'>Need an account? Sign Up here!</a>
 
-  <form action="/users/oauth/twitch/" method="GET">
-    <input type="submit" value="Login from twitch">
-  </form>
-  <a class="uplink" routerLink='/signup'>Need an account? Sign Up here!</a>
+    <form action="/users/oauth/google/" method="GET">
+      <button type="submit" class="loginBtn loginBtn--google" value="Login from Google">Login from Google</button>
+    </form>
+
+    <form action="/users/oauth/facebook/" method="GET">
+      <button type="submit" class="loginBtn loginBtn--facebook" value="Login from Facebook">Login from Facebook</button>
+    </form>
+
+    <form action="/users/oauth/twitch/" method="GET">
+      <button type="submit"  class="loginBtn loginBtn--twitch" value="Login from Twitch">Login from Twitch</button>
+    </form>
+    
   <h1 class="alert">{{response}}</h1>             
 </div>

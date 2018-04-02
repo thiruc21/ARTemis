@@ -4,22 +4,21 @@
   <div class="teamLeft">
     <div *ngFor="let player1 of teams[0];  let i1 = index" class="teamPlayer">
       <p>{{player1}}</p>
-      <img src="./assets/delete.png" alt="X" class="kickImg" [ngStyle]="{ 'display': hostD }" (click)="kick(0, i1)">
+      <img src="./assets/delete.png" alt="X" class="kickImg clickable" [ngStyle]="{ 'display': hostD }" (click)="kick(0, i1)">
     </div>
   </div>
   <div class="hostCenter">
     <h2>Hosted by: {{host}}</h2>
 
     <input type="file" [ngStyle]="{ 'display': hostD }" #input required>
-    <a (click)="startGame()" [ngStyle]="{ 'display': hostD }" class="startButton">{{startText}}</a>
+    <a (click)="startGame()" [ngStyle]="{ 'display': hostD }" class="startButton clickable">{{startText}}</a>
     
-    <button class="leaveButton" (click)="leave()">Leave Lobby</button>
-    <button (click)="debug()">Debug</button>
+    <button class="leaveButton clickable" (click)="leave()">Leave Lobby</button>
   </div>
   <div class="teamRight">
     <div *ngFor="let player2 of teams[1];  let i2 = index" class="teamPlayer">
       <p>{{player2}}</p>
-      <img src="./assets/delete.png" alt="X" class="kickImg" [ngStyle]="{ 'display': hostD }" (click)="kick(1, i2)">
+      <img src="./assets/delete.png" alt="X" class="kickImg clickable" [ngStyle]="{ 'display': hostD }" (click)="kick(1, i2)">
     </div>
   </div>
 </div>
