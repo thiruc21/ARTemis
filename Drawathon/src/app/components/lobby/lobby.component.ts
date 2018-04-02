@@ -67,7 +67,6 @@ export class LobbyComponent implements OnInit {
   }
   
   timeOut() { // Short-Poll Function: it check if new players are in and if game has declared as started from host. Redirects to main on disconnect.
-    console.log(this.panel.running);
     if (this.panel.running != null && (!this.panel.running)) this.running = false; // Flag from panel to tell if user signed out in lobby.
     if (!this.running) return; // Exit on not running. 
     
