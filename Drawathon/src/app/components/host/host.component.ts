@@ -35,7 +35,6 @@ export class HostComponent implements OnInit {
   public peer: any[];
 
   ngOnInit() {
-    console.log("first initialize oninit");
     // Load API
     this.api = new ApiModule();
 
@@ -90,17 +89,17 @@ export class HostComponent implements OnInit {
                           port : 443,
                           debug: false});
     this.peer[0].on('open', function(id){
-      console.log(id);
+      console.log("Peer1 ID of Host: " + id);
     });
     this.peer[1].on('open', function(id){
-      console.log(id);
+      console.log("Peer2 ID of Host: " + id);
     });
     setTimeout(() => {
       this.myPeerId[0] = this.peer[0].id;
       this.myPeerId[1] = this.peer[1].id;
       this.api.updateHostInfo(this.game._id, this.myPeerId[0], this.myPeerId[1], function(err) {
         if (err) console.log(err);
-        else console.log("sent peerIds");
+        else console.log("peerIds sent");
       });
     },1000);
     // End off with initing the canvasi;
@@ -131,7 +130,6 @@ export class HostComponent implements OnInit {
       });
     });
     this.keepAlive(i);
-    console.log("inited everything");
   }
 
   timeOut() { // Update loop.
@@ -198,8 +196,6 @@ export class HostComponent implements OnInit {
   }
 
   wait() {
-    console.log("wait enter" + this.timeVal);
-
     if (!this.running) return; // Exit on not running. 
     var check = false;
     if (this.results.length >= 2) { // Got back results.
@@ -211,18 +207,12 @@ export class HostComponent implements OnInit {
       this.api.endGame(this.game._id, parseInt(winner), function(err, res) {
         if (err) console.log("Could not end game\n" + err);
         else {
-          console.log("endedgame");
           check = true;
         }
       });
     }
     setTimeout(() => { // Game starts, enable all child components, start countdown timer.
-      console.log("RESULTS" + this.results);
-      console.log("dog");
-      console.log("check is " + check);
       if (check) {
-        console.log("RESULTS" + this.results);
-        console.log("cat");
         this.running = false;
         // Can appear in any order, so account for this to get the right results
         if (this.results[0][0] == "0") { 

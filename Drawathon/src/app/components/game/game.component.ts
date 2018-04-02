@@ -99,7 +99,6 @@ export class GameComponent implements OnInit {
     var singlePlayer:boolean = true; // Single Player flag, assume the user is a single player until proven otherwise.
 
     if (!this.sent) { // Has not sent yet, try sending.
-      console.log("Waiting on send")
       if (this.canvas.myPeerId != null && this.chat.myPeerId != null) { // Child components have not generated values.
         this.api.updateUserInfo(this.gameId, this.canvas.myPeerId, this.chat.myPeerId, function (err, res) { // Try Sending data.
           if (err) { // Error, cannot send.
@@ -110,7 +109,6 @@ export class GameComponent implements OnInit {
         });
       }
     } else if (this.recieved == false) { // Has sent, has not recieved, try recieveing.
-      console.log("Waiting on recieve");
       this.api.getPlayers(this.gameId, function (err, players) { // Get all players to find our teammate and their peerIds.
         if (err) { // Error, cannot connect.
           console.log("Could not get player peerIds.\n" + err)
@@ -208,7 +206,6 @@ export class GameComponent implements OnInit {
       if (this.timeVal <= 0) this.exit('/result'); // If countdown is over, go to results.
       else {
         this.timeVal = this.timeVal - 1;
-        console.log(this.timeVal)
         this.countDown();
       }
     }, 1000);

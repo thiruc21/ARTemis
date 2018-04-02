@@ -25,7 +25,6 @@ export class SignupComponent implements OnInit {
     this.response="";
     this.username = this.user.nativeElement.value;
     this.password = this.pass.nativeElement.value;
-    console.log("Signing up with: " + this.username + " , " + this.password);
     var rtr = this.router;
     // Pointer to own class and a function in it which we use in callback
     var me:any = this;

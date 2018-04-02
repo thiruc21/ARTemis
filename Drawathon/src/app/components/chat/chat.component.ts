@@ -50,7 +50,7 @@ export class ChatComponent implements OnInit {
                           port : 443,
                           debug: false});     
     this.peer.on('open', function(id){
-      console.log(id);
+      console.log("Chat peer ID:" + id);
     });
     setTimeout(() => {
       this.myPeerId = this.peer.id; // Update myPeer.
@@ -77,9 +77,6 @@ export class ChatComponent implements OnInit {
   }
   submitMessage() {
     var text = this.textelem.value;
-
-    console.log("hi" + text);
-    console.log("recieved? " + this.recieved)
     if (this.recieved  && text != "") { // If we recieved, its connected, and there is something typed.
       var me = this.api.getCurrentUser();
       this.messages.push(me + ": " + text); // Push messages onto local chat.

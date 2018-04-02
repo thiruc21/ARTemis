@@ -80,7 +80,6 @@ export class MainComponent implements OnInit {
   clickGame(i) { //User is joing a lobby at index i.
     var check:boolean = this.check;
     this.api.pushLobby(this.gamesData[i]);
-    console.log(i, this.gamesData[i]);
     this.api.joinGame(this.gamesData[i]._id, function(err, res){ //Join game with null cavnasId and chatId.
       if (err) console.log(err);
       else {

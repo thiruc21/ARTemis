@@ -73,7 +73,7 @@ export class CanvasComponent implements OnInit {
                           port : 443,
                           debug: false});     
     this.peer.on('open', function(id){
-      console.log(id);
+      console.log("Canvas peer ID: " + id);
     });
     setTimeout(() => {
       this.myPeerId = this.peer.id; // Update peer info.
