@@ -523,7 +523,7 @@ function updateWinnersLosers(playerEntries, callback) {
 async function updateUsers(winners, losers, callback) {
     var allDone = winners.length + losers.length
     var count = 0;
-    for(var i = 0; i < (winners).length; i++){ 
+    for (var i = 0; i < (winners).length; i++){ 
         (function(user, authProvider){ 
             dbo.collection("users").update({username:user, authProvider:authProvider},  
                 {"$inc":{ wins:1 }}, function(err, data) {
@@ -534,7 +534,7 @@ async function updateUsers(winners, losers, callback) {
         } (winners[i].user,winners[i].authProvider));
     };
 
-    for(var i = 0; i < (losers).length; i++){ 
+    for (var i = 0; i < (losers).length; i++){ 
         (function(user, authProvider){ 
             dbo.collection("users").update({username:user, authProvider:authProvider},  
                 {"$inc":{losses:1 }}, function(err, data) {
@@ -544,15 +544,6 @@ async function updateUsers(winners, losers, callback) {
             });
         } (losers[i].user,losers[i].authProvider));
     };
-
-    /*
-    var loserPromise =losers.forEach(function(user, callback){
-        prom2 = dbo.collection("users").updateMany({user:user.user, user:user.authProvider}, 
-            {"$inc":{ losses: 1 }}, function(err, result) {
-                if (err) return callback(err, null);});
-        res.push(prom2);
-    });
-    */
 }
 
 
@@ -568,6 +559,20 @@ app.get('/api/games/:id/', [isAuthenticated, checkGameId], function (req, res, n
         return res.json(game);
     });
 });
+
+
+app.get('/api/games/:auth/:user/playerstats/', isAuthenticated, function (req, res, next) {
+    req.checkParams('auth', 'username required!').exists().notEmpty();
+    req.checkParams('auth', 'authentication provider required!').exists().notEmpty();
+    authProv = req.params.auth;
+    user = req.params.user;
+
+    dbo.collection("users").findOne({user:user, authProvider:authProv}).toArray(function(err, user) {
+        if (err) return res.status(500).end(" Server side error");
+            return {user: user.wins, losses: user.losses};
+    });
+});
+
 
 // curl -k -b cookie.txt -H "Content-Type: application/json" -X PATCH -d '{"action":'generateId', 'team1Id": 1233, "team2Id": 12123}' https://localhost:3000/api/games/5aad97f9f4e28b075083ef9c/host/
 /* Patch a host's rtc ids for each team */
@@ -916,12 +921,13 @@ async function mongoSetup() {
             dbo.collection("images").drop();            
             dbo.collection("users").drop();            
             dbo.collection("game_joined").drop();  */
-
             
+            /*
             dbo.collection("users").find({username: "alice6"}).toArray(function(err, res) {
                 console.log(res);
                 res.map(x => console.log(x._id))
             });
+            */
             
         }        
     });

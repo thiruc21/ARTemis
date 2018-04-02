@@ -140,6 +140,10 @@ export class ApiModule implements OnInit {
     this.send("GET", "/api/games/"  + gameId + "/" , null, callback);
   }
 
+  /* Returns information about the game  (including the host's peerids) */
+  public getPlayerStats = function(user, authProv, callback) {
+    this.send("GET", "/api/users/"  + authProv  + "/" + user + "/playerstats/" , null, callback);
+  }
 
   /* Patch the host's ids for the game they are hosting */
   public sendHostIds = function(gameId, team1Id, team2Id, callback) {
@@ -151,16 +155,6 @@ export class ApiModule implements OnInit {
     this.send("PATCH", "/api/games/" + gameId + "/joined/", {chatId:chatId, canvasId:canvasId}, callback);
   }
 
-  /* to be implemented
-  public startGame = function(gameId, callback) {
-    this.send("POST", "/api/games/" + gameId + "/start/", null, callback);
-  }
-    }
-
-  public getResults = function(gameId, image, callback) { // Get back results of image comparison. should return null if results not calculated yet.
-    this.send("GET", "/api/games/" + gameId + "/joined/result", null, callback);
-  }
-*/
 
   //Local Storage
   public pushLobby = function(lobby) {
