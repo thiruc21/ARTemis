@@ -485,13 +485,13 @@ app.patch('/api/games/:id/', [isAuthenticated, checkGameId], function (req, res,
             {$set: {"winner": true}},               
             function(err, wrRes) {
                 if (err) return res.status(500).end(err);
-                //if (wrRes.modifiedCount == 0) return res.status(409).end("players for game " + gameId + " have already been assigned winners"); 
+                if (wrRes.modifiedCount == 0) return res.status(409).end("players for game " + gameId + " have already been assigned winners"); 
                 
                 dbo.collection("game_joined").find({gameId: ObjectId(gameId) }).toArray(function(err, playerEntries) {
                     if (err) return res.status(500).end(" Server side error");
                     updateWinnersLosers(playerEntries, function(err, result) {
                         if (err) return res.status(500).end(err);
-                        return res.json("winning players!");
+                        return res.json("Game Ends!!");
                     });
                 });
                 
