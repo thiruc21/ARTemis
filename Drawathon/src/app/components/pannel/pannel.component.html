@@ -3,6 +3,6 @@
     <a class="header clickable" (click)="home()">Drawathon</a>
     <a class="credits clickable" routerLink='/credits'>Credits</a>
     <p class="user_info">Welcome {{user}}</p>
-    <a #signout (click)="signOut()" class="btn clickable">Sign Out</a>
+    <a #signout routerLink='/' (click)="signOut()" class="btn clickable">Sign Out</a>
     <a #signin routerLink='/' class="btn clickable">Sign In</a>
 </div>
