@@ -451,7 +451,7 @@ app.patch('/api/games/:id/', [isAuthenticated, checkGameId], function (req, res,
     if (action === "Start")
         req.checkBody('time', 'Every game needs a time limit!').exists().notEmpty().isNumeric();
     if (action === "End") 
-        req.checkBody('teamNum', 'Every game needs a valid winning team!').exists().notEmpty().isNumeric().isIn(0, 1);
+        req.checkBody('teamNum', 'Every game needs a valid winning team!').exists().notEmpty().isNumeric().isIn([0, 1]);
     
     errors = req.validationErrors();
     if (errors) return res.status(400).send(errors[0].msg);
