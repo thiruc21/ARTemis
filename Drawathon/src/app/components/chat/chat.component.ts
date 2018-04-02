@@ -77,6 +77,9 @@ export class ChatComponent implements OnInit {
   }
   submitMessage() {
     var text = this.textelem.value;
+
+    console.log("hi" + text);
+    console.log("recieved? " + this.recieved)
     if (this.recieved && this.myPeer && text != "") { // If we recieved, its connected, and there is something typed.
       var me = this.api.getCurrentUser();
       this.messages.push(me + ": " + text); // Push messages onto local chat.

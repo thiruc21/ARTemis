@@ -40,6 +40,8 @@
 }
 
 .btn {
+    font: #0000EE;
+    font-style: underline;
     margin-top:18px;
     grid-area: 1 / 7 / span 1 / span 1;
     font-size:15px;
