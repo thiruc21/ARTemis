@@ -167,8 +167,10 @@ export class LobbyComponent implements OnInit {
        if (this.uploaded) { // Switch button and input to start game and time val.
          this.startText = "Start";
          this.inputElem.type="number";
+         this.inputElem.max = "600";
+         this.inputElem.min = "60";
          this.inputElem.placeholder="Seconds";
-         this.inputElem.value="50";
+         this.inputElem.value="60";
        }
       }, 2000);
   } else console.log("Please select an image first!");
@@ -181,7 +183,9 @@ export class LobbyComponent implements OnInit {
     var check:boolean = false;
     var time:number = 60; // Default time in seconds is 60 seconds or a minute.
     if (this.inputElem.value) time = parseInt(this.inputElem.value); // Get time if it exists.
-    this.api.startGame(this.gameId, time * 1000,function(err, res){ // Give time in ms.
+    if (time > 600) time = 600;
+    if (time < 60) time = 60;
+    this.api.startGame(this.gameId, time + 10 * 1000,function(err, res){ // Give time in ms.
         if (err) { // Error, cannot connect.
           console.log("Could not start game\n" + err)
         }
