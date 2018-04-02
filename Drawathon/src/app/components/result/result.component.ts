@@ -58,6 +58,7 @@ export class ResultComponent implements OnInit {
       if (check) {
         this.leaveText = "";
         this.count = 0;
+        this.resultEnd = "";
         if (win) this.resultText = "You Won!";
         else this.resultText = "You Lost.";
         this.running = false;

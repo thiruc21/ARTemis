@@ -119,7 +119,7 @@ export class GameComponent implements OnInit {
           players.forEach(function(player) { // Loop through until you find your team number.
             if (user == player.user) team = player.teamNum;
           });
-          if (team) { // If you don't have your team number already wait for next loop cycle.
+          if (team != null) { // If you don't have your team number already wait for next loop cycle.
             players.forEach(function(player) { // Loop through until you find your team mate.
               if (team == player.teamNum && user != player.user) {
                 otherPlayer = player;
