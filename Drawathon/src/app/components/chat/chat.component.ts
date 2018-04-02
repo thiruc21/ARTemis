@@ -80,18 +80,21 @@ export class ChatComponent implements OnInit {
 
     console.log("hi" + text);
     console.log("recieved? " + this.recieved)
-    if (this.recieved && this.myPeer && text != "") { // If we recieved, its connected, and there is something typed.
+    if (this.recieved  && text != "") { // If we recieved, its connected, and there is something typed.
       var me = this.api.getCurrentUser();
       this.messages.push(me + ": " + text); // Push messages onto local chat.
       this.textelem.value = ""; // Empty text box.
       // Connect to other peer and send message
-      var otherPeer = this.peer.connect(this.myPeer); // Connect to other peer.
-      otherPeer.on('open', function(){
-        otherPeer.send(me + ": " + text); // Send text.
-      });
+      if (this.myPeer) {
+        var otherPeer = this.peer.connect(this.myPeer); // Connect to other peer.
+        otherPeer.on('open', function(){
+          otherPeer.send(me + ": " + text); // Send text.
+        });
+      }
       this.divelem.scrollTo(0, this.divelem.scrollHeight); // Scroll to bottom.
       this.divelem.scrollBy(0, 50);
     }
+    else this.textelem.value = "";
   }
 
   timeOut(){
