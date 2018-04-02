@@ -22,6 +22,8 @@ export class HostComponent implements OnInit {
   // Values for game start timer.
   timeText:string;
   timeVal:number;
+  result1:string;
+  result2:string;
 
   // Canvas Draw Variables
   private canvasElem: HTMLCanvasElement[];
@@ -48,7 +50,9 @@ export class HostComponent implements OnInit {
     this.strokes = [[], []];
     this.teams = [[], []];
     this.results = [];
-
+    this.result1 = "";
+    this.result2 = "";
+  
     // Timer values.
     this.timeText = "Game Starts in:"
     this.timeVal = 5;
@@ -200,7 +204,8 @@ export class HostComponent implements OnInit {
     var check = false;
     if (this.results.length >= 2) { // Got back results.
       var winner:string = null;
-      if (parseInt(this.results[0][1]) >= parseInt(this.results[1][1])) winner = this.results[0][0]
+    
+      if (parseFloat(this.results[0][1]) >= parseFloat(this.results[1][1])) winner = this.results[0][0]
       else winner = this.results[1][0]
       console.log("Winner is : " + winner);
       this.api.endGame(this.game._id, parseInt(winner), function(err, res) {
@@ -219,7 +224,16 @@ export class HostComponent implements OnInit {
         console.log("RESULTS" + this.results);
         console.log("cat");
         this.running = false;
+        // Can appear in any order, so account for this to get the right results
+        if (this.results[0][0] == "0") { 
+          this.result1 = (parseFloat(this.results[0][1])*100).toString();
+          this.result2 = (parseFloat(this.results[1][1])*100).toString();
+        } else {
+          this.result1 = (parseFloat(this.results[1][1])*100).toString();
+          this.result2 = (parseFloat(this.results[0][1])*100).toString();
+        }
         this.resultD = "flex"; // Show results.
+
         // Remove game.
         this.api.removeGame(this.game._id, function(err, res) {
           if (err) console.log("Could not remove game\n" + err);

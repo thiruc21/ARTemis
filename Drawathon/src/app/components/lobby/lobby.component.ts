@@ -185,7 +185,7 @@ export class LobbyComponent implements OnInit {
     if (this.inputElem.value) time = parseInt(this.inputElem.value); // Get time if it exists.
     if (time > 600) time = 600;
     if (time < 60) time = 60;
-    this.api.startGame(this.gameId, time + 10 * 1000,function(err, res){ // Give time in ms.
+    this.api.startGame(this.gameId, (time + 20) * 1000,function(err, res){ // Give time in ms.
         if (err) { // Error, cannot connect.
           console.log("Could not start game\n" + err)
         }
