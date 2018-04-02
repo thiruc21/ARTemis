@@ -328,6 +328,7 @@ app.post('/signin/', [checkUsername, checkPassword], function (req, res, next) {
             path : '/', 
             maxAge: 60 * 60 * 24 * 7
         }));
+        return res.json("User " + username + " signed in");
     });
 });
 
