@@ -519,7 +519,7 @@ function updateWinnersLosers(playerEntries, callback) {
     updateUsers(winners, losers, callback);
 }
 
-async function updateUsers(winners, losers, callback) {
+async function updateUsers(winners, losers, callback) { // jshint ignore:line
     var allDone = winners.length + losers.length;
     var count = 0;
     var i;
@@ -895,7 +895,7 @@ function findGames(res, gameId, callback) {
     }); 
 }
 
-async function mongoSetup() {
+async function mongoSetup() { // jshint ignore:line
     MongoClient.connect(configFile.mongo.id, function(err, mongodb) {  
         if (err) console.log(err);
         if (!mongodb) console.log(err);
