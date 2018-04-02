@@ -334,6 +334,9 @@ app.post('/signin/', [checkUsername, checkPassword], function (req, res, next) {
 
 // Sign out of the current user
 app.get('/signout/', isAuthenticated, function (req, res, next) {
+
+    var host = req.session.username;
+    var provider = req.session.authProv;
     req.logOut();
     req.session.destroy();    
     res.setHeader('Set-Cookie', cookie.serialize('username', '', {
@@ -342,9 +345,8 @@ app.get('/signout/', isAuthenticated, function (req, res, next) {
     }));
 
     // Check if game has already been created
-    dbo.collection("games").findOne({host: host, authProvider:provider}, function(err, game) {
+    dbo.collection("games").deleteOne({host: host, authProvider:provider}, function(err, wrRes) {
         if (err) return res.status(500).end(err);
-        if (game) return res.status(409).end("User " + host + " already has a hosted game");
         return res.json("User signed out");
     });
 });
