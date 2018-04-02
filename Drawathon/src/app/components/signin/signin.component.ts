@@ -35,6 +35,7 @@ export class SigninComponent implements OnInit {
       if (err) respond(me, err);
       else {
         console.log(res);
+        apiModule.killLobby();
         rtr.navigate(['/main']);
       }
     });
