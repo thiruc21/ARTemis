@@ -9,10 +9,10 @@
 .container {
     width: auto;
     display: flex;
-    align-self: flex-end;
-    flex-direction: row;
+    flex-direction: column;
+    justify-self: flex-end;
 }
 .leave {
     height: 20px;
     width: 50px;
-}
+} 
