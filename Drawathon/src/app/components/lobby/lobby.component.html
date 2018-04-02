@@ -13,7 +13,7 @@
     <input type="file" class="clickable" [ngStyle]="{ 'display': hostD }" #input required>
     <a (click)="startGame()" [ngStyle]="{ 'display': hostD }" class="startButton clickable">{{startText}}</a>
     
-    <button class="leaveButton clickable" (click)="leave()">Leave Lobby</button>
+    <button class="leaveButton clickable2" (click)="leave()">Leave Lobby</button>
   </div>
   <div class="teamRight">
     <div *ngFor="let player2 of teams[1];  let i2 = index" class="teamPlayer">

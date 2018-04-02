@@ -3,7 +3,7 @@
     margin: -10px 0px 0px -10px;
     width: 100%;
     display: grid;
-    min-width: 780px;
+    min-width: 800px;
     grid-template-columns: 25px 30px 100px 1fr 75px 400px 150px;
     grid-template-rows: 1fr;
     height: 50px;
@@ -35,6 +35,9 @@
 }
 
 .user_info {
+    display:flex;
+    margin-right: 10px;
+    justify-self: flex-end;
     margin-top:18px;
     grid-area: 1 / 6 / span 1 / span 1;
 }
