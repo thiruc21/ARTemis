@@ -31,18 +31,22 @@
     width: 150px;
     background: grey;
     color:white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    display: grid;
+    grid-template-rows: 5px 10px 5px 40px 10px 80px;
+    grid-template-columns: 50px 80px 5px 10px 5px;
+    /*align-items: center;
+    justify-content: center;*/
 }
 
-
+.playerName {
+    width: auto;
+    height: 10px;
+    grid-area: 5 / 2 / span 1 / span 1;
+}
 .kickImg {
     width: 10px;
     height: 10px;
-    display:flex;
-    align-self: flex-start;
-    justify-self: flex-end;
+    grid-area: 2 / 4 / span 1 / span 1;
 }
 
 .hostCenter {
