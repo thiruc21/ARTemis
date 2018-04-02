@@ -33,6 +33,7 @@ export class HostComponent implements OnInit {
   public peer: any[];
 
   ngOnInit() {
+    console.log("first initialize oninit");
     // Load API
     this.api = new ApiModule();
 
@@ -78,12 +79,12 @@ export class HostComponent implements OnInit {
                           secure : true,
                           path : "/peerjs",
                           port : 443,
-                          debug: true});
+                          debug: false});
     this.peer[1] = new Peer({host : "lightpeerjs.herokuapp.com",
                           secure : true,
                           path : "/peerjs",
                           port : 443,
-                          debug: true});
+                          debug: false});
     this.peer[0].on('open', function(id){
       console.log(id);
     });
@@ -106,14 +107,14 @@ export class HostComponent implements OnInit {
     this.initCanvas(1);
     
     // Start update loop and game start timer.
-    this.timeOut();
     this.timer();
+    this.timeOut();
   }
 
   initCanvas(i) {
     this.ctx[i] = this.canvasElem[i].getContext('2d');
     this.ctx[i].lineJoin = "round";
-    this.ctx[i].lineWidth = 20;
+    this.ctx[i].lineWidth = 10;
 
     // Open Listener for canvas
     var peerDraw:any[] = this.strokes;
@@ -126,6 +127,7 @@ export class HostComponent implements OnInit {
       });
     });
     this.keepAlive(i);
+    console.log("inited everything");
   }
 
   timeOut() { // Update loop.
@@ -192,19 +194,29 @@ export class HostComponent implements OnInit {
   }
 
   wait() {
+    console.log("wait enter" + this.timeVal);
+
     if (!this.running) return; // Exit on not running. 
     var check = false;
     if (this.results.length >= 2) { // Got back results.
-      var winner:number = null;
-      if (parseInt(this.results[0][1]) >= parseInt(this.results[1][1])) winner = parseInt(this.results[0][0])
-      else winner = parseInt(this.results[0][0])
-      this.api.endGame(this.game._id, winner, function(err) {
+      var winner:string = null;
+      if (parseInt(this.results[0][1]) >= parseInt(this.results[1][1])) winner = this.results[0][0]
+      else winner = this.results[1][0]
+      console.log("Winner is : " + winner);
+      this.api.endGame(this.game._id, parseInt(winner), function(err) {
         if (err) console.log("Could not end game\n" + err);
-        else check = true;
+        else {
+          console.log("endedgame");
+          check = true;
+        }
       });
     }
     setTimeout(() => { // Game starts, enable all child components, start countdown timer.
+      console.log("RESULTS" + this.results);
+      console.log("dog");
       if (check) {
+        console.log("RESULTS" + this.results);
+        console.log("cat");
         this.running = false;
         this.resultD = "flex"; // Show results.
         // Remove game.

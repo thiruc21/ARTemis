@@ -107,7 +107,7 @@ export class ApiModule implements OnInit {
   }
 
   public endGame = function(gameId, teamNum, callback) {
-    this.send("PATCH", "/api/games/" + gameId + "/", {action:"End", winner: teamNum}, callback);
+    this.send("PATCH", "/api/games/" + gameId + "/", {action:"End", teamNum: teamNum}, callback);
   }
 
   public leaveGame = function(gameId, callback) {
