@@ -341,13 +341,21 @@ app.post('/signin/', [checkUsername, checkPassword], function (req, res, next) {
 
 // Sign out of the current user
 app.get('/signout/', isAuthenticated, function (req, res, next) {
+
+    var host = req.session.username;
+    var provider = req.session.authProv;
     req.logOut();
     req.session.destroy();    
     res.setHeader('Set-Cookie', cookie.serialize('username', '', {
           path : '/', 
           maxAge: 60 * 60 * 24 * 7 
     }));
-    res.json("User signed out");
+
+    // Check if game has already been created
+    dbo.collection("games").deleteOne({host: host, authProvider:provider}, function(err, wrRes) {
+        if (err) return res.status(500).end(err);
+        return res.json("User signed out");
+    });
 });
 
 // curl -k  -b cookie.txt -H "Content-Type: application/json" -X POST -d '{"title":"join THIS Lobby lol"}' https://localhost:3000/api/games/
