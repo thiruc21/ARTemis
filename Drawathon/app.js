@@ -340,7 +340,13 @@ app.get('/signout/', isAuthenticated, function (req, res, next) {
           path : '/', 
           maxAge: 60 * 60 * 24 * 7 
     }));
-    res.json("User signed out");
+
+    // Check if game has already been created
+    dbo.collection("games").findOne({host: host, authProvider:provider}, function(err, game) {
+        if (err) return res.status(500).end(err);
+        if (game) return res.status(409).end("User " + host + " already has a hosted game");
+        return res.json("User signed out");
+    });
 });
 
 // curl -k  -b cookie.txt -H "Content-Type: application/json" -X POST -d '{"title":"join THIS Lobby lol"}' https://localhost:3000/api/games/
