@@ -791,10 +791,10 @@ app.post('/api/games/:id/canvas/', [isAuthenticated, checkGameId], function (req
     findGames(res, gameId, function(err, game) {
         if (err) return res.status(500).end(" Server side error");
         if (!game) return res.status(409).end("game with id " + gameId + " not found"); 
-        console.log("Host is " + host);
-        console.log("Host should be " + game.host);
-        console.log("Provider is " + provider);
-        console.log("Authprovider should be " + game.authProvider);
+        //console.log("Host is " + host);
+        //console.log("Host should be " + game.host);
+        //console.log("Provider is " + provider);
+        //console.log("Authprovider should be " + game.authProvider);
         if (game.host !== host || game.authProvider !== provider) 
             return res.status(409).end("User " + host + " is not the host of this game");
         // Get canvas similarity score
@@ -802,9 +802,13 @@ app.post('/api/games/:id/canvas/', [isAuthenticated, checkGameId], function (req
             function(response) {
                 var score = 0;
                 //console.log(response);
+                //console.log(response);
                 console.log("Calculated image similarity score");
                 // Find the similarity for the image ID of this game, then return the score
+                console.log(response.hits.length);
                 for (var index = 0; index < response.hits.length; index++) {
+                    //console.log("hit id is: " + response.hits[index].input.id);
+                    //console.log("gameid is: " + gameId)
                     // Get the image with the current game's ID
                     if (response.hits[index].input.id == gameId) {
                         score = response.hits[index].score;

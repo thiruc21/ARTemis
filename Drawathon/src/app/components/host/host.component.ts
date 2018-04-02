@@ -203,7 +203,7 @@ export class HostComponent implements OnInit {
       if (parseInt(this.results[0][1]) >= parseInt(this.results[1][1])) winner = this.results[0][0]
       else winner = this.results[1][0]
       console.log("Winner is : " + winner);
-      this.api.endGame(this.game._id, parseInt(winner), function(err) {
+      this.api.endGame(this.game._id, parseInt(winner), function(err, res) {
         if (err) console.log("Could not end game\n" + err);
         else {
           console.log("endedgame");
@@ -221,7 +221,7 @@ export class HostComponent implements OnInit {
         this.running = false;
         this.resultD = "flex"; // Show results.
         // Remove game.
-        this.api.removeGame(this.game._id, function(err) {
+        this.api.removeGame(this.game._id, function(err, res) {
           if (err) console.log("Could not remove game\n" + err);
         });
       }
