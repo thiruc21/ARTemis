@@ -345,8 +345,9 @@ app.get('/signout/', isAuthenticated, function (req, res, next) {
     }));
 
     // Check if game has already been created
-    dbo.collection("games").deleteOne({host: host, authProvider:provider}, function(err, wrRes) {
+    dbo.collection("games").deleteOne({host: host, authProvider:provider}, function(err, game) {
         if (err) return res.status(500).end(err);
+        if (wrRes.deletedCount === 0) return res.status(409).end("game " + gameId + " was not deleted");
         return res.json("User signed out");
     });
 });
@@ -524,7 +525,7 @@ async function updateUsers(winners, losers, callback) { // jshint ignore:line
     var count = 0;
     var i;
     for (i= 0; i < (winners).length; i++){ 
-        (function(user, authProvider){ 
+        (function(user, authProvider){  // jshint ignore:line
             dbo.collection("users").update({username:user, authProvider:authProvider},  
                 {"$inc":{ wins:1 }}, function(err, data) {
                 if (err) return callback(err, null);
@@ -535,7 +536,7 @@ async function updateUsers(winners, losers, callback) { // jshint ignore:line
     }
 
     for (i = 0; i < (losers).length; i++){ 
-        (function(user, authProvider){ 
+        (function(user, authProvider){ // jshint ignore:line
             dbo.collection("users").update({username:user, authProvider:authProvider},  
                 {"$inc":{losses:1 }}, function(err, data) {
                 if (err) return callback(err, null);
