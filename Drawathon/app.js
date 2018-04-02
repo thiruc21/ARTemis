@@ -649,10 +649,10 @@ app.delete('/api/games/:id/', [isAuthenticated, checkGameId], function (req, res
 
             dbo.collection("game_joined").deleteMany({gameId: ObjectId(gameId)}, function(err, delRes) {
                 if (err) return res.status(500).end(err);
-                if (delRes.deletedCount !== game.numPlayers) return res.status(409).end("game" + gameId + " lobby could not kick all players")
+                if (delRes.deletedCount !== game.numPlayers) return res.status(409).end("game" + gameId + " lobby could not kick all players");
                 removeFromClarifai(gameId, function(err, resp) {
-                    if (err) return res.status(500).end(err)
-                    else console.log("Image removed from Clarifai")
+                    if (err) return res.status(500).end(err);
+                    else console.log("Image removed from Clarifai");
                 });
                 return res.json("Game " + game.title + " has been removed");
             });
