@@ -23,7 +23,7 @@ const sanitize = require('express-validator/filter');
 var GoogleStrategy = require('passport-google-oauth20').Strategy;
 var FacebookStrategy = require('passport-facebook').Strategy;
 var TwitchStrategy = require("passport-twitch").Strategy;
-
+var sync = require('synchronize')
 var db = null;
 var dbo = null;
 
@@ -299,7 +299,7 @@ app.post('/signup/', [checkUsername, checkPassword],  function (req, res, next) 
         var salt = generateSalt();
         var hash = generateHash(password, salt);
         dbo.collection("users").update({username: username, authProvider: 'artemis'}, 
-            {username: username, authProvider: 'artemis', salt:salt, hash:hash, wins: 0}, 
+            {username: username, authProvider: 'artemis', salt:salt, hash:hash, wins: 0, losses: 0}, 
             {upsert: true}, function(n, nMod) {
                 if (err) return res.status(500).end(err);
                 return res.json("User " + username + " signed up");
@@ -481,34 +481,19 @@ app.patch('/api/games/:id/', [isAuthenticated, checkGameId], function (req, res,
             });
         } else {
 
-            dbo.collection("game_joined").updateMany({_id: ObjectId(gameId), teamNum: winner}, 
+            dbo.collection("game_joined").updateMany({gameId: ObjectId(gameId), teamNum: winner}, 
             {$set: {"winner": true}},               
             function(err, wrRes) {
                 if (err) return res.status(500).end(err);
-                if (wrRes.modifiedCount = 0) return res.status(409).end("players for game " + gameId + " could not be modified"); 
-                dbo.collection("game_joined").find({gameId: ObjectId(gameId)}).toArray(function(err, playerEntries) {
+                //if (wrRes.modifiedCount == 0) return res.status(409).end("players for game " + gameId + " have already been assigned winners"); 
+                
+                dbo.collection("game_joined").find({gameId: ObjectId(gameId) }).toArray(function(err, playerEntries) {
                     if (err) return res.status(500).end(" Server side error");
-                    v
-                    ar winners = playerEntries.map( function(user) {
-                        if (user.winner) {
-                            return user._id;
-                    }});
-
-                    var losers = playerEntries.map( function(user) {
-                        if (!user.winner) {
-                            return user._id;
-                    }});
-
-                    updateWins(winners, function(err, res) {
-                        if (err) return res.status(500).end(err);
-                        updateLoss(losers, function(err, res) {
-
-                        });
-                        return res.json("winning players!");
-
-                    });
-
                     
+                    updateWinnersLosers(playerEntries, function(err, result) {
+                        if (err) return res.status(500).end(err);
+                        return res.json("winning players!");
+                    });
                 });
                 
             });
@@ -516,19 +501,59 @@ app.patch('/api/games/:id/', [isAuthenticated, checkGameId], function (req, res,
     });
 });
 
-async function updateWins( winners, callback) {
-    await dbo.collection("users").updateMany({_id: {$in: winners}}, 
-        {"$inc":{ "wins": 1 }}, function(err,result) {
-            if (err) callback(err, null);
-    });
-    
-}
 
-async function updateLoss( losers, callback) {
-    await dbo.collection("users").updateMany({_id: {$in: losers}},  
-        {"$inc":{ "wins": -1 }}, function(err,result) {
-            if (err) callback(err, null);
+
+
+function updateWinnersLosers(playerEntries, callback) {
+
+    var winners = playerEntries.reduce(function(filtered, user) {
+        if (user.winner) filtered.push(
+             {user:user.user, authProvider:user.authProvider}
+        );
+        return filtered;
+    }, []);
+
+    var losers = playerEntries.reduce(function(filtered, user) {
+        if (!user.winner) filtered.push(
+            {user:user.user, authProvider:user.authProvider}
+        );
+        return filtered;
+    }, []); 
+    updateUsers(winners, losers, callback);
+}
+async function updateUsers(winners, losers, callback) {
+    var allDone = winners.length + losers.length
+    var count = 0;
+    for(var i = 0; i < (winners).length; i++){ 
+        (function(user, authProvider){ 
+            dbo.collection("users").update({username:user, authProvider:authProvider},  
+                {"$inc":{ wins:1 }}, function(err, data) {
+                if (err) return callback(err, null);
+                count++
+                if (count >= allDone) callback(null, data)
+            });
+        } (winners[i].user,winners[i].authProvider));
+    };
+
+    for(var i = 0; i < (losers).length; i++){ 
+        (function(user, authProvider){ 
+            dbo.collection("users").update({username:user, authProvider:authProvider},  
+                {"$inc":{losses:1 }}, function(err, data) {
+                if (err) return callback(err, null);
+                count++
+                if (count >= allDone) callback(null, data)
+            });
+        } (losers[i].user,losers[i].authProvider));
+    };
+
+    /*
+    var loserPromise =losers.forEach(function(user, callback){
+        prom2 = dbo.collection("users").updateMany({user:user.user, user:user.authProvider}, 
+            {"$inc":{ losses: 1 }}, function(err, result) {
+                if (err) return callback(err, null);});
+        res.push(prom2);
     });
+    */
 }
 
 
@@ -892,6 +917,13 @@ async function mongoSetup() {
             dbo.collection("images").drop();            
             dbo.collection("users").drop();            
             dbo.collection("game_joined").drop();  */
+
+            
+            dbo.collection("users").find({username: "alice6"}).toArray(function(err, res) {
+                console.log(res);
+                res.map(x => console.log(x._id))
+            });
+            
         }        
     });
 }
