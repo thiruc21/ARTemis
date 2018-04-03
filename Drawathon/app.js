@@ -345,7 +345,7 @@ app.get('/signout/', isAuthenticated, function (req, res, next) {
     }));
 
     // Check if game has already been created
-    dbo.collection("games").deleteOne({host: host, authProvider:provider}, function(err, game) {
+    dbo.collection("games").deleteOne({host: host, authProvider:provider}, function(err, wrRes) {
         if (err) return res.status(500).end(err);
         if (wrRes.deletedCount === 0) return res.status(409).end("game " + gameId + " was not deleted");
         return res.json("User signed out");
