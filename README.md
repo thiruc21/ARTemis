@@ -8,6 +8,8 @@
 - Primary URL: [Drawathon](https://art-emis.me/)
 - Secondary URL: [Drawathon back-up](https://art-emis.herokuapp.com/)
 - Demo: [Drawathon demo video](https://www.youtube.com/watch?v=cA-Cuf8rK-A&feature=youtu.be)
+- API: [Drawathon API](https://art-emis.me/api/)
+- API: [Drawathon API back-up](https://art-emis.herokuapp.com/assets/api.html)
 ## Description
 - A drawing game where the server shows a simple cartoon image of an object to two or more teams. The teams must then compete to draw their own version of the provided image within a time limit. After the timer has ended the server uses a image comparison api to score each team based on their closeness to the original image and decides who the winner is of that round is. There will be multiple rounds and the score will accumulate.
 ## Key Features

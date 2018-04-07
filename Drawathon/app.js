@@ -604,7 +604,7 @@ app.patch('/api/games/:id/host/', [isAuthenticated, checkGameId], function (req,
     });
 });
 
-// curl -k -b cookie.txt -H "Content-Type: application/json" -X PATCH -d '{"canvasId": "123123", "chatId": "12412sdad"}' https://localhost:3000/api/games/5abd897b49790f305b870aab/joined/
+// curl -k -b cookie.txt -H "Content-Type: application/json" -X PATCH -d '{"action": "generateId", "canvasId": "123123", "chatId": "12412sdad"}' https://localhost:3000/api/games/5abd897b49790f305b870aab/joined/
 /* Patch a players's rtc id n a game */
 app.patch('/api/games/:id/joined/', [isAuthenticated, checkGameId], function (req, res, next) {
     req.checkBody('action', 'Valid Action required for patch!').exists().notEmpty().isIn(['generateId']);
@@ -847,13 +847,15 @@ app.get('/api/games/:id/image/', [isAuthenticated, checkGameId], function (req, 
 
     dbo.collection("images").findOne({gameId: gameId}, function(err, image){
         if (err) return res.status(500).end(" Server side error");
-        if (image == null) return res.status(409).end(" game id " + gameId + " does not have an image");
+        if (image == null) return res.status(409).end("game id " + gameId + " does not have an image");
 
         var profile = image.file;
         res.setHeader('Content-Type', profile.mimetype);
         res.sendFile(profile.path);        
     });
 });
+
+
 // Redirects for our SPA program.
 app.get('/signup', function (req, res, next){
     res.redirect('/');
@@ -873,6 +875,11 @@ app.get('/main', function (req, res, next){
 app.get('/credit', function (req, res, next){
     res.redirect('/');
 });
+// Redirects to our api
+app.get('/api/', function(req, res, next) {
+    res.redirect('/assets/api.html');
+});
+
 function team(userEnt, userJoined, provider, callback) {
     var team0 = 0;
     var team1 = 0;

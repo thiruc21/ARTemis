@@ -1,6 +1,7 @@
 <div class="panel">
     <img class="icon" src="assets/icon.png" alt="Image not found">
     <a class="header clickable3" (click)="home()">Drawathon</a>
+    <a class="api clickable3" href="/api">API</a>
     <a class="credits clickable3" routerLink='/credits'>Credits</a>
     <p class="user_info">Welcome {{user}}</p>
     <a #signout routerLink='/' (click)="signOut()" class="btn clickable3">Sign Out</a>

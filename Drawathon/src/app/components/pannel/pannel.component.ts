@@ -57,6 +57,7 @@ export class PannelComponent implements OnInit {
     this.exit();
     this.router.navigate(['/']);
   }
+  
   exit() {
     var api = this.apiModule;
     var lob = this.apiModule.getLobby();

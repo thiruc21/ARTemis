@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8"/>
+	<title>Drawathon</title>
+	<link rel="icon" type="image/x-icon" href="./icon.png">
+</head>
+<body style="background:wheat">
+	<h1>User API:</h1>
+	<h2>Create</h2>
+	<ul>
+		<li>description: create a new user and create a session for them</li>
+		<li>request: POST /signup/</li>
+		<ul>
+			<li>content-type: application/json</li>
+			<li>body: object</li>
+			<ul>
+				<li>username: (string) the new user's username</li>
+				<li>password: (string) the new user's password</li>
+			</ul>
+		</ul>
+		<li>response: 200</li>
+		<ul>
+			<li>content-type: application/json</li>
+			<li>body: User $username has signed up</li>
+		</ul>
+		<li>response: 400</li>
+		<ul><li>body: Username/Password is required</li></ul>
+		<li>response: 400</li>
+		<ul><li>body: Please enter a valid alphanumeric username/password</li></ul>
+		<li>response: 400</li>
+		<ul><li>body: Username/Password must be atleast 5 characters</li></ul>
+		<li>response: 400</li>
+		<ul><li>body: Username/Password must be atmost 24 characters long</li></ul>
+		<li>response: 409</li>
+		<ul><li>body: Username $username already exists</li></ul>
+	</ul>
+	<p>$curl -k -H  "Content-Type: application/json" -X POST -d '{"username":"alice","password":"alice"}' -c cookie.txt https://art-emis.me/signup/</p>
+	<ul>
+		<li>description: create a session for an existing user</li>
+		<li>request: POST /api/signin/</li>
+		<ul>
+			<li>body: object</li>
+			<ul>
+				<li>username: (string) the user's username</li>
+				<li>password: (string) the user's password</li>
+			</ul>
+		</ul>
+		<li>response: 200</li>
+		<ul>
+			<li>content-type: application/json</li>
+			<li>body: User $username has signed in!</li>
+		</ul>
+		<li>response: 400</li>
+		<ul><li>body: Username/Password is required</li></ul>
+		<li>response: 400</li>
+		<ul><li>body: Please enter a valid alphanumeric username/password</li></ul>
+		<li>response: 400</li>
+		<ul><li>body: Username/Password must be atleast 5 characters</li></ul>
+		<li>response: 400</li>
+		<ul><li>body: Username/Password must be atmost 24 characters long</li></ul>
+		<li>response: 401</li>
+		<ul><li>body: Access denied, incorrect credentials</li></ul>
+	</ul>
+	<p>$curl -k -H "Content-Type: application/json" -X POST -d '{"username":"alice","password":"alice"}' -c cookie.txt https://art-emis.me/signin/</p>
+	<h2>Read</h2>
+	<ul>
+		<li>description: removes current user session</li>
+		<li>request: GET /api/signout/</li>
+		<li>response: 302</li>
+		<ul><li>redirect: '/'</li></ul>
+		<li>response: 401</li>
+		<ul><li>body: access denied</li></ul>
+	</ul>
+	<p>$curl -b cookie.txt -c cookie.txt https://art-emis.me/signout/</p>
+	<h1>Game API:</h1>
+	<h2>Create</h2>
+	<ul>
+		<li>description: make a new game instance</li>
+		<li>request: POST /api/games/</li>
+		<ul>
+			<li>content-type: application/json</li>
+			<li>body: object</li>
+			<ul>
+				<li>title: (string) the title of the game</li>
+			</ul>
+		</ul>
+		<li>response: 200</li>
+		<ul>
+			<li>content-type: application/json</li>
+			<li>body: object</li>
+			<ul>
+				<li>title: (string) the title of the game</li>
+				<li>host: (string) the user who is the host of the game</li>
+				<li>authProvider: (string) the source of the host's authorization</li>
+				<li>inLobby: (boolean) flag for if game is in lobby or not</li>
+				<li>numPlayers: (number) total number of players in this game right now</li>
+				<li>maxPlayers: (number) max number of players that can be in the game</li>
+				<li>_id: (string) the unique id for the game</li>
+			</ul>
+		</ul>
+		<li>response: 400</li>
+		<ul><li>body: access denied</li></ul>
+		<li>response: 409</li>
+		<ul><li>body: User $host already has a hosted game</li></ul>
+	</ul>
+	<p>curl -k  -b cookie.txt -H "Content-Type: application/json" -X POST -d '{"title":"join THIS Lobby"}' https://art-emis.me/api/games/</p>
+	<ul>
+		<li>description: join a game</li>
+		<li>request: POST /api/games/:id/joined/</li>
+		<ul><li>content-type: application/json</li></ul>
+		<li>response: 200</li>
+		<ul>
+			<li>body: object</li>
+			<ul>
+				<li>user: (string) username of the user who entered the game</li>
+				<li>authProvider: (string) the source of the user's authorization</li>
+				<li>gameId: (string) id of game the user is in</li>
+				<li>winner: (boolean) flag for if the user has won</li>
+				<li>teamNum: (number) team number of the user</li>
+				<li>_id: (string) unique id of the user</li>
+			</ul>
+		</ul>
+		<li>response: 400</li>
+		<ul><li>body: access denied</li></ul>
+		<li>response: 400</li>
+		<ul><li>body: game id required!</li></ul>
+		<li>response: 409</li>
+		<ul><li>body: game with id :id not found</li></ul>
+		<li>response: 409</li>
+		<ul><li>body: game :id is full</li></ul>
+		<li>response: 409</li>
+		<ul><li>body: Joining user $user is already the host</li></ul>
+		<li>response: 409</li>
+		<ul><li>body: user is already the host</li></ul>
+	</ul>
+	<p>curl -k -b cookie.txt -H "Content-Type: application/json" -X POST  https://art-emis.me/api/games/5aad97f9f4e28b075083ef9c/joined/</p>
+	<ul>
+		<li>description: allow host to upload an image for game.</li>
+		<li>request: POST /api/games/:id/image/</li>
+		<ul>
+			<li>content-type: multipart/form-data</li>
+			<li>file: (file) the image file</li>
+		</ul>
+		<li>response: 200</li>
+		<ul>
+			<li>content-type: application/json</li>
+			<li>body: object</li>
+			<ul>
+				<li>gameId: (string) Id of the game file was uploaded to</li>
+				<li>file: object</li>
+				<ul>
+					<li>fieldname: (string) field name of file uploaded</li>
+					<li>originalname: (string) original name of file uploaded</li>
+					<li>encoding: (string) file encoding type</li>
+					<li>mimetype: (string) mime type of file uploaded</li>
+					<li>destination: (string) location where uploaded image is saved</li>
+					<li>filename: (string) new name for file uploaded</li>
+					<li>path: (string) path the uploaded file is saved in</li>
+					<li>size: (number) size of file in bytes</li>
+				</ul>
+				<li>_id: (string) unique id for file</li>
+			</ul>
+		</ul>
+		<li>response: 400</li>
+		<ul><li>body: access denied</li></ul>
+		<li>response: 400</li>
+		<ul><li>body: game id required!</li></ul>
+		<li>response: 409</li>
+		<ul><li>body: game with id :id not found</li></ul>
+		<li>response: 409</li>
+		<ul><li>body: User $user is not the host of this game</li></ul>
+		<li>response: 409</li>
+		<ul><li>body: Game :id already has a posted image</li></ul>
+	</ul>
+	<p>curl -k -b cookie.txt -X POST 'https://art-emis.me/api/games/5abd3cf22b3db66bcc0e2ef9/image/' -H 'content-type: multipart/form-data' -F 'file=@/home/shadman/ARTemis/Drawathon/uploads/user.png'</p>
+	<ul>
+		<li>description: upload an image to compare with</li>
+		<li>request: POST /api/games/:id/canvas/</li>
+		<ul>
+			<li>content-type: application/json</li>
+			<li>content-transfer-encoding: base64</li>
+			<li>body: object</li>
+			<ul><li>img: (string) the data of the image to compare in base64</li></ul>
+		</ul>
+		<li>response: 200</li>
+		<ul><li>body: (number) image comparison score of the image</li></ul>
+		<li>response: 400</li>
+		<ul><li>body: access denied</li></ul>
+		<li>response: 400</li>
+		<ul><li>body: game id required!</li></ul>
+		<li>response: 409</li>
+		<ul><li>body: game with id :id not found</li></ul>
+		<li>response: 409</li>
+		<ul><li>body: User $user is not the host of this game</li></ul>
+	</ul>
+	<p>curl -k -b cookie.txt -H "Content-Type: application/json" -d '{"img":"imgData"}' -X POST  https://art-emis.me/api/games/5aad97f9f4e28b075083ef9c/canvas/</p>
+	<h2>Read</h2>
+	<ul>
+		<li>description: get all games in lobby</li>
+		<li>request: GET /api/games/</li>
+		<li>response: 200</li>
+		<ul>
+			<li>body: list of objects</li>
+			<ul>
+				<li>title: (string) the title of the game</li>
+				<li>host: (string) the user who is the host of the game</li>
+				<li>authProvider: (string) the source of the host's authorization</li>
+				<li>inLobby: (boolean) flag for if game is in lobby or not</li>
+				<li>numPlayers: (number) total number of players in this game right now</li>
+				<li>maxPlayers: (number) max number of players that can be in the game</li>
+				<li>_id: (string) the unique id for the game</li>
+				<li>team1Id: (string) a unique peer Id from the host for team 1. Only part of body after 'generateId' game patch.</li>
+				<li>team2Id: (string) a unique peer Id from the host for team 2. Only part of body after 'generateId' game patch.</li>
+			</ul>
+		</ul>
+		<li>response: 400</li>
+		<ul><li>body: access denied</li></ul>
+	</ul>
+	<p>curl -k -b cookie.txt https://art-emis.me/api/games/</p>
+	<ul>
+		<li>description: get info on a specific game</li>
+		<li>request: GET /api/games/:id</li>
+		<li>response: 200</li>
+		<ul>
+			<li>body: object</li>
+			<ul>
+				<li>title: (string) the title of the game</li>
+				<li>host: (string) the user who is the host of the game</li>
+				<li>authProvider: (string) the source of the host's authorization</li>
+				<li>inLobby: (boolean) flag for if game is in lobby or not</li>
+				<li>numPlayers: (number) total number of players in this game right now</li>
+				<li>maxPlayers: (number) max number of players that can be in the game</li>
+				<li>_id: (string) the unique id for the game</li>
+			</ul>
+		</ul>
+		<li>response: 400</li>
+		<ul><li>body: access denied</li></ul>
+		<li>response: 400</li>
+		<ul><li>body: game id required!</li></ul>
+		<li>response: 409</li>
+		<ul><li>body: game with id :id not found</li></ul>
+	</ul>
+	<p>curl -k -b cookie.txt https://art-emis.me/api/games/5abd897b49790f305b870aab</p>
+	<ul>
+		<li>description: get every player in a game</li>
+		<li>request: GET /api/games/:id/joined/</li>
+		<li>response: 200</li>
+		<ul>
+			<li>body: list of objects</li>
+			<ul>
+				<li>user: (string) username of the user who entered the game</li>
+				<li>authProvider: (string) the source of the user's authorization</li>
+				<li>gameId: (string) id of game the user is in</li>
+				<li>winner: (boolean) flag for if the user has won</li>
+				<li>teamNum: (number) team number of the user</li>
+				<li>_id: (string) unique id of the user</li>
+				<li>canvasId: (string) peer Id for user's canvas. Only part of body after 'generateId' user patch.</li>
+				<li>chatId: (string) peer Id for user's chat. Only part of body after 'generateId' user patch.</li>
+			</ul>
+		</ul>
+		<li>response: 400</li>
+		<ul><li>body: access denied</li></ul>
+		<li>response: 400</li>
+		<ul><li>body: game id required!</li></ul>
+		<li>response: 409</li>
+		<ul><li>body: game with id :id not found</li></ul>
+	</ul>
+	<p>curl -k -b cookie.txt https://art-emis.me/api/games/5aaee8a6a459c0149b14c809/joined</p>
+	<ul>
+		<li>description: get image uploaded by host</li>
+		<li>request: GET /api/games/:id/joined/</li>
+		<li>response: 200</li>
+		<ul>
+			<li>content-type: application/octet-stream</li>
+			<li>body: (file) the image file</li>
+		</ul>
+		<li>response: 400</li>
+		<ul><li>body: access denied</li></ul>
+		<li>response: 400</li>
+		<ul><li>body: game id required!</li></ul>
+		<li>response: 409</li>
+		<ul><li>body:  game id :id does not have an image</li></ul>
+	</ul>
+	<p>curl -k -b cookie.txt 'https://art-emis.me/api/games/5abd3cf22b3db66bcc0e2ef9/image/'</p>
+	<h2>Update</h2>
+	<ul>
+		<li>description: update a game to start or end it</li>
+		<li>request: PATCH /api/games/:id/</li>
+		<ul>
+			<li>content-type: application/json</li>
+			<li>body: object</li>
+			<ul>
+				<li>action: (string) action to be performed. Either 'start' or 'end'</li>
+				<li>time: (number) length of game in seconds. Only required if action is 'start'</li>
+				<li>teamNum: (number) the number of the team that won. Only required if action is 'end'</li>
+			</ul>
+		</ul>
+		<li>response: 200</li>
+		<ul><li>body: Game Started!/Game Ends!!!</li></ul>
+		<li>response: 400</li>
+		<ul><li>body: access denied</li></ul>
+		<li>response: 400</li>
+		<ul><li>body: game id required!</li></ul>
+		<li>response: 400</li>
+		<ul><li>body: Valid Action required!</li></ul>
+		<li>response: 400 (action:'start')</li>
+		<ul><li>body: Every game needs a time limit!</li></ul>
+		<li>response: 400 (action:'end')</li>
+		<ul><li>body: Every game needs a valid winning team!</li></ul>
+		<li>response: 409</li>
+		<ul><li>game with id :id not found</li></ul>
+		<li>response: 409</li>
+		<ul><li>User $user is not the host of this game</li></ul>
+		<li>response: 409</li>
+		<ul><li>body: game with id :id has less than 2 joined players</li></ul>
+		<li>response: 409 (action:'start')</li>
+		<ul><li>body: game with id :id has already started</li></ul>
+		<li>response: 409</li>
+		<ul><li>body: game with id :id could not be modified</li></ul>
+		<li>response: 409</li>
+		<ul><li>body: players for game :id have already been assigned winners</li></ul>
+	</ul>
+	<p>curl -k -b cookie.txt -H "Content-Type: application/json" -X PATCH -d '{"action": "Start", "time": 120}' https://art-emis.me/api/games/5abffc298dd2d4558f58e312/</p>
+	<p>curl -k -b cookie.txt -H "Content-Type: application/json" -X PATCH -d '{"action": "End", "teamNum": 0}' https://art-emis.me/api/games/5abffc298dd2d4558f58e312/</p>
+	<ul>
+		<li>description: update a game by uploading two canvas peer Ids</li>
+		<li>request: PATCH /api/games/:id/host/</li>
+		<ul>
+			<li>content-type: application/json</li>
+			<li>body: object</li>
+			<ul>
+				<li>action: (string) action to be performed. Must be 'generateId'</li>
+				<li>team1Id: (string) the canvas peer Id for the first team</li>
+				<li>team1Id: (string) the canvas peer Id for the second team</li>
+			</ul>
+		</ul>
+		<li>response: 200</li>
+		<ul><li>body: Canvas ids posted</li></ul>
+		<li>response: 400</li>
+		<ul><li>body: access denied</li></ul>
+		<li>response: 400</li>
+		<ul><li>body: game id required!</li></ul>
+		<li>response: 400</li>
+		<ul><li>body: Valid Action required for patch!</li></ul>
+		<li>response: 400</li>
+		<ul><li>body: Host requires a canvas id for team 1/2</li></ul>
+		<li>response: 409</li>
+		<ul><li>body: game with id :id not found</li></ul>
+		<li>response: 409</li>
+		<ul><li>body: User $user is not the host of this game</li></ul>
+	</ul>
+	<p>curl -k -b cookie.txt -H "Content-Type: application/json" -X PATCH -d '{"action":'generateId', 'team1Id": 1233, "team2Id": 12123}' https://art-emis.me/api/games/5aad97f9f4e28b075083ef9c/host/</p>
+	<ul>
+		<li>description: allow players to update their information with peer Ids for canvas and chat</li>
+		<li>request: PATCH /api/games/:id/joined/</li>
+		<ul>
+			<li>content-type: application/json</li>
+			<li>body: object</li>
+			<ul>
+				<li>action: (string) action to be performed. Must be 'generateId'</li>
+				<li>canvasId: (string) the canvas peer Id of the user</li>
+				<li>chatId: (string) the chat peer Id of the user</li>
+			</ul>
+		</ul>
+		<li>response: 200</li>
+		<ul><li>body: Peer ids posted</li></ul>
+		<li>response: 400</li>
+		<ul><li>body: access denied</li></ul>
+		<li>response: 400</li>
+		<ul><li>body: game id required!</li></ul>
+		<li>response: 400</li>
+		<ul><li>body: Valid Action required for patch!</li></ul>
+		<li>response: 400</li>
+		<ul><li>body: Each player requires a chat id</li></ul>
+		<li>response: 400</li>
+		<ul><li>body: Each player requires a canvas id</li></ul>
+		<li>response: 409</li>
+		<ul><li>body: game with id :id not found</li></ul>
+		<li>response: 409</li>
+		<ul><li>body: User $user not found</li></ul>
+	</ul>
+	<p>curl -k -b cookie.txt -H "Content-Type: application/json" -X PATCH -d '{"action": "generateId", "canvasId": "123123", "chatId": "12412sdad"}' https://art-emis.me/api/games/5abd897b49790f305b870aab/joined/</p>
+	<h2>Delete</h2>
+	<ul>
+		<li>description: delete a game if host</li>
+		<li>request: DELETE /api/games/:id/</li>
+		<li>response: 200</li>
+		<ul><li>body: Game $game.title has been removed</li></ul>
+		<li>response: 400</li>
+		<ul><li>body: access denied</li></ul>
+		<li>response: 400</li>
+		<ul><li>body: game id required!</li></ul>
+		<li>response: 409</li>
+		<ul><li>body: game with id :id not found</li></ul>
+		<li>response: 409</li>
+		<ul><li>body: User $user is not the host of this game</li></ul>
+		<li>response: 409</li>
+		<ul><li>body: game :id was not deleted</li></ul>
+		<li>response: 409</li>
+		<ul><li>body: game :id lobby could not kick all players/li></ul>
+	</ul>
+	<p>curl -k -b cookie.txt -H "Content-Type: application/json" -X DELETE https://art-emis.me/api/games/5aad97f9f4e28b075083ef9c/</p>
+	<ul>
+		<li>description: allow player to leave game</li>
+		<li>request: DELETE /api/games/:id/joined/</li>
+		<li>response: 200</li>
+		<ul><li>body: user $user has been removed from game :id</li></ul>
+		<li>response: 400</li>
+		<ul><li>body: access denied</li></ul>
+		<li>response: 400</li>
+		<ul><li>body: game id required!</li></ul>
+		<li>response: 409</li>
+		<ul><li>body: User $user is not in the game!</li></ul>
+		<li>response: 409</li>
+		<ul><li>body: User $user is not in the game!</li></ul>
+	</ul>
+	<p>curl -k -b cookie.txt -H -X delete  https://art-emis.me/api/games/5aae9368eccb1357c708bbd0/joined/</p>
+	<ul>
+		<li>description: allow a host to kick a player out of game</li>
+		<li>request: DELETE /api/games/:id/joined/:userId/</li>
+		<li>response: 200</li>
+		<ul><li>body: user $user has been removed from game :id</li></ul>
+		<li>response: 400</li>
+		<ul><li>body: access denied</li></ul>
+		<li>response: 400</li>
+		<ul><li>body: game id required!</li></ul>
+		<li>response: 409</li>
+		<ul><li>body: game with id :id not found</li></ul>
+		<li>response: 409</li>
+		<ul><li>body: User $user is not the host of this game</li></ul>
+		<li>response: 409</li>
+		<ul><li>body: User $user is not in the game!</li></ul>
+		<li>response: 409</li>
+		<ul><li>body: number of players could not be reduced ingame</li></ul>
+	</ul>
+	<p>curl -k -b cookie.txt -H -X delete https://art-emis.me/api/games/5aae9368eccb1357c708bbd0/joined/alice</p>
+</body>
+</html>
+
+
