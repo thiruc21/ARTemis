@@ -6,7 +6,6 @@
     - Vishakan Shanthakumar
 ## URL
 - Primary URL: [Drawathon](https://art-emis.me/)
-- Secondary URL: [Drawathon back-up](https://art-emis.herokuapp.com/)
 - Demo: [Drawathon demo video](https://www.youtube.com/watch?v=cA-Cuf8rK-A&feature=youtu.be)
 - API: [Drawathon API](https://art-emis.me/api/)
 - API: [Drawathon API back-up](https://art-emis.herokuapp.com/assets/api.html)
